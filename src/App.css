@@ -1,0 +1,81 @@
+#root {
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+body {
+  background-color: #2c3e50;
+  /* Match legacy body bg */
+  width: 100%;
+}
+
+#theme-wrapper {
+  width: 100%;
+  position: relative;
+  min-height: 100vh;
+  padding-top: 50px;
+  /* Header height */
+}
+
+#content-wrapper {
+  margin-left: 220px;
+  background-color: #f7f9fa;
+  min-height: calc(100vh - 50px);
+  padding-bottom: 0;
+}
+
+/* Sidebar needs to be below header? */
+/* In legacy, header likely overlays or sidebar starts below? */
+/* Usually sidebar is fixed below header. */
+#nav-col {
+  top: 50px;
+  /* Header height */
+}
+
+@media (max-width: 991px) {
+  #content-wrapper {
+    margin-left: 0;
+  }
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}

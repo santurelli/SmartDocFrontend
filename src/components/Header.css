@@ -1,0 +1,197 @@
+#header-navbar {
+    background-color: #ffffff;
+    border-radius: 0;
+    border: none;
+    margin-bottom: 0;
+    min-height: 50px;
+    z-index: 900;
+    box-shadow: 1px 0 3px rgba(0, 0, 0, 0.15);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+}
+
+#header-navbar .container {
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+#header-navbar .container .clearfix {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    height: 100%;
+    width: 100%;
+}
+
+#logo {
+    width: 220px !important;
+    height: 50px !important;
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 0 20px !important;
+    font-size: 20px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    margin: 0 !important;
+    flex-shrink: 0;
+    /* Don't shrink */
+}
+
+.logo-text {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    /* text-transform: uppercase; Removed to match SmartDOC mixed case */
+    font-size: 1.1em;
+    color: #fff;
+    font-family: 'Open Sans', sans-serif;
+}
+
+#header-navbar .nav>li>a {
+    color: #6a7a8c;
+    font-size: 13px;
+    padding: 15px 20px;
+    line-height: 20px;
+    cursor: pointer;
+}
+
+#header-navbar .nav>li>a:hover,
+#header-navbar .nav>li>a:focus,
+#header-navbar .nav .open>a {
+    background-color: #f7f9fa;
+    color: #2c3e50;
+}
+
+/* User Avatar Small in Header */
+.user-avatar-small {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #03a9f4 0%, #0288d1 100%);
+    color: #fff;
+    font-size: 0.8em;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: block;
+    /* Controlled by React condition */
+    float: left;
+    min-width: 160px;
+    padding: 5px 0;
+    margin: 2px 0 0;
+    font-size: 13px;
+    text-align: left;
+    list-style: none;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0, 0, 0, .15);
+    border-radius: 2px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+}
+
+.dropdown-menu-right {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-menu>li>a {
+    display: block;
+    padding: 3px 20px;
+    clear: both;
+    font-weight: 400;
+    line-height: 1.42857143;
+    color: #333;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.dropdown-menu>li>a:hover,
+.dropdown-menu>li>a:focus {
+    color: #262626;
+    text-decoration: none;
+    background-color: #f5f5f5;
+}
+
+.dropdown-menu>li>a svg {
+    margin-right: 10px;
+    width: 14px;
+    text-align: center;
+}
+
+.navbar-toggle {
+    float: left;
+    margin: 8px 15px;
+    padding: 9px 10px;
+    background-color: transparent;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #2c3e50;
+}
+
+#header-navbar .nav-no-collapse {
+    display: block !important;
+}
+
+#header-navbar .pull-left {
+    float: left !important;
+}
+
+#header-navbar .pull-right {
+    float: right !important;
+    margin-left: auto;
+    /* Push to right in flex container */
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+#header-navbar .nav {
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+#header-navbar .nav>li {
+    position: relative;
+    display: block;
+    /* float: left; Removed for flex */
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* Adjustments for dropdown arrow */
+.caret {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: 2px;
+    vertical-align: middle;
+    border-top: 4px dashed;
+    border-top: 4px solid \9;
+    border-right: 4px solid transparent;
+    border-left: 4px solid transparent;
+}

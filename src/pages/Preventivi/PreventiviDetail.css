@@ -1,0 +1,55 @@
+/* PreventiviDetail.css */
+
+.preventivi-detail-container {
+    padding-bottom: 50px;
+}
+
+.preventivi-detail-container .main-box {
+    margin-bottom: 20px;
+    background-color: #fff;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    border-radius: 3px;
+}
+
+.preventivi-detail-container .main-box-header {
+    min-height: 50px;
+    padding: 20px;
+    background-clip: padding-box;
+    border-radius: 3px 3px 0 0;
+}
+
+.preventivi-detail-container .main-box-body {
+    padding: 20px;
+}
+
+.preventivi-detail-container .toolbar {
+    margin-bottom: 15px;
+    text-align: right;
+}
+
+/* Tabs styling reuse if not global */
+.nav-tabs {
+    border-bottom: 1px solid #ddd;
+}
+
+.nav-tabs > li > a {
+    color: #555;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.nav-tabs > li.active > a, 
+.nav-tabs > li.active > a:focus, 
+.nav-tabs > li.active > a:hover {
+    color: #03a9f4;
+    cursor: default;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid #03a9f4;
+}
+
+.hide {
+    display: none;
+}

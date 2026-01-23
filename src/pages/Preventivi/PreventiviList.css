@@ -1,0 +1,69 @@
+/* PreventiviList.css */
+
+.preventivi-list-container {
+    padding-bottom: 50px;
+}
+
+/* Reuse styles from ClientiList or generic table styles */
+.btn-paginate {
+    border: 1px solid #ddd;
+    background: #fff;
+    margin: 0 2px;
+}
+
+.btn-paginate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-container {
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f1f2f7;
+    margin-top: 15px;
+}
+
+.sort-icon {
+    font-size: 0.8em;
+    margin-left: 5px;
+    color: #999;
+}
+
+.filter-block {
+    margin-bottom: 15px;
+    display: inline-block;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    border: none;
+    margin-left: 5px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-action:hover {
+    opacity: 0.8;
+}
+
+.btn-action-edit {
+    background-color: #f39c12;
+    /* Amber/Orange for edit */
+}
+
+.btn-action-delete {
+    background-color: #e74c3c;
+    /* Red for delete */
+}
+
+/* Ensure table header is clickable */
+th[style*="cursor: pointer"] {
+    user-select: none;
+}
