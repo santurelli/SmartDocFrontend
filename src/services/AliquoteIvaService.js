@@ -1,14 +1,37 @@
-import axios from 'axios';
-import AuthService from './authService';
+import api from './api';
 
-const API_URL = 'http://localhost:8080/api/aliquoteiva';
+class AliquoteIvaService {
+    getList(params) {
+        const { start, length, orderColumn, orderDir, ...filter } = params;
+        const queryParams = new URLSearchParams({
+            start: start || 0,
+            length: length || 10
+        });
+        if (orderColumn !== undefined) queryParams.append('orderColumn', orderColumn);
+        if (orderDir) queryParams.append('orderDir', orderDir);
 
-const getListForCombo = () => {
-    return axios.post(`${API_URL}/listForCombo`, {}, { headers: AuthService.authHeader() });
-};
+        return api.post(`/aliquoteiva/list?${queryParams.toString()}`, filter);
+    }
 
-const AliquoteIvaService = {
-    getListForCombo
-};
+    getListForCombo() {
+        return api.post('/aliquoteiva/listForCombo');
+    }
 
-export default AliquoteIvaService;
+    getById(id) {
+        return api.get(`/aliquoteiva/${id}`);
+    }
+
+    create(data) {
+        return api.post('/aliquoteiva', data);
+    }
+
+    update(id, data) {
+        return api.put(`/aliquoteiva/${id}`, data);
+    }
+
+    delete(id) {
+        return api.delete(`/aliquoteiva/${id}`);
+    }
+}
+
+export default new AliquoteIvaService();

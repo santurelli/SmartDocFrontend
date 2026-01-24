@@ -227,22 +227,36 @@ const ClientiList = () => {
                                 <span className="pagination-info">
                                     Visualizzati {clienti.length} di {total} risultati
                                 </span>
-                                <div className="btn-group">
-                                    <button
-                                        className="btn btn-paginate"
-                                        disabled={currentPage === 0}
-                                        onClick={() => setCurrentPage(c => c - 1)}
-                                    >
-                                        <FaChevronLeft />
-                                    </button>
-                                    <button
-                                        className="btn btn-paginate"
-                                        disabled={(currentPage + 1) * pageSize >= total}
-                                        onClick={() => setCurrentPage(c => c + 1)}
-                                    >
-                                        <FaChevronRight />
-                                    </button>
-                                </div>
+                                <nav>
+                                    <ul className="pagination">
+                                        <li className={currentPage === 0 ? 'disabled' : ''}>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 0) setCurrentPage(currentPage - 1); }}>
+                                                <FaChevronLeft />
+                                            </a>
+                                        </li>
+                                        {[...Array(Math.ceil(total / pageSize))].map((_, i) => {
+                                            const totalPages = Math.ceil(total / pageSize);
+                                            if (totalPages > 10) {
+                                                if (i > 0 && i < totalPages - 1 && (i < currentPage - 2 || i > currentPage + 2)) {
+                                                    if (i === currentPage - 3 || i === currentPage + 3) return <li key={i} className="disabled"><span>...</span></li>;
+                                                    return null;
+                                                }
+                                            }
+                                            return (
+                                                <li key={i} className={currentPage === i ? 'active' : ''}>
+                                                    <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i); }}>
+                                                        {i + 1}
+                                                    </a>
+                                                </li>
+                                            );
+                                        })}
+                                        <li className={(currentPage + 1) * pageSize >= total ? 'disabled' : ''}>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); if ((currentPage + 1) * pageSize < total) setCurrentPage(currentPage + 1); }}>
+                                                <FaChevronRight />
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
                             </div>
                         </div>
                     </div>

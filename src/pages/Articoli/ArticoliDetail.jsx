@@ -14,6 +14,8 @@ import AliquoteIvaService from '../../services/AliquoteIvaService';
 import FornitoriService from '../../services/FornitoriService';
 import CategorieManagementModal from './CategorieManagementModal';
 import SottoCategorieManagementModal from './SottoCategorieManagementModal';
+import UnitaMisuraManagementModal from './UnitaMisuraManagementModal';
+import AliquoteIvaManagementModal from './AliquoteIvaManagementModal';
 import { FaSave, FaArrowLeft, FaWrench, FaAngleRight, FaHome } from 'react-icons/fa';
 import AsyncSelect from 'react-select/async';
 import './ArticoliDetail.css';
@@ -35,6 +37,8 @@ const ArticoliDetail = () => {
     });
     const [showCategorieModal, setShowCategorieModal] = useState(false);
     const [showSottoCategorieModal, setShowSottoCategorieModal] = useState(false);
+    const [showUnitaMisuraModal, setShowUnitaMisuraModal] = useState(false);
+    const [showAliquoteIvaModal, setShowAliquoteIvaModal] = useState(false);
 
     const [formData, setFormData] = useState({
         codice: '',
@@ -204,6 +208,34 @@ const ArticoliDetail = () => {
         } catch (e) {
             console.error("Error generating code", e);
             alert("Errore durante la generazione del codice.");
+        }
+    };
+
+    const handleManageUnitaMisura = () => {
+        setShowUnitaMisuraModal(true);
+    };
+
+    const handleCloseUnitaMisuraModal = async () => {
+        setShowUnitaMisuraModal(false);
+        try {
+            const res = await UnitaMisuraService.getListForCombo();
+            setCombos(prev => ({ ...prev, unitaMisura: res.data.payload || [] }));
+        } catch (e) {
+            console.error("Refresh units failed", e);
+        }
+    };
+
+    const handleManageAliquoteIva = () => {
+        setShowAliquoteIvaModal(true);
+    };
+
+    const handleCloseAliquoteIvaModal = async () => {
+        setShowAliquoteIvaModal(false);
+        try {
+            const res = await AliquoteIvaService.getListForCombo();
+            setCombos(prev => ({ ...prev, aliquoteIva: res.data.payload || [] }));
+        } catch (e) {
+            console.error("Refresh VAT rates failed", e);
         }
     };
 
@@ -426,7 +458,11 @@ const ArticoliDetail = () => {
                                             <select className="form-control" name="idUnitaMisura" value={formData.idUnitaMisura} onChange={handleChange}>
                                                 {combos.unitaMisura.map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
                                             </select>
-                                            {renderConfigButton('/tabelle/unita-misura')}
+                                            <span className="input-group-btn">
+                                                <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageUnitaMisura} title="Gestione tabella">
+                                                    <FaWrench />
+                                                </button>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -463,7 +499,11 @@ const ArticoliDetail = () => {
                                             <option value="">Seleziona...</option>
                                             {combos.aliquoteIva.map(a => <option key={a.id} value={a.id}>{a.codice} - {a.descrizione}</option>)}
                                         </select>
-                                        {renderConfigButton('/tabelle/aliquote-iva')}
+                                        <span className="input-group-btn">
+                                            <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageAliquoteIva} title="Gestione tabella">
+                                                <FaWrench />
+                                            </button>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -552,6 +592,12 @@ const ArticoliDetail = () => {
             )}
             {showSottoCategorieModal && (
                 <SottoCategorieManagementModal onClose={handleCloseSottoCategorieModal} />
+            )}
+            {showUnitaMisuraModal && (
+                <UnitaMisuraManagementModal onClose={handleCloseUnitaMisuraModal} />
+            )}
+            {showAliquoteIvaModal && (
+                <AliquoteIvaManagementModal onClose={handleCloseAliquoteIvaModal} />
             )}
         </div>
     );

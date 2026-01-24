@@ -260,10 +260,37 @@ const ArticoliList = () => {
 
                     <div className="pagination-container">
                         <span className="pagination-info">Visualizzati {articoli.length} di {totalItems} risultati</span>
-                        <div className="btn-group">
-                            <button className="btn btn-paginate" disabled={page === 0} onClick={() => setPage(c => c - 1)}><FaChevronLeft /></button>
-                            <button className="btn btn-paginate" disabled={(page + 1) * pageSize >= totalItems} onClick={() => setPage(c => c + 1)}><FaChevronRight /></button>
-                        </div>
+                        <nav>
+                            <ul className="pagination">
+                                <li className={page === 0 ? 'disabled' : ''}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); if (page > 0) setPage(page - 1); }}>
+                                        <FaChevronLeft />
+                                    </a>
+                                </li>
+                                {[...Array(Math.ceil(totalItems / pageSize))].map((_, i) => {
+                                    // Limit visible pages if there are too many
+                                    const totalPages = Math.ceil(totalItems / pageSize);
+                                    if (totalPages > 10) {
+                                        if (i > 0 && i < totalPages - 1 && (i < page - 2 || i > page + 2)) {
+                                            if (i === page - 3 || i === page + 3) return <li key={i} className="disabled"><span>...</span></li>;
+                                            return null;
+                                        }
+                                    }
+                                    return (
+                                        <li key={i} className={page === i ? 'active' : ''}>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); setPage(i); }}>
+                                                {i + 1}
+                                            </a>
+                                        </li>
+                                    );
+                                })}
+                                <li className={(page + 1) * pageSize >= totalItems ? 'disabled' : ''}>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); if ((page + 1) * pageSize < totalItems) setPage(page + 1); }}>
+                                        <FaChevronRight />
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
                     </div>
                 </div>
             </div>

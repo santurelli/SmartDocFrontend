@@ -25,7 +25,17 @@ const NoteDocumentiManagementModal = ({ onClose }) => {
             }
         } catch (error) {
             console.error("Error loading note:", error);
-            Swal.fire('Errore', 'Impossibile caricare le note documenti', 'error');
+            Swal.fire({
+                title: 'Errore',
+                text: 'Impossibile caricare le note documenti',
+                icon: 'error',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title',
+                    confirmButton: 'premium-swal-confirm'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -37,19 +47,44 @@ const NoteDocumentiManagementModal = ({ onClose }) => {
             text: "La nota verrà eliminata.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm btn-danger',
+                cancelButton: 'premium-swal-cancel'
+            }
         });
 
         if (result.isConfirmed) {
             try {
                 await NoteDocumentiService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Nota eliminata.', 'success');
+                Swal.fire({
+                    title: 'Eliminato!',
+                    text: 'Nota eliminata.',
+                    icon: 'success',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             } catch (error) {
-                Swal.fire('Errore', 'Errore durante l\'eliminazione', 'error');
+                Swal.fire({
+                    title: 'Errore',
+                    text: 'Errore durante l\'eliminazione',
+                    icon: 'error',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             }
         }
     };
@@ -65,28 +100,47 @@ const NoteDocumentiManagementModal = ({ onClose }) => {
     const openDetailModal = (id, existingDesc) => {
         Swal.fire({
             title: id ? 'Modifica Nota' : 'Nuova Nota',
-            input: 'text',
-            inputValue: existingDesc,
+            html: `
+                <div style="text-align: left; padding: 10px 5px;">
+                    <div class="form-group">
+                        <label class="premium-swal-label">Contenuto Nota</label>
+                        <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Consegna solo al mattino..." value="${existingDesc}">
+                    </div>
+                </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
-            inputValidator: (value) => {
+            showLoaderOnConfirm: true,
+            buttonsStyling: false,
+            width: 600,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm',
+                cancelButton: 'premium-swal-cancel'
+            },
+            preConfirm: async () => {
+                const value = document.getElementById('swal-descrizione').value;
                 if (!value) {
-                    return 'Inserisci una descrizione!';
+                    Swal.showValidationMessage('La descrizione è obbligatoria');
+                    return false;
                 }
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
                 try {
                     if (id) {
-                        await NoteDocumentiService.update(id, { descrizione: result.value });
+                        await NoteDocumentiService.update(id, { descrizione: value });
                     } else {
-                        await NoteDocumentiService.insert({ descrizione: result.value });
+                        await NoteDocumentiService.insert({ descrizione: value });
                     }
-                    loadData();
+                    return true;
                 } catch (error) {
-                    Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+                    Swal.showValidationMessage('Errore durante il salvataggio');
+                    return false;
                 }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                loadData();
             }
         });
     };
@@ -102,7 +156,7 @@ const NoteDocumentiManagementModal = ({ onClose }) => {
     const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
-        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
                     <div className="modal-header">

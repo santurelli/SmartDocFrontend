@@ -33,7 +33,17 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
             }
         } catch (error) {
             console.error("Error loading risorse:", error);
-            Swal.fire('Errore', 'Impossibile caricare le risorse', 'error');
+            Swal.fire({
+                title: 'Errore',
+                text: 'Impossibile caricare le risorse',
+                icon: 'error',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title',
+                    confirmButton: 'premium-swal-confirm'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -45,19 +55,44 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
             text: "La risorsa verrà eliminata.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm btn-danger',
+                cancelButton: 'premium-swal-cancel'
+            }
         });
 
         if (result.isConfirmed) {
             try {
                 await RisorseService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Risorsa eliminata.', 'success');
+                Swal.fire({
+                    title: 'Eliminato!',
+                    text: 'Risorsa eliminata.',
+                    icon: 'success',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             } catch (error) {
-                Swal.fire('Errore', 'Errore durante l\'eliminazione', 'error');
+                Swal.fire({
+                    title: 'Errore',
+                    text: 'Errore durante l\'eliminazione',
+                    icon: 'error',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             }
         }
     };
@@ -98,56 +133,58 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
     const openDetailModal = (item) => {
         const isNew = !item.id;
 
-        // Build generic form fields
         let htmlContent = `
-            <div class="form-group text-left">
-                <label>Tipologia</label>
-                <select id="swal-tipologia" class="form-control">
-                    <option value="">Seleziona...</option>
-                    ${getTipologiaOptionsHtml(item.tipologia)}
-                </select>
-            </div>
-            <div class="form-group text-left">
-                <label>Descrizione</label>
-                <input id="swal-descrizione" class="form-control" value="${item.descrizione || ''}">
-            </div>
-            <div class="form-group text-left">
-                <label>Saldo Iniziale</label>
-                <input id="swal-saldo" type="number" class="form-control" value="${item.saldoIniziale || 0}">
-            </div>
-             <div class="form-group text-left" style="margin-top: 10px;">
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox" id="swal-predefinita" ${item.predefinita === 1 ? 'checked' : ''}> Predefinita
-                    </label>
-                </div>
-            </div>
-        `;
-
-        // We handle extra fields dynamically or show them all for now (simpler approach if SweetAlert is limited)
-        // or we use a more complex React Modal. Since we using pure Swal for editing in these examples:
-        // Let's add bank fields hidden/visible? Or just show them.
-        // For simplicity, let's show bank specific fields always or collapsible.
-        // Given the requirement, Tipologia 'BA' implies specific fields.
-
-        htmlContent += `
-            <div id="bank-fields" style="display: ${item.tipologia === 'BA' ? 'block' : 'none'}; border-top: 1px solid #eee; padding-top: 10px; margin-top: 10px;">
-                <h5 class="text-left">Dati Bancari</h5>
+            <div style="text-align: left; padding: 10px 5px;">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="form-group text-left">
-                             <label>IBAN</label>
-                             <input id="swal-iban" class="form-control" value="${item.iban || ''}">
+                        <div class="form-group">
+                            <label class="premium-swal-label">Tipologia</label>
+                            <select id="swal-tipologia" class="form-control premium-swal-input">
+                                <option value="">Seleziona...</option>
+                                ${getTipologiaOptionsHtml(item.tipologia)}
+                            </select>
                         </div>
                     </div>
-                     <div class="col-md-6">
-                        <div class="form-group text-left">
-                             <label>Banca</label>
-                             <input id="swal-banca" class="form-control" value="${item.descBanca || ''}">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="premium-swal-label">Saldo Iniziale</label>
+                            <input id="swal-saldo" type="number" class="form-control premium-swal-input" value="${item.saldoIniziale || 0}">
                         </div>
                     </div>
                 </div>
-                <!-- Add other fields if necessary: ABI, CAB, etc. -->
+                
+                <div class="form-group" style="margin-top: 20px;">
+                    <label class="premium-swal-label">Descrizione</label>
+                    <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Conto Corrente Intesa..." value="${item.descrizione || ''}">
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <div class="checkbox" style="padding-left: 5px;">
+                        <label style="font-weight: 600; color: #555; cursor: pointer;">
+                            <input type="checkbox" id="swal-predefinita" ${item.predefinita === 1 ? 'checked' : ''} style="transform: scale(1.2); margin-right: 10px;"> Risorsa Predefinita
+                        </label>
+                    </div>
+                </div>
+
+                <div id="bank-fields" style="display: ${item.tipologia === 'BA' ? 'block' : 'none'}; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+                    <h5 style="font-weight: 700; color: #03a9f4; margin-bottom: 15px;">Dati Bancari</h5>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                 <label class="premium-swal-label">IBAN</label>
+                                 <input id="swal-iban" class="form-control premium-swal-input" placeholder="IT00..." value="${item.iban || ''}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 15px;">
+                         <div class="col-md-12">
+                            <div class="form-group">
+                                 <label class="premium-swal-label">Banca</label>
+                                 <input id="swal-banca" class="form-control premium-swal-input" placeholder="Nome istituto..." value="${item.descBanca || ''}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -157,7 +194,14 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
             showCancelButton: true,
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
-            width: '600px',
+            width: 650,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm',
+                cancelButton: 'premium-swal-cancel'
+            },
             didOpen: () => {
                 const typeSelect = document.getElementById('swal-tipologia');
                 const bankFields = document.getElementById('bank-fields');
@@ -174,7 +218,6 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                 const descrizione = document.getElementById('swal-descrizione').value;
                 const saldoIniziale = document.getElementById('swal-saldo').value;
                 const predefinita = document.getElementById('swal-predefinita').checked ? 1 : 0;
-
                 const iban = document.getElementById('swal-iban').value;
                 const descBanca = document.getElementById('swal-banca').value;
 
@@ -187,7 +230,7 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                     saldoIniziale: parseFloat(saldoIniziale),
                     predefinita,
                     iban,
-                    descBanca: descBanca // Mapped to 'banca' field in I01/U01
+                    descBanca: descBanca
                 };
             }
         }).then(async (result) => {
@@ -201,7 +244,17 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                     }
                     loadData();
                 } catch (error) {
-                    Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+                    Swal.fire({
+                        title: 'Errore',
+                        text: 'Errore durante il salvataggio',
+                        icon: 'error',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'premium-swal-popup',
+                            title: 'premium-swal-title',
+                            confirmButton: 'premium-swal-confirm'
+                        }
+                    });
                 }
             }
         });
@@ -220,7 +273,7 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
     const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
-        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
                     <div className="modal-header">

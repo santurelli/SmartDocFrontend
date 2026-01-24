@@ -25,7 +25,17 @@ const AvvisiManagementModal = ({ onClose }) => {
             }
         } catch (error) {
             console.error("Error loading avvisi:", error);
-            Swal.fire('Errore', 'Impossibile caricare gli avvisi', 'error');
+            Swal.fire({
+                title: 'Errore',
+                text: 'Impossibile caricare gli avvisi',
+                icon: 'error',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title',
+                    confirmButton: 'premium-swal-confirm'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -37,19 +47,44 @@ const AvvisiManagementModal = ({ onClose }) => {
             text: "L'avviso verrà eliminato.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm btn-danger',
+                cancelButton: 'premium-swal-cancel'
+            }
         });
 
         if (result.isConfirmed) {
             try {
                 await AvvisiService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Avviso eliminato.', 'success');
+                Swal.fire({
+                    title: 'Eliminato!',
+                    text: 'Avviso eliminato.',
+                    icon: 'success',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             } catch (error) {
-                Swal.fire('Errore', 'Errore durante l\'eliminazione', 'error');
+                Swal.fire({
+                    title: 'Errore',
+                    text: 'Errore durante l\'eliminazione',
+                    icon: 'error',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             }
         }
     };
@@ -65,28 +100,47 @@ const AvvisiManagementModal = ({ onClose }) => {
     const openDetailModal = (id, existingDesc) => {
         Swal.fire({
             title: id ? 'Modifica Avviso' : 'Nuovo Avviso',
-            input: 'text',
-            inputValue: existingDesc,
+            html: `
+                <div style="text-align: left; padding: 10px 5px;">
+                    <div class="form-group">
+                        <label class="premium-swal-label">Descrizione Avviso</label>
+                        <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Pagamento alla consegna..." value="${existingDesc}">
+                    </div>
+                </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
-            inputValidator: (value) => {
+            showLoaderOnConfirm: true,
+            buttonsStyling: false,
+            width: 600,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm',
+                cancelButton: 'premium-swal-cancel'
+            },
+            preConfirm: async () => {
+                const value = document.getElementById('swal-descrizione').value;
                 if (!value) {
-                    return 'Inserisci una descrizione!';
+                    Swal.showValidationMessage('La descrizione è obbligatoria');
+                    return false;
                 }
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
                 try {
                     if (id) {
-                        await AvvisiService.update(id, { descrizione: result.value });
+                        await AvvisiService.update(id, { descrizione: value });
                     } else {
-                        await AvvisiService.insert({ descrizione: result.value });
+                        await AvvisiService.insert({ descrizione: value });
                     }
-                    loadData();
+                    return true;
                 } catch (error) {
-                    Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+                    Swal.showValidationMessage('Errore durante il salvataggio');
+                    return false;
                 }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                loadData();
             }
         });
     };
@@ -104,7 +158,7 @@ const AvvisiManagementModal = ({ onClose }) => {
     // Bootstrap Modal Styles (Inline for simplicity or use existing class logic)
     // Using a fixed position overlay to simulate modal behavior outside of standard Bootstrap JS triggers
     return (
-        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
                     <div className="modal-header">

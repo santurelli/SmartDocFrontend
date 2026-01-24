@@ -1,14 +1,29 @@
-import axios from 'axios';
-import AuthService from './authService';
+import api from './api';
 
-const API_URL = 'http://localhost:8080/api/unitamisura';
+class UnitaMisuraService {
+    getList(params) {
+        return api.post('/unitamisura/list', params);
+    }
 
-const getListForCombo = () => {
-    return axios.post(`${API_URL}/listForCombo`, {}, { headers: AuthService.authHeader() });
-};
+    getListForCombo() {
+        return api.post('/unitamisura/listForCombo');
+    }
 
-const UnitaMisuraService = {
-    getListForCombo
-};
+    getById(id) {
+        return api.get(`/unitamisura/${id}`); // Assuming you might add a GET endpoint or use search for this
+    }
 
-export default UnitaMisuraService;
+    create(data) {
+        return api.post('/unitamisura', data);
+    }
+
+    update(id, data) {
+        return api.put(`/unitamisura/${id}`, data);
+    }
+
+    delete(id) {
+        return api.delete(`/unitamisura/${id}`);
+    }
+}
+
+export default new UnitaMisuraService();

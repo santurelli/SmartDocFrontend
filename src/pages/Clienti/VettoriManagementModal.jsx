@@ -27,7 +27,17 @@ const VettoriManagementModal = ({ onClose }) => {
             }
         } catch (error) {
             console.error("Error loading vettori:", error);
-            Swal.fire('Errore', 'Impossibile caricare i vettori', 'error');
+            Swal.fire({
+                title: 'Errore',
+                text: 'Impossibile caricare i vettori',
+                icon: 'error',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title',
+                    confirmButton: 'premium-swal-confirm'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -39,19 +49,44 @@ const VettoriManagementModal = ({ onClose }) => {
             text: "Il vettore verrà eliminato.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm btn-danger',
+                cancelButton: 'premium-swal-cancel'
+            }
         });
 
         if (result.isConfirmed) {
             try {
                 await VettoriService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Vettore eliminato.', 'success');
+                Swal.fire({
+                    title: 'Eliminato!',
+                    text: 'Vettore eliminato.',
+                    icon: 'success',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             } catch (error) {
-                Swal.fire('Errore', 'Errore durante l\'eliminazione', 'error');
+                Swal.fire({
+                    title: 'Errore',
+                    text: 'Errore durante l\'eliminazione',
+                    icon: 'error',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             }
         }
     };
@@ -67,28 +102,47 @@ const VettoriManagementModal = ({ onClose }) => {
     const openDetailModal = (id, existingDesc) => {
         Swal.fire({
             title: id ? 'Modifica Vettore' : 'Nuovo Vettore',
-            input: 'text',
-            inputValue: existingDesc,
+            html: `
+                <div style="text-align: left; padding: 10px 5px;">
+                    <div class="form-group">
+                        <label class="premium-swal-label">Nome Vettore / Ragione Sociale</label>
+                        <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Bartolini, GLS..." value="${existingDesc}">
+                    </div>
+                </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
-            inputValidator: (value) => {
+            showLoaderOnConfirm: true,
+            buttonsStyling: false,
+            width: 600,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm',
+                cancelButton: 'premium-swal-cancel'
+            },
+            preConfirm: async () => {
+                const value = document.getElementById('swal-descrizione').value;
                 if (!value) {
-                    return 'Inserisci una descrizione!';
+                    Swal.showValidationMessage('La descrizione è obbligatoria');
+                    return false;
                 }
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
                 try {
                     if (id) {
-                        await VettoriService.update(id, { description: result.value, descrizione: result.value });
+                        await VettoriService.update(id, { description: value, descrizione: value });
                     } else {
-                        await VettoriService.insert({ description: result.value, descrizione: result.value });
+                        await VettoriService.insert({ description: value, descrizione: value });
                     }
-                    loadData();
+                    return true;
                 } catch (error) {
-                    Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+                    Swal.showValidationMessage('Errore durante il salvataggio');
+                    return false;
                 }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                loadData();
             }
         });
     };
@@ -104,7 +158,7 @@ const VettoriManagementModal = ({ onClose }) => {
     const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
-        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
                     <div className="modal-header">

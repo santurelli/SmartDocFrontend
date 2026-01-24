@@ -26,7 +26,17 @@ const CategorieManagementModal = ({ onClose }) => {
             }
         } catch (error) {
             console.error("Error loading categorie:", error);
-            Swal.fire('Errore', 'Impossibile caricare le categorie', 'error');
+            Swal.fire({
+                title: 'Errore',
+                text: 'Impossibile caricare le categorie',
+                icon: 'error',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title',
+                    confirmButton: 'premium-swal-confirm'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -38,25 +48,60 @@ const CategorieManagementModal = ({ onClose }) => {
             text: "La categoria verrà eliminata.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm btn-danger',
+                cancelButton: 'premium-swal-cancel'
+            }
         });
 
         if (result.isConfirmed) {
             try {
                 const res = await CategorieArticoliService.delete(id);
                 if (res.data && res.data.errorText) {
-                    Swal.fire('Errore', res.data.errorText, 'error');
+                    Swal.fire({
+                        title: 'Errore',
+                        text: res.data.errorText,
+                        icon: 'error',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'premium-swal-popup',
+                            title: 'premium-swal-title',
+                            confirmButton: 'premium-swal-confirm'
+                        }
+                    });
                 } else {
                     loadData();
-                    Swal.fire('Eliminato!', 'Categoria eliminata.', 'success');
+                    Swal.fire({
+                        title: 'Eliminato!',
+                        text: 'Categoria eliminata.',
+                        icon: 'success',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'premium-swal-popup',
+                            title: 'premium-swal-title',
+                            confirmButton: 'premium-swal-confirm'
+                        }
+                    });
                 }
             } catch (error) {
                 console.error("Delete error", error);
                 const msg = error.response?.data?.errorText || 'Errore durante l\'eliminazione';
-                Swal.fire('Errore', msg, 'error');
+                Swal.fire({
+                    title: 'Errore',
+                    text: msg,
+                    icon: 'error',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             }
         }
     };
@@ -72,18 +117,32 @@ const CategorieManagementModal = ({ onClose }) => {
     const openDetailModal = (id, existingDesc) => {
         Swal.fire({
             title: id ? 'Modifica Categoria' : 'Nuova Categoria',
-            input: 'text',
-            inputValue: existingDesc,
+            html: `
+                <div style="text-align: left; padding: 10px 5px;">
+                    <div class="form-group">
+                        <label class="premium-swal-label">Descrizione Categoria</label>
+                        <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Ferramenta, Idraulica..." value="${existingDesc}">
+                    </div>
+                </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
             showLoaderOnConfirm: true,
-            inputValidator: (value) => {
-                if (!value) {
-                    return 'Inserisci una descrizione!';
-                }
+            buttonsStyling: false,
+            width: 600,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm',
+                cancelButton: 'premium-swal-cancel'
             },
-            preConfirm: async (value) => {
+            preConfirm: async () => {
+                const value = document.getElementById('swal-descrizione').value;
+                if (!value) {
+                    Swal.showValidationMessage('La descrizione è obbligatoria');
+                    return false;
+                }
                 try {
                     let res;
                     if (id) {
@@ -146,7 +205,8 @@ const CategorieManagementModal = ({ onClose }) => {
     const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
-        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
+
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
                     <div className="modal-header">

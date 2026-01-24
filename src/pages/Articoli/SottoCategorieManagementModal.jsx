@@ -42,7 +42,17 @@ const SottoCategorieManagementModal = ({ onClose }) => {
             }
         } catch (error) {
             console.error("Error loading sottocategorie:", error);
-            Swal.fire('Errore', 'Impossibile caricare le sottocategorie', 'error');
+            Swal.fire({
+                title: 'Errore',
+                text: 'Impossibile caricare le sottocategorie',
+                icon: 'error',
+                buttonsStyling: false,
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title',
+                    confirmButton: 'premium-swal-confirm'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -54,25 +64,60 @@ const SottoCategorieManagementModal = ({ onClose }) => {
             text: "La sottocategoria verrà eliminata.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm btn-danger',
+                cancelButton: 'premium-swal-cancel'
+            }
         });
 
         if (result.isConfirmed) {
             try {
                 const res = await SottoCategorieService.delete(id);
                 if (res.data && res.data.errorText) {
-                    Swal.fire('Errore', res.data.errorText, 'error');
+                    Swal.fire({
+                        title: 'Errore',
+                        text: res.data.errorText,
+                        icon: 'error',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'premium-swal-popup',
+                            title: 'premium-swal-title',
+                            confirmButton: 'premium-swal-confirm'
+                        }
+                    });
                 } else {
                     loadData();
-                    Swal.fire('Eliminato!', 'Sottocategoria eliminata.', 'success');
+                    Swal.fire({
+                        title: 'Eliminato!',
+                        text: 'Sottocategoria eliminata.',
+                        icon: 'success',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'premium-swal-popup',
+                            title: 'premium-swal-title',
+                            confirmButton: 'premium-swal-confirm'
+                        }
+                    });
                 }
             } catch (error) {
                 console.error("Delete error", error);
                 const msg = error.response?.data?.errorText || 'Errore durante l\'eliminazione';
-                Swal.fire('Errore', msg, 'error');
+                Swal.fire({
+                    title: 'Errore',
+                    text: msg,
+                    icon: 'error',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             }
         }
     };
@@ -89,10 +134,10 @@ const SottoCategorieManagementModal = ({ onClose }) => {
         Swal.fire({
             title: id ? 'Modifica Sottocategoria' : 'Nuova Sottocategoria',
             html: `
-                <div style="text-align: left;">
+                <div style="text-align: left; padding: 10px 5px;">
                     <div class="form-group">
-                        <label style="font-weight: bold;">Categoria Padre:</label>
-                        <select id="swal-parent-id" class="form-control" ${id ? 'disabled' : ''}>
+                        <label class="premium-swal-label">Categoria Padre</label>
+                        <select id="swal-parent-id" class="form-control premium-swal-input" ${id ? 'disabled' : ''}>
                             <option value="">Seleziona...</option>
                             ${categories.map(c => `
                                 <option value="${c.id}" ${Number(c.id) === Number(existingParentId) ? 'selected' : ''}>
@@ -101,9 +146,9 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                             `).join('')}
                         </select>
                     </div>
-                    <div class="form-group" style="margin-top: 15px;">
-                        <label style="font-weight: bold;">Descrizione:</label>
-                        <input id="swal-descrizione" class="form-control" placeholder="Descrizione" value="${existingDesc}">
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="premium-swal-label">Descrizione</label>
+                        <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Minuterie, Accessori..." value="${existingDesc}">
                     </div>
                 </div>
             `,
@@ -111,6 +156,14 @@ const SottoCategorieManagementModal = ({ onClose }) => {
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
             showLoaderOnConfirm: true,
+            buttonsStyling: false,
+            width: 600,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm',
+                cancelButton: 'premium-swal-cancel'
+            },
             preConfirm: async () => {
                 const parentId = document.getElementById('swal-parent-id').value;
                 const descrizione = document.getElementById('swal-descrizione').value;
@@ -181,7 +234,8 @@ const SottoCategorieManagementModal = ({ onClose }) => {
     const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
-        <div className="modal show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
+
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
                     <div className="modal-header">
