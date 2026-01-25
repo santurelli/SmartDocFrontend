@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ClientiService from '../../services/ClientiService';
+import FornitoriService from '../../services/FornitoriService';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaFileAlt } from 'react-icons/fa';
-import './ClientiList.css';
+import './FornitoriList.css';
 import Swal from 'sweetalert2';
 
-const ClientiList = () => {
+const FornitoriList = () => {
     const navigate = useNavigate();
-    const [clienti, setClienti] = useState([]);
+    const [fornitori, setFornitori] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
     const [search, setSearch] = useState('');
@@ -18,7 +18,7 @@ const ClientiList = () => {
     const [sortCol, setSortCol] = useState(0);
     const [sortDir, setSortDir] = useState('asc');
 
-    const fetchClienti = async () => {
+    const fetchFornitori = async () => {
         setLoading(true);
         try {
             const params = {
@@ -28,30 +28,30 @@ const ClientiList = () => {
                 orderColumn: sortCol,
                 orderDir: sortDir
             };
-            const response = await ClientiService.getList(params);
-            setClienti(response.data.list || []);
+            const response = await FornitoriService.getList(params);
+            setFornitori(response.data.list || []);
             setTotal(response.data.totalCount || 0);
         } catch (error) {
-            console.error("Error fetching clienti:", error);
+            console.error("Error fetching fornitori:", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchClienti();
+        fetchFornitori();
     }, [currentPage, pageSize, sortCol, sortDir]);
 
     const handleSearch = (e) => {
         e.preventDefault();
         setCurrentPage(0);
-        fetchClienti();
+        fetchFornitori();
     };
 
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "Vuoi eliminare questo cliente?",
+            text: "Vuoi eliminare questo fornitore?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -62,15 +62,15 @@ const ClientiList = () => {
 
         if (result.isConfirmed) {
             try {
-                await ClientiService.delete(id);
-                fetchClienti();
+                await FornitoriService.delete(id);
+                fetchFornitori();
                 Swal.fire(
                     'Eliminato!',
-                    'Il cliente è stato eliminato.',
+                    'Il fornitore è stato eliminato.',
                     'success'
                 );
             } catch (error) {
-                console.error("Error deleting cliente:", error);
+                console.error("Error deleting fornitore:", error);
                 Swal.fire(
                     'Errore',
                     "Errore durante l'eliminazione",
@@ -92,39 +92,18 @@ const ClientiList = () => {
         setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
     };
 
-    const handleExport = async () => {
-        try {
-            const params = { search };
-            const response = await ClientiService.exportExcel(params);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'elenco_clienti.xls');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (error) {
-            console.error("Error exporting:", error);
-            Swal.fire(
-                'Errore',
-                "Errore durante l'esportazione",
-                'error'
-            );
-        }
-    };
-
     return (
-        <div className="clienti-list-container">
+        <div className="fornitori-list-container">
             {/* Header Area */}
             <div id="content-header">
                 <ol className="breadcrumb">
                     <li><a href="/">HOME</a></li>
-                    <li className="active">Elenco clienti</li>
+                    <li className="active">Elenco fornitori</li>
                 </ol>
-                <h1>Elenco clienti</h1>
+                <h1>Elenco fornitori</h1>
             </div>
 
-            <div className="row" style={{ margin: '0 10px' }}> {/* Small margin wrapper */}
+            <div className="row" style={{ margin: '0 10px' }}>
                 <div className="col-lg-12">
                     <div className="main-box">
                         <div className="main-box-body">
@@ -132,7 +111,7 @@ const ClientiList = () => {
                             {/* Toolbar */}
                             <div className="toolbar-container">
                                 <div className="toolbar-left">
-                                    <button className="btn btn-cloud" title="Esporta" onClick={handleExport}>
+                                    <button className="btn btn-cloud" title="Esporta">
                                         <FaCloudDownloadAlt />
                                     </button>
                                     <label className="visualizza-label">
@@ -164,8 +143,8 @@ const ClientiList = () => {
                                                 <FaSearch />
                                             </button>
                                         </div>
-                                        <button className="btn btn-new-client" type="button" onClick={() => navigate('/clienti/new')}>
-                                            <FaPlus /> Nuovo cliente
+                                        <button className="btn btn-new-fornitore" type="button" onClick={() => navigate('/fornitori/new')}>
+                                            <FaPlus /> Nuovo fornitore
                                         </button>
                                     </form>
                                 </div>
@@ -181,32 +160,32 @@ const ClientiList = () => {
                                             <th onClick={() => handleSort(2)} style={{ cursor: 'pointer' }}>CITTÀ {renderSortIcon(2)}</th>
                                             <th onClick={() => handleSort(3)} style={{ cursor: 'pointer' }}>REFERENTE {renderSortIcon(3)}</th>
                                             <th onClick={() => handleSort(4)} style={{ cursor: 'pointer' }}>P. IVA / CF {renderSortIcon(4)}</th>
-                                            <th>ULTIMO DOC.</th>
+                                            {/* <th>ULTIMO DOC.</th> */}
                                             <th style={{ width: '1%' }}></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {loading ? (
                                             <tr>
-                                                <td colSpan="7" className="text-center" style={{ padding: '20px', color: '#777' }}>Caricamento...</td>
+                                                <td colSpan="6" className="text-center" style={{ padding: '20px', color: '#777' }}>Caricamento...</td>
                                             </tr>
-                                        ) : clienti.length === 0 ? (
+                                        ) : fornitori.length === 0 ? (
                                             <tr>
-                                                <td colSpan="7" style={{ padding: '20px', color: '#777' }}>Nessun dato presente nella tabella</td>
+                                                <td colSpan="6" style={{ padding: '20px', color: '#777' }}>Nessun dato presente nella tabella</td>
                                             </tr>
                                         ) : (
-                                            clienti.map(cliente => (
-                                                <tr key={cliente.id}>
-                                                    <td>{cliente.codice}</td>
-                                                    <td>{cliente.denominazione}</td>
-                                                    <td>{cliente.elencoIndirizzi && cliente.elencoIndirizzi.length > 0 ? cliente.elencoIndirizzi[0].citta : ''}</td>
-                                                    <td>{cliente.referente}</td>
-                                                    <td>{cliente.partitaIva || cliente.codiceFiscale}</td>
-                                                    <td>{cliente.ultimoDocVendita || '-'}</td>
+                                            fornitori.map(fornitore => (
+                                                <tr key={fornitore.id}>
+                                                    <td>{fornitore.codice}</td>
+                                                    <td>{fornitore.denominazione}</td>
+                                                    <td>{fornitore.elencoIndirizzi && fornitore.elencoIndirizzi.length > 0 ? fornitore.elencoIndirizzi[0].citta : ''}</td>
+                                                    <td>{fornitore.referente}</td>
+                                                    <td>{fornitore.partitaIva || fornitore.codiceFiscale}</td>
+                                                    {/* <td>{fornitore.ultimoDocAcquisto || '-'}</td> */}
                                                     <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                         <button
                                                             className="btn-action btn-action-edit"
-                                                            onClick={(e) => { e.preventDefault(); navigate(`/clienti/${cliente.id}`); }}
+                                                            onClick={(e) => { e.preventDefault(); navigate(`/fornitori/${fornitore.id}`); }}
                                                             title="Modifica"
                                                         >
                                                             <FaEdit size={16} color="#ffffff" />
@@ -218,18 +197,18 @@ const ClientiList = () => {
                                                                 Swal.fire({
                                                                     icon: 'info',
                                                                     title: 'Funzionalità non disponibile',
-                                                                    text: 'La scheda cliente non è ancora stata implementata.',
+                                                                    text: 'La scheda fornitore non è ancora stata implementata.',
                                                                     confirmButtonColor: '#03a9f4',
                                                                     confirmButtonText: 'OK'
                                                                 });
                                                             }}
-                                                            title="Scheda Cliente"
+                                                            title="Scheda Fornitore"
                                                         >
                                                             <FaFileAlt size={16} color="#ffffff" />
                                                         </button>
                                                         <button
                                                             className="btn-action btn-action-delete"
-                                                            onClick={(e) => { e.preventDefault(); handleDelete(cliente.id); }}
+                                                            onClick={(e) => { e.preventDefault(); handleDelete(fornitore.id); }}
                                                             title="Elimina"
                                                         >
                                                             <FaTrash size={16} color="#ffffff" />
@@ -246,7 +225,7 @@ const ClientiList = () => {
                             {/* Pagination */}
                             <div className="pagination-container">
                                 <span className="pagination-info">
-                                    Visualizzati {clienti.length} di {total} risultati
+                                    Visualizzati {fornitori.length} di {total} risultati
                                 </span>
                                 <nav>
                                     <ul className="pagination">
@@ -287,4 +266,4 @@ const ClientiList = () => {
     );
 };
 
-export default ClientiList;
+export default FornitoriList;

@@ -49,6 +49,10 @@
     gap: 10px;
 }
 
+.main-box-body {
+    padding: 20px;
+}
+
 .filter-block-left {
     display: flex;
     align-items: center;
@@ -83,12 +87,14 @@
 
 .category-select {
     width: 220px;
-    height: 44px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    height: 44px !important;
+    border-radius: 10px !important;
+    border: 1px solid #ddd !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
     font-size: 14px;
     transition: all 0.2s;
+    background-color: #fff;
+    /* Optional: custom arrow if needed, but for now standard is fine or use appearance: none and custom bg */
 }
 
 .category-select:focus {

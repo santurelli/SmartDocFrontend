@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import ClientiService from '../../services/ClientiService';
+import FornitoriService from '../../services/FornitoriService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
-import AvvisiService from '../../services/AvvisiService'; // Import the new service
-import AvvisiManagementModal from './AvvisiManagementModal';
-import NoteDocumentiService from '../../services/NoteDocumentiService';
-import NoteDocumentiManagementModal from './NoteDocumentiManagementModal';
-import TipiPortoService from '../../services/TipiPortoService';
-import TipiPortoManagementModal from './TipiPortoManagementModal';
-import VettoriService from '../../services/VettoriService';
-import VettoriManagementModal from './VettoriManagementModal';
-import RisorseService from '../../services/RisorseService';
-import RisorseManagementModal from './RisorseManagementModal';
+import AvvisiService from '../../services/AvvisiService'; // Shared
+import NoteDocumentiService from '../../services/NoteDocumentiService'; // Shared
+import TipiPortoService from '../../services/TipiPortoService'; // Shared
+import VettoriService from '../../services/VettoriService'; // Shared
+import RisorseService from '../../services/RisorseService'; // Shared
+import CategorieSpesaService from '../../services/CategorieSpesaService';
 import { parseIban } from '../../utils/ibanUtils';
-import './ClientiDetail.css';
+import './FornitoriDetail.css';
 import { FaPlus, FaWrench, FaHome, FaAngleRight, FaFileSignature } from 'react-icons/fa';
 
-const ClientiDetail = () => {
+// Reuse Modals from Clienti for now (assuming they are generic enough)
+import AvvisiManagementModal from '../Clienti/AvvisiManagementModal';
+import NoteDocumentiManagementModal from '../Clienti/NoteDocumentiManagementModal';
+import TipiPortoManagementModal from '../Clienti/TipiPortoManagementModal';
+import VettoriManagementModal from '../Clienti/VettoriManagementModal';
+import RisorseManagementModal from '../Clienti/RisorseManagementModal';
+
+const FornitoriDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isNew = id === 'new';
@@ -25,6 +28,8 @@ const ClientiDetail = () => {
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(false);
     const [showCommercialData, setShowCommercialData] = useState(true);
+
+    // Modals state
     const [showAvvisiModal, setShowAvvisiModal] = useState(false);
     const [showNoteDocumentiModal, setShowNoteDocumentiModal] = useState(false);
     const [showTipiPortoModal, setShowTipiPortoModal] = useState(false);
@@ -37,23 +42,26 @@ const ClientiDetail = () => {
     // Contact Management State
     const [activeContactIndex, setActiveContactIndex] = useState(0);
 
-    const [cliente, setCliente] = useState({
+    const [fornitore, setFornitore] = useState({
         codice: '',
-        tipologia: 'PRIVATO',
         denominazione: '',
         codiceFiscale: '',
         partitaIva: '',
         note: '',
         referente: '',
-        elencoIndirizzi: [], // Will be initialized with at least one
-        elencoContatti: [], // Will be initialized with at least one
+        elencoIndirizzi: [],
+        elencoContatti: [],
         idAvviso: '',
         idNota: '',
         // Commercial Data
-        idRisorsa: '',
+        idRisorsa: '', // Nostra Banca
         idVettore: '',
         idTipoPorto: '',
-        // Banking fields
+        idCategoriaSpesa: '',
+        // Banking fields (Fornitore specifics?)
+        // Legacy 'nuovo.jsp' has 'coordinate bancarie' disabled input + 'Imposta' button.
+        // But also 'banca', 'iban', etc. mappings in DAO (FORNITORI_I01).
+        // I'll include them.
         banca: '',
         iban: '',
         abi: '',
@@ -61,7 +69,8 @@ const ClientiDetail = () => {
         cin: '',
         conto: '',
         bic: '',
-        codSia: ''
+        codSia: '',
+        descrizioneBanca: ''
     });
 
     const [avvisiList, setAvvisiList] = useState([]);
@@ -69,6 +78,7 @@ const ClientiDetail = () => {
     const [tipiPortoList, setTipiPortoList] = useState([]);
     const [vettoriList, setVettoriList] = useState([]);
     const [bancheList, setBancheList] = useState([]);
+    const [categorieSpesaList, setCategorieSpesaList] = useState([]);
 
     useEffect(() => {
         const init = async () => {
@@ -76,47 +86,30 @@ const ClientiDetail = () => {
             try {
                 // Fetch Avvisi
                 const avvisiRes = await AvvisiService.getAll();
-                if (avvisiRes.data && Array.isArray(avvisiRes.data)) {
-                    setAvvisiList(avvisiRes.data);
-                } else {
-                    console.warn("Avvisi response is not an array:", avvisiRes.data);
-                    setAvvisiList([]); // Fallback to empty array
-                }
+                if (avvisiRes.data && Array.isArray(avvisiRes.data)) setAvvisiList(avvisiRes.data);
 
                 // Fetch Note Documenti
                 const noteRes = await NoteDocumentiService.getAll();
-                if (noteRes.data && Array.isArray(noteRes.data)) {
-                    setNoteDocumentiList(noteRes.data);
-                } else {
-                    setNoteDocumentiList([]);
-                }
+                if (noteRes.data && Array.isArray(noteRes.data)) setNoteDocumentiList(noteRes.data);
 
                 // Fetch Tipi Porto
                 const tipiPortoRes = await TipiPortoService.getAllForCombo();
-                if (tipiPortoRes.data && Array.isArray(tipiPortoRes.data)) {
-                    setTipiPortoList(tipiPortoRes.data);
-                } else {
-                    setTipiPortoList([]);
-                }
+                if (tipiPortoRes.data && Array.isArray(tipiPortoRes.data)) setTipiPortoList(tipiPortoRes.data);
 
                 // Fetch Vettori
                 const vettoriRes = await VettoriService.getAllForCombo();
-                if (vettoriRes.data && Array.isArray(vettoriRes.data)) {
-                    setVettoriList(vettoriRes.data);
-                } else {
-                    setVettoriList([]);
-                }
+                if (vettoriRes.data && Array.isArray(vettoriRes.data)) setVettoriList(vettoriRes.data);
 
                 // Fetch Banche
                 const bancheRes = await RisorseService.getAllForCombo('BA');
-                if (bancheRes.data && Array.isArray(bancheRes.data)) {
-                    setBancheList(bancheRes.data);
-                } else {
-                    setBancheList([]);
-                }
+                if (bancheRes.data && Array.isArray(bancheRes.data)) setBancheList(bancheRes.data);
 
-                // Fetch configuration
-                const configResponse = await ConfigurazioneService.getByDomain('CLIENTI');
+                // Fetch Categorie Spesa
+                const catRes = await CategorieSpesaService.getAllForCombo();
+                if (catRes.data && Array.isArray(catRes.data)) setCategorieSpesaList(catRes.data);
+
+                // Fetch configuration (Domain: FORNITORI)
+                const configResponse = await ConfigurazioneService.getByDomain('FORNITORI');
                 if (configResponse.data) {
                     const val = configResponse.data['ABILITA_DATI_COMMERCIALI'] || configResponse.data['ABILITA_DATICOMMERCIALI'];
                     if (val === '0') {
@@ -125,10 +118,9 @@ const ClientiDetail = () => {
                 }
 
                 if (!isNew) {
-                    await fetchCliente(id);
+                    await fetchFornitore(id);
                 } else {
-                    // Initialize empty lists for new client
-                    setCliente(prev => ({
+                    setFornitore(prev => ({
                         ...prev,
                         elencoIndirizzi: [{ tipologia: 'O', indirizzo: '', citta: '', cap: '', provincia: '', nazione: '', codiceUfficio: '' }],
                         elencoContatti: [{ referente: '', telefono: '', cellulare: '', fax: '', email: '', pec: '' }]
@@ -143,12 +135,11 @@ const ClientiDetail = () => {
         init();
     }, [id, isNew]);
 
-    const fetchCliente = async (clienteId) => {
+    const fetchFornitore = async (idFornitore) => {
         try {
-            const response = await ClientiService.getById(clienteId);
+            const response = await FornitoriService.getById(idFornitore);
             let data = response.data;
 
-            // Map 'descrizione' to 'referente' for contacts if needed
             if (data.elencoContatti && Array.isArray(data.elencoContatti)) {
                 data.elencoContatti = data.elencoContatti.map(c => ({
                     ...c,
@@ -156,7 +147,6 @@ const ClientiDetail = () => {
                 }));
             }
 
-            // Ensure all banking fields are present, fallback to empty string if null
             data = {
                 ...data,
                 banca: data.banca || data.descrizioneBanca || '',
@@ -167,62 +157,60 @@ const ClientiDetail = () => {
                 conto: data.conto || '',
                 bic: data.bic || '',
                 codSia: data.codSia || '',
-                // Ensure other fields are present
                 idRisorsa: data.idRisorsa || '',
                 idVettore: data.idVettore || '',
                 idTipoPorto: data.idTipoPorto || '',
                 idAvviso: data.idAvviso || '',
-                idNota: data.idNota || ''
+                idNota: data.idNota || '',
+                idCategoriaSpesa: data.idCategoriaSpesa || ''
             };
 
-            // Ensure at least one address exists
             if (!data.elencoIndirizzi || data.elencoIndirizzi.length === 0) {
                 data.elencoIndirizzi = [{ tipologia: 'O', indirizzo: '', citta: '', cap: '', provincia: '', nazione: '', codiceUfficio: '' }];
             }
 
-            // Ensure at least one contact exists
             if (!data.elencoContatti || data.elencoContatti.length === 0) {
                 data.elencoContatti = [{ referente: '', telefono: '', cellulare: '', fax: '', email: '', pec: '' }];
             }
 
-            setCliente(data);
+            setFornitore(data);
 
         } catch (error) {
-            console.error("Error fetching cliente:", error);
+            console.error("Error fetching fornitore:", error);
             Swal.fire({
                 icon: 'error',
                 title: 'Errore',
-                text: 'Impossibile caricare i dati del cliente.'
+                text: 'Impossibile caricare i dati del fornitore.'
             });
         }
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setCliente({ ...cliente, [name]: value });
+        setFornitore({ ...fornitore, [name]: value });
     };
 
     // Address Management Methods
     const handleAddressChange = (e) => {
         const { name, value } = e.target;
-        const updatedIndirizzi = [...cliente.elencoIndirizzi];
+        const updatedIndirizzi = [...fornitore.elencoIndirizzi];
         updatedIndirizzi[activeAddressIndex] = {
             ...updatedIndirizzi[activeAddressIndex],
             [name]: value
         };
-        setCliente({ ...cliente, elencoIndirizzi: updatedIndirizzi });
+        setFornitore({ ...fornitore, elencoIndirizzi: updatedIndirizzi });
     };
 
     const handleAddAddress = () => {
         const newAddress = { tipologia: 'O', indirizzo: '', citta: '', cap: '', provincia: '', nazione: '', codiceUfficio: '' };
-        const updatedIndirizzi = [...cliente.elencoIndirizzi, newAddress];
-        setCliente({ ...cliente, elencoIndirizzi: updatedIndirizzi });
+        const updatedIndirizzi = [...fornitore.elencoIndirizzi, newAddress];
+        setFornitore({ ...fornitore, elencoIndirizzi: updatedIndirizzi });
         setActiveAddressIndex(updatedIndirizzi.length - 1);
     };
 
     const handleRemoveAddress = (e, index) => {
-        e.stopPropagation(); // Prevent tab switch
-        if (cliente.elencoIndirizzi.length <= 1) {
+        e.stopPropagation();
+        if (fornitore.elencoIndirizzi.length <= 1) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Attenzione',
@@ -242,8 +230,8 @@ const ClientiDetail = () => {
             cancelButtonText: 'Annulla'
         }).then((result) => {
             if (result.isConfirmed) {
-                const updatedIndirizzi = cliente.elencoIndirizzi.filter((_, i) => i !== index);
-                setCliente({ ...cliente, elencoIndirizzi: updatedIndirizzi });
+                const updatedIndirizzi = fornitore.elencoIndirizzi.filter((_, i) => i !== index);
+                setFornitore({ ...fornitore, elencoIndirizzi: updatedIndirizzi });
                 if (activeAddressIndex >= updatedIndirizzi.length) {
                     setActiveAddressIndex(updatedIndirizzi.length - 1);
                 }
@@ -267,31 +255,28 @@ const ClientiDetail = () => {
     // Contact Management Methods
     const handleContactChange = (e) => {
         const { name, value } = e.target;
-        const updatedContatti = [...cliente.elencoContatti];
+        const updatedContatti = [...fornitore.elencoContatti];
         updatedContatti[activeContactIndex] = {
             ...updatedContatti[activeContactIndex],
             [name]: value
         };
-        setCliente({ ...cliente, elencoContatti: updatedContatti });
+        setFornitore({ ...fornitore, elencoContatti: updatedContatti });
 
-        // Sync main referente if changing generic one? 
-        // Maybe better to keep them separate or sync the first one.
-        // For now, let's just update the list. The legacy backend might expect main 'referente' field too.
         if (name === 'referente' && activeContactIndex === 0) {
-            setCliente(prev => ({ ...prev, referente: value, elencoContatti: updatedContatti }));
+            setFornitore(prev => ({ ...prev, referente: value, elencoContatti: updatedContatti }));
         }
     };
 
     const handleAddContact = () => {
         const newContact = { referente: '', telefono: '', cellulare: '', fax: '', email: '', pec: '' };
-        const updatedContatti = [...cliente.elencoContatti, newContact];
-        setCliente({ ...cliente, elencoContatti: updatedContatti });
+        const updatedContatti = [...fornitore.elencoContatti, newContact];
+        setFornitore({ ...fornitore, elencoContatti: updatedContatti });
         setActiveContactIndex(updatedContatti.length - 1);
     };
 
     const handleRemoveContact = (e, index) => {
         e.stopPropagation();
-        if (cliente.elencoContatti.length <= 1) {
+        if (fornitore.elencoContatti.length <= 1) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Attenzione',
@@ -311,8 +296,8 @@ const ClientiDetail = () => {
             cancelButtonText: 'Annulla'
         }).then((result) => {
             if (result.isConfirmed) {
-                const updatedContatti = cliente.elencoContatti.filter((_, i) => i !== index);
-                setCliente({ ...cliente, elencoContatti: updatedContatti });
+                const updatedContatti = fornitore.elencoContatti.filter((_, i) => i !== index);
+                setFornitore({ ...fornitore, elencoContatti: updatedContatti });
                 if (activeContactIndex >= updatedContatti.length) {
                     setActiveContactIndex(updatedContatti.length - 1);
                 }
@@ -325,148 +310,51 @@ const ClientiDetail = () => {
         return `Contatto ${index + 1}`;
     };
 
-    // --- AVVISI MANAGEMENT (Modal) ---
-    const handleManageAvvisi = () => {
-        setShowAvvisiModal(true);
-    };
-
+    // Modal Handlers (Simplified - mostly reuse logic from ClientiDetail or just simple toggles)
+    const handleManageAvvisi = () => setShowAvvisiModal(true);
     const handleCloseAvvisiModal = async () => {
         setShowAvvisiModal(false);
-        // Refresh dropdown
-        setLoading(true);
-        try {
-            const res = await AvvisiService.getAll();
-            if (res.data && Array.isArray(res.data)) {
-                setAvvisiList(res.data);
-            } else {
-                setAvvisiList([]);
-            }
-        } catch (error) {
-            console.warn("Refresh avvisi failed", error);
-        } finally {
-            setLoading(false);
-        }
+        const res = await AvvisiService.getAll();
+        if (res.data && Array.isArray(res.data)) setAvvisiList(res.data);
     };
 
-    // --- NOTE DOCUMENTI MANAGEMENT (Modal) ---
-    const handleManageNoteDocumenti = () => {
-        setShowNoteDocumentiModal(true);
-    };
-
+    const handleManageNoteDocumenti = () => setShowNoteDocumentiModal(true);
     const handleCloseNoteDocumentiModal = async () => {
         setShowNoteDocumentiModal(false);
-        setLoading(true);
-        try {
-            const res = await NoteDocumentiService.getAll();
-            if (res.data && Array.isArray(res.data)) {
-                setNoteDocumentiList(res.data);
-            } else {
-                setNoteDocumentiList([]);
-            }
-        } catch (error) {
-            console.warn("Refresh note failed", error);
-        } finally {
-            setLoading(false);
-        }
+        const res = await NoteDocumentiService.getAll();
+        if (res.data && Array.isArray(res.data)) setNoteDocumentiList(res.data);
     };
 
-    // --- TIPI PORTO MANAGEMENT (Modal) ---
-    const handleManageTipiPorto = () => {
-        setShowTipiPortoModal(true);
-    };
-
+    const handleManageTipiPorto = () => setShowTipiPortoModal(true);
     const handleCloseTipiPortoModal = async () => {
         setShowTipiPortoModal(false);
-        setLoading(true);
-        try {
-            const res = await TipiPortoService.getAllForCombo();
-            if (res.data && Array.isArray(res.data)) {
-                setTipiPortoList(res.data);
-            } else {
-                setTipiPortoList([]);
-            }
-        } catch (error) {
-            console.warn("Refresh tipi porto failed", error);
-        } finally {
-            setLoading(false);
-        }
+        const res = await TipiPortoService.getAllForCombo();
+        if (res.data && Array.isArray(res.data)) setTipiPortoList(res.data);
     };
 
-    // --- VETTORI MANAGEMENT (Modal) ---
-    const handleIbanChange = (e) => {
-        const newIban = e.target.value.toUpperCase();
-        const parsed = parseIban(newIban);
-
-        setFormState(prev => ({
-            ...prev,
-            iban: newIban,
-            // Only auto-fill if it's an Italian IBAN and we have parsed data
-            // parsing logic in ibanUtils handles the decision (returns fields if IT, otherwise empty/null if parse fails or non-IT)
-            // But we only want to overwrite if it WAS parsed. 
-            // Actually, if it's non-IT, parseIban returns country but other fields empty.
-            // If the user manually set fields, we might not want to clear them immediately unless we are sure.
-            // For simplicity and user expectation: if it is IT, we force the fields.
-            ...(parsed.country === 'IT' ? {
-                abi: parsed.abi,
-                cab: parsed.cab,
-                cin: parsed.cin,
-                conto: parsed.conto
-            } : {})
-        }));
-    };
-
-    const handleManageVettori = () => {
-        setShowVettoriModal(true);
-    };
-
+    const handleManageVettori = () => setShowVettoriModal(true);
     const handleCloseVettoriModal = async () => {
         setShowVettoriModal(false);
-        setLoading(true);
-        try {
-            const res = await VettoriService.getAllForCombo();
-            if (res.data && Array.isArray(res.data)) {
-                setVettoriList(res.data);
-            } else {
-                setVettoriList([]);
-            }
-        } catch (error) {
-            console.warn("Refresh vettori failed", error);
-        } finally {
-            setLoading(false);
-        }
+        const res = await VettoriService.getAllForCombo();
+        if (res.data && Array.isArray(res.data)) setVettoriList(res.data);
     };
 
-    // --- RISORSE (BANCHE) MANAGEMENT (Modal) ---
-    const handleManageRisorse = () => {
-        setShowRisorseModal(true);
-    };
-
+    const handleManageRisorse = () => setShowRisorseModal(true);
     const handleCloseRisorseModal = async () => {
         setShowRisorseModal(false);
-        setLoading(true);
-        try {
-            const res = await RisorseService.getAllForCombo('BA');
-            if (res.data && Array.isArray(res.data)) {
-                setBancheList(res.data);
-            } else {
-                setBancheList([]);
-            }
-        } catch (error) {
-            console.warn("Refresh banche failed", error);
-        } finally {
-            setLoading(false);
-        }
+        const res = await RisorseService.getAllForCombo('BA');
+        if (res.data && Array.isArray(res.data)) setBancheList(res.data);
     };
 
     const generateCodice = async () => {
         try {
-            const response = await ClientiService.generateCodice();
+            const response = await FornitoriService.generateCodice();
             if (response.data && response.data.payload) {
-                setCliente(prev => ({ ...prev, codice: response.data.payload }));
+                setFornitore(prev => ({ ...prev, codice: response.data.payload }));
             }
         } catch (error) {
             console.error("Error generating code", error);
-            setCliente(prev => ({ ...prev, codice: '000001' })); // Fallback
+            setFornitore(prev => ({ ...prev, codice: '000001' }));
         }
     };
 
@@ -474,43 +362,31 @@ const ClientiDetail = () => {
         e.preventDefault();
         setLoading(true);
 
-        const updatedCliente = { ...cliente };
+        const updatedFornitore = { ...fornitore };
 
-        // Sanitize integer fields: convert empty strings to null to avoid 400 Bad Request
+        // Integer field sanitization
         const intFields = [
-            'idRisorsa', 'idVettore', 'idTipoPorto', 'idAvviso', 'idNota',
-            'idAgente', 'idListino', 'idZonaCompetenza', 'idSottoconto', 'idLingua',
-            'idAliquotaIva', 'idTipoPagamento'
+            'idRisorsa', 'idVettore', 'idTipoPorto', 'idAvviso', 'idNota', 'idCategoriaSpesa', 'idAliquotaIva', 'idTipoPagamento'
         ];
-
         intFields.forEach(field => {
-            if (updatedCliente[field] === '') {
-                updatedCliente[field] = null;
-            }
+            if (updatedFornitore[field] === '') updatedFornitore[field] = null;
         });
 
-        // Sync banca and descrizioneBanca
-        updatedCliente.descrizioneBanca = updatedCliente.banca;
+        updatedFornitore.descrizioneBanca = updatedFornitore.banca;
 
         try {
             if (isNew) {
-                await ClientiService.insert(updatedCliente);
+                await FornitoriService.insert(updatedFornitore);
             } else {
-                await ClientiService.update(id, updatedCliente);
+                await FornitoriService.update(id, updatedFornitore);
             }
-            navigate('/clienti');
+            navigate('/fornitori');
         } catch (error) {
-            console.error("Error saving cliente:", error);
-            if (error.response) {
-                console.error("Server response data:", error.response.data);
-                console.error("Server response status:", error.response.status);
-                console.error("Server response headers:", error.response.headers);
-            }
+            console.error("Error saving fornitore:", error);
             let errorMessage = 'Errore durante il salvataggio.';
             if (error.response && error.response.data && error.response.data.errorText) {
                 errorMessage = error.response.data.errorText;
             }
-
             Swal.fire({
                 icon: 'error',
                 title: 'Si è verificato un errore',
@@ -523,24 +399,23 @@ const ClientiDetail = () => {
         }
     };
 
-    if (loading && !cliente.codice && !isNew) return <div>Caricamento...</div>;
+    if (loading && !fornitore.codice && !isNew) return <div>Caricamento...</div>;
 
-    // Helper to get active address safely
-    // Helper to get active address safely
-    const currentAddress = cliente.elencoIndirizzi[activeAddressIndex] || {};
-    // Helper to get active contact safely 
-    const currentContact = cliente.elencoContatti[activeContactIndex] || {};
+    const currentAddress = fornitore.elencoIndirizzi[activeAddressIndex] || {};
+    const currentContact = fornitore.elencoContatti[activeContactIndex] || {};
 
     return (
-        <div className="clienti-detail-container">
+        <div className="fornitori-detail-container">
             {/* Breadcrumb */}
             <ul className="breadcrumb">
                 <li><Link to="/">Home</Link></li>
                 <li><FaAngleRight /></li>
-                <li className="active">{isNew ? 'Nuovo cliente' : 'Modifica cliente'}</li>
+                <li><Link to="/fornitori">Elenco fornitori</Link></li>
+                <li><FaAngleRight /></li>
+                <li className="active">{isNew ? 'Nuovo fornitore' : 'Modifica fornitore'}</li>
             </ul>
 
-            <h1>{isNew ? 'Nuovo cliente' : `Modifica cliente`}</h1>
+            <h1>{isNew ? 'Nuovo fornitore' : `Modifica fornitore`}</h1>
 
             <form onSubmit={handleSubmit}>
                 {/* Tabs */}
@@ -561,7 +436,6 @@ const ClientiDetail = () => {
                     {/* General Information Tab */}
                     <div className={`tab-pane ${activeTab === 'general' ? 'active' : ''}`} style={{ display: activeTab === 'general' ? 'block' : 'none' }}>
 
-                        {/* Basic Info Row - Unchanged */}
                         <div className="row">
                             <div className="col-md-3">
                                 <div className="form-group">
@@ -571,7 +445,7 @@ const ClientiDetail = () => {
                                             type="text"
                                             className="form-control"
                                             name="codice"
-                                            value={cliente.codice}
+                                            value={fornitore.codice}
                                             onChange={handleChange}
                                             placeholder="Inserisci codice"
                                             required
@@ -584,21 +458,6 @@ const ClientiDetail = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-md-5">
-                                <div className="form-group">
-                                    <label className="required">Tipologia</label>
-                                    <select
-                                        className="form-control"
-                                        name="tipologia"
-                                        value={cliente.tipologia}
-                                        onChange={handleChange}
-                                    >
-                                        <option value="PRIVATO">Privato</option>
-                                        <option value="AZIENDA">Azienda</option>
-                                        <option value="PUBBLICA_AMMINISTRAZIONE">Pubblica amministrazione</option>
-                                    </select>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="row">
@@ -609,7 +468,7 @@ const ClientiDetail = () => {
                                         type="text"
                                         className="form-control"
                                         name="denominazione"
-                                        value={cliente.denominazione}
+                                        value={fornitore.denominazione}
                                         onChange={handleChange}
                                         placeholder="Inserisci denominazione"
                                         required
@@ -626,7 +485,7 @@ const ClientiDetail = () => {
                                         type="text"
                                         className="form-control"
                                         name="codiceFiscale"
-                                        value={cliente.codiceFiscale}
+                                        value={fornitore.codiceFiscale}
                                         onChange={handleChange}
                                         placeholder="Inserisci codice fiscale"
                                     />
@@ -639,7 +498,7 @@ const ClientiDetail = () => {
                                         type="text"
                                         className="form-control"
                                         name="partitaIva"
-                                        value={cliente.partitaIva}
+                                        value={fornitore.partitaIva}
                                         onChange={handleChange}
                                         placeholder="Inserisci partita iva"
                                     />
@@ -647,18 +506,18 @@ const ClientiDetail = () => {
                             </div>
                         </div>
 
-                        {/* SMART TABS for Addresses */}
+                        {/* Indirizzi Section */}
                         <div className="smart-tabs-container">
                             <label style={{ display: 'block', marginBottom: '10px', color: '#555', fontWeight: 'bold' }}>Indirizzi</label>
                             <div className="smart-tabs">
-                                {cliente.elencoIndirizzi.map((addr, index) => (
+                                {fornitore.elencoIndirizzi.map((addr, index) => (
                                     <div
                                         key={index}
                                         className={`smart-tab ${activeAddressIndex === index ? 'active' : ''}`}
                                         onClick={() => setActiveAddressIndex(index)}
                                     >
                                         {getAddressLabel(addr, index)}
-                                        {cliente.elencoIndirizzi.length > 1 && (
+                                        {fornitore.elencoIndirizzi.length > 1 && (
                                             <span className="remove-tab" onClick={(e) => handleRemoveAddress(e, index)} title="Rimuovi">×</span>
                                         )}
                                     </div>
@@ -667,7 +526,6 @@ const ClientiDetail = () => {
                             </div>
                         </div>
 
-                        {/* Indirizzo Fields (Bound to currentAddress) */}
                         <div className="smart-fields-panel">
                             <div className="row">
                                 <div className="col-md-3">
@@ -682,7 +540,7 @@ const ClientiDetail = () => {
                                             <option value="O">Sede Operativa</option>
                                             <option value="L">Sede Legale</option>
                                             <option value="A">Sede Amministrativa</option>
-                                            <option value="M">Destinazione Merce</option>
+                                            <option value="M">Dest. Merce</option>
                                             <option value="T">Altro</option>
                                         </select>
                                     </div>
@@ -701,7 +559,6 @@ const ClientiDetail = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="row">
                                 <div className="col-md-4">
                                     <div className="form-group">
@@ -758,37 +615,20 @@ const ClientiDetail = () => {
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="row">
-                                <div className="col-md-4">
-                                    <div className="form-group">
-                                        <label>Codice ufficio</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            name="codiceUfficio"
-                                            value={currentAddress.codiceUfficio || ''}
-                                            onChange={handleAddressChange}
-                                            placeholder="Codice ufficio"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Contatti Section */}
-                        {/* SMART TABS for Contatti */}
                         <div className="smart-tabs-container">
                             <label style={{ display: 'block', marginBottom: '10px', color: '#555', fontWeight: 'bold' }}>Contatti</label>
                             <div className="smart-tabs">
-                                {cliente.elencoContatti.map((cont, index) => (
+                                {fornitore.elencoContatti.map((cont, index) => (
                                     <div
                                         key={index}
                                         className={`smart-tab ${activeContactIndex === index ? 'active' : ''}`}
                                         onClick={() => setActiveContactIndex(index)}
                                     >
                                         {getContactLabel(cont, index)}
-                                        {cliente.elencoContatti.length > 1 && (
+                                        {fornitore.elencoContatti.length > 1 && (
                                             <span className="remove-tab" onClick={(e) => handleRemoveContact(e, index)} title="Rimuovi">×</span>
                                         )}
                                     </div>
@@ -797,10 +637,7 @@ const ClientiDetail = () => {
                             </div>
                         </div>
 
-                        {/* Contatto Fields (Bound to currentContact) */}
                         <div className="smart-fields-panel">
-                            {/* NOTE: We need to define currentContact inside render before return */}
-
                             <div className="row">
                                 <div className="col-md-4">
                                     <div className="form-group">
@@ -816,7 +653,6 @@ const ClientiDetail = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="row">
                                 <div className="col-md-4">
                                     <div className="form-group">
@@ -858,7 +694,6 @@ const ClientiDetail = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <div className="row">
                                 <div className="col-md-4">
                                     <div className="form-group">
@@ -889,9 +724,7 @@ const ClientiDetail = () => {
                             </div>
                         </div>
 
-                        {/* Note Section */}
-                        <h3 className="section-header">Note</h3>
-                        <div className="row">
+                        <div className="row" style={{ marginTop: '20px' }}>
                             <div className="col-md-6">
                                 <div className="form-group">
                                     <label>Note</label>
@@ -899,7 +732,7 @@ const ClientiDetail = () => {
                                         className="form-control"
                                         rows="3"
                                         name="note"
-                                        value={cliente.note}
+                                        value={fornitore.note || ''}
                                         onChange={handleChange}
                                     ></textarea>
                                 </div>
@@ -908,116 +741,97 @@ const ClientiDetail = () => {
 
                     </div>
 
-                    {/* Other Information Tab (Unchanged) */}
+                    {/* Other Information Tab */}
                     <div className={`tab-pane ${activeTab === 'other' ? 'active' : ''}`} style={{ display: activeTab === 'other' ? 'block' : 'none' }}>
+
+                        <div className="section-header">Dati commerciali</div>
+
+                        {!showCommercialData && <div className="alert alert-info">I dati commerciali sono disabilitati da configurazione</div>}
+
                         {showCommercialData && (
                             <>
-                                <h3 className="section-header">Coordinate bancarie cliente</h3>
-
                                 <div className="row">
                                     <div className="col-md-6">
                                         <div className="form-group">
-                                            <label>Banca</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                name="banca"
-                                                value={cliente.banca || ''}
-                                                onChange={handleChange}
-                                                placeholder="Nome della banca"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="col-md-6">
-                                        <div className="form-group">
-                                            <label>IBAN</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                name="iban"
-                                                value={cliente.iban || ''}
-                                                onChange={handleIbanChange}
-                                                placeholder="IT00X0000000000000000000000"
-                                            />
+                                            <label>Coordinate bancarie</label>
+                                            <div className="input-group">
+                                                <input type="text" className="form-control" disabled placeholder="Inserisci coordinate bancarie" value={fornitore.iban} />
+                                                <span className="input-group-btn">
+                                                    <button className="btn btn-primary-custom" type="button" onClick={() => Swal.fire('Implementare modale coordinate bancarie', 'Per ora usa i campi sottostanti (se visibili)', 'info')}>
+                                                        Imposta
+                                                    </button>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="row">
-                                    <div className="col-md-2 col-xs-6">
-                                        <div className="form-group">
-                                            <label>ABI</label>
-                                            <input type="text" className="form-control input-sm" name="abi" value={cliente.abi || ''} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-2 col-xs-6">
-                                        <div className="form-group">
-                                            <label>CAB</label>
-                                            <input type="text" className="form-control input-sm" name="cab" value={cliente.cab || ''} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-2 col-xs-4">
-                                        <div className="form-group">
-                                            <label>CIN</label>
-                                            <input type="text" className="form-control input-sm" name="cin" value={cliente.cin || ''} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-4 col-xs-8">
-                                        <div className="form-group">
-                                            <label>Conto</label>
-                                            <input type="text" className="form-control input-sm" name="conto" value={cliente.conto || ''} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="row">
-                                    <div className="col-md-3 col-xs-6">
-                                        <div className="form-group">
-                                            <label>BIC/SWIFT</label>
-                                            <input type="text" className="form-control" name="bic" value={cliente.bic || ''} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                    <div className="col-md-3 col-xs-6">
-                                        <div className="form-group">
-                                            <label>Codice SIA</label>
-                                            <input type="text" className="form-control" name="codSia" value={cliente.codSia || ''} onChange={handleChange} />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <h3 className="section-header">Dati commerciali</h3>
 
                                 <div className="row">
                                     <div className="col-md-3">
                                         <div className="form-group">
                                             <label>Nostra banca</label>
                                             <div className="input-group">
-                                                <select className="form-control" name="idRisorsa" value={cliente.idRisorsa || ''} onChange={handleChange}>
-                                                    <option value="">Seleziona banca...</option>
+                                                <select
+                                                    className="form-control"
+                                                    name="idRisorsa"
+                                                    value={fornitore.idRisorsa || ''}
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="">Seleziona una banca...</option>
                                                     {bancheList.map(b => (
                                                         <option key={b.id} value={b.id}>{b.descrizione}</option>
                                                     ))}
                                                 </select>
                                                 <span className="input-group-btn">
-                                                    <button className="btn btn-wrench" type="button" onClick={handleManageRisorse}><FaWrench /></button>
+                                                    <button className="btn btn-default btn-wrench" type="button" onClick={handleManageRisorse}><FaWrench /></button>
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
+                                <div className="row">
+                                    <div className="col-md-3">
+                                        <div className="form-group">
+                                            <label>Categoria di spesa</label>
+                                            <div className="input-group">
+                                                <select
+                                                    className="form-control"
+                                                    name="idCategoriaSpesa"
+                                                    value={fornitore.idCategoriaSpesa || ''}
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="">Seleziona una categoria...</option>
+                                                    {categorieSpesaList.map(c => (
+                                                        <option key={c.id} value={c.id}>{c.descrizione}</option>
+                                                    ))}
+                                                </select>
+                                                <span className="input-group-btn">
+                                                    <button className="btn btn-default btn-wrench" type="button" onClick={() => Swal.fire('Gestione Categorie Spesa', 'Implementazione futura', 'info')}><FaWrench /></button>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="row">
                                     <div className="col-md-3">
                                         <div className="form-group">
                                             <label>Vettore</label>
                                             <div className="input-group">
-                                                <select className="form-control" name="idVettore" value={cliente.idVettore || ''} onChange={handleChange}>
-                                                    <option value="">Seleziona vettore...</option>
+                                                <select
+                                                    className="form-control"
+                                                    name="idVettore"
+                                                    value={fornitore.idVettore || ''}
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="">Seleziona un vettore...</option>
                                                     {vettoriList.map(v => (
                                                         <option key={v.id} value={v.id}>{v.descrizione}</option>
                                                     ))}
                                                 </select>
                                                 <span className="input-group-btn">
-                                                    <button className="btn btn-wrench" type="button" onClick={handleManageVettori}><FaWrench /></button>
+                                                    <button className="btn btn-default btn-wrench" type="button" onClick={handleManageVettori}><FaWrench /></button>
                                                 </span>
                                             </div>
                                         </div>
@@ -1026,14 +840,19 @@ const ClientiDetail = () => {
                                         <div className="form-group">
                                             <label>Tipo porto</label>
                                             <div className="input-group">
-                                                <select className="form-control" name="idTipoPorto" value={cliente.idTipoPorto || ''} onChange={handleChange}>
-                                                    <option value="">Seleziona tipo porto...</option>
+                                                <select
+                                                    className="form-control"
+                                                    name="idTipoPorto"
+                                                    value={fornitore.idTipoPorto || ''}
+                                                    onChange={handleChange}
+                                                >
+                                                    <option value="">Seleziona un tipo porto...</option>
                                                     {tipiPortoList.map(tp => (
                                                         <option key={tp.id} value={tp.id}>{tp.descrizione}</option>
                                                     ))}
                                                 </select>
                                                 <span className="input-group-btn">
-                                                    <button className="btn btn-wrench" type="button" onClick={handleManageTipiPorto}><FaWrench /></button>
+                                                    <button className="btn btn-default btn-wrench" type="button" onClick={handleManageTipiPorto}><FaWrench /></button>
                                                 </span>
                                             </div>
                                         </div>
@@ -1042,21 +861,26 @@ const ClientiDetail = () => {
                             </>
                         )}
 
-                        <h3 className="section-header">Nei documenti</h3>
-                        {/* Doc Fields... same as before */}
+                        <div className="section-header">Nei documenti</div>
+
                         <div className="row">
                             <div className="col-md-3">
                                 <div className="form-group">
                                     <label>Mostra avviso</label>
                                     <div className="input-group">
-                                        <select className="form-control" name="idAvviso" value={cliente.idAvviso || ''} onChange={handleChange}>
+                                        <select
+                                            className="form-control"
+                                            name="idAvviso"
+                                            value={fornitore.idAvviso || ''}
+                                            onChange={handleChange}
+                                        >
                                             <option value="">Seleziona un avviso...</option>
-                                            {avvisiList.map(av => (
-                                                <option key={av.id} value={av.id}>{av.descrizione}</option>
+                                            {avvisiList.map(a => (
+                                                <option key={a.id} value={a.id}>{a.descrizione}</option>
                                             ))}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button className="btn btn-wrench" type="button" onClick={handleManageAvvisi}><FaWrench /></button>
+                                            <button className="btn btn-default btn-wrench" type="button" onClick={handleManageAvvisi}><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
@@ -1065,14 +889,19 @@ const ClientiDetail = () => {
                                 <div className="form-group">
                                     <label>Inserisci nota</label>
                                     <div className="input-group">
-                                        <select className="form-control" name="idNota" value={cliente.idNota || ''} onChange={handleChange}>
+                                        <select
+                                            className="form-control"
+                                            name="idNota"
+                                            value={fornitore.idNota || ''}
+                                            onChange={handleChange}
+                                        >
                                             <option value="">Seleziona una nota...</option>
                                             {noteDocumentiList.map(n => (
                                                 <option key={n.id} value={n.id}>{n.descrizione}</option>
                                             ))}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button className="btn btn-wrench" type="button" onClick={handleManageNoteDocumenti}><FaWrench /></button>
+                                            <button className="btn btn-default btn-wrench" type="button" onClick={handleManageNoteDocumenti}><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
@@ -1082,30 +911,22 @@ const ClientiDetail = () => {
                     </div>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="form-actions">
-                    <Link to="/clienti" className="btn btn-premium-cancel">Annulla</Link>
+                <div className="form-footer">
+                    <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/fornitori')}>Annulla</button>
                     <button type="submit" className="btn btn-premium-save">Salva</button>
                 </div>
             </form>
-            {showAvvisiModal && (
-                <AvvisiManagementModal onClose={handleCloseAvvisiModal} />
-            )}
-            {showNoteDocumentiModal && (
-                <NoteDocumentiManagementModal onClose={handleCloseNoteDocumentiModal} />
-            )}
-            {showTipiPortoModal && (
-                <TipiPortoManagementModal onClose={handleCloseTipiPortoModal} />
-            )}
-            {showVettoriModal && (
-                <VettoriManagementModal onClose={handleCloseVettoriModal} />
-            )}
-            {showRisorseModal && (
-                <RisorseManagementModal onClose={handleCloseRisorseModal} initialTipologia="BA" />
-            )}
+
+            {/* Modals */}
+            {/* Modals */}
+            {showAvvisiModal && <AvvisiManagementModal onClose={handleCloseAvvisiModal} />}
+            {showNoteDocumentiModal && <NoteDocumentiManagementModal onClose={handleCloseNoteDocumentiModal} />}
+            {showTipiPortoModal && <TipiPortoManagementModal onClose={handleCloseTipiPortoModal} />}
+            {showVettoriModal && <VettoriManagementModal onClose={handleCloseVettoriModal} />}
+            {showRisorseModal && <RisorseManagementModal onClose={handleCloseRisorseModal} type='BA' title="Gestione Banche" />}
+
         </div>
     );
 };
 
-export default ClientiDetail;
-
+export default FornitoriDetail;

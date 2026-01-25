@@ -14,6 +14,8 @@ import PreventiviList from './pages/Preventivi/PreventiviList';
 import PreventiviDetail from './pages/Preventivi/PreventiviDetail';
 import DatiAziendaPage from './pages/Configurazione/DatiAziendaPage';
 import ParametriPage from './pages/Configurazione/ParametriPage';
+import FornitoriList from './pages/Fornitori/FornitoriList';
+import FornitoriDetail from './pages/Fornitori/FornitoriDetail';
 
 const ProtectedRoute = ({ children }) => {
   const user = authService.getCurrentUser();
@@ -102,6 +104,8 @@ function App() {
                 <Route path="/preventivi/:id" element={<PreventiviDetail />} />
                 <Route path="/configurazione/dati-azienda" element={<DatiAziendaPage />} />
                 <Route path="/configurazione/dati-sistema" element={<ParametriPage />} />
+                <Route path="/fornitori" element={<FornitoriList />} />
+                <Route path="/fornitori/:id" element={<FornitoriDetail />} />
                 {/* Add other protected routes here */}
                 <Route path="/articoli" element={<ArticoliList />} />
                 <Route path="/articoli/new" element={<ArticoliDetail />} />

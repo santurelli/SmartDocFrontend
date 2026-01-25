@@ -27,9 +27,8 @@ instance.interceptors.response.use(
     },
     (error) => {
         if (error.response && error.response.status === 401) {
-            // Auto logout if 401?
-            // authService.logout();
-            // window.location.href = '/login';
+            authService.logout();
+            window.location.href = '/login';
         }
         return Promise.reject(error);
     }

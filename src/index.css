@@ -356,10 +356,42 @@ button:focus-visible {
   transform: translateX(24px);
 }
 
-.premium-toggle-label {
-  vertical-align: middle;
+
+/* Premium Button Styles (Matching Modal/Swal) - Global Access */
+.btn-premium-save {
+  padding: 12px 35px;
+  font-size: 15px;
   font-weight: 600;
-  color: #555;
-  cursor: pointer;
-  font-size: 14px;
+  border-radius: 10px;
+  background-color: #03a9f4;
+  color: white;
+  margin-left: 10px;
+  transition: all 0.2s;
+  border: none;
+  box-shadow: 0 4px 6px rgba(3, 169, 244, 0.2);
+}
+
+.btn-premium-save:hover {
+  background-color: #0288d1;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px rgba(3, 169, 244, 0.3);
+  color: white;
+}
+
+.btn-premium-cancel {
+  padding: 12px 35px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
+  background-color: #95a5a6;
+  color: white;
+  margin-left: 10px;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-premium-cancel:hover {
+  background-color: #7f8c8d;
+  transform: translateY(-1px);
+  color: white;
 }

@@ -16,6 +16,7 @@ import CategorieManagementModal from './CategorieManagementModal';
 import SottoCategorieManagementModal from './SottoCategorieManagementModal';
 import UnitaMisuraManagementModal from './UnitaMisuraManagementModal';
 import AliquoteIvaManagementModal from './AliquoteIvaManagementModal';
+import FornitoriManagementModal from './FornitoriManagementModal';
 import { FaSave, FaArrowLeft, FaWrench, FaAngleRight, FaHome } from 'react-icons/fa';
 import AsyncSelect from 'react-select/async';
 import './ArticoliDetail.css';
@@ -38,7 +39,9 @@ const ArticoliDetail = () => {
     const [showCategorieModal, setShowCategorieModal] = useState(false);
     const [showSottoCategorieModal, setShowSottoCategorieModal] = useState(false);
     const [showUnitaMisuraModal, setShowUnitaMisuraModal] = useState(false);
+
     const [showAliquoteIvaModal, setShowAliquoteIvaModal] = useState(false);
+    const [showFornitoriModal, setShowFornitoriModal] = useState(false);
 
     const [formData, setFormData] = useState({
         codice: '',
@@ -237,6 +240,17 @@ const ArticoliDetail = () => {
         } catch (e) {
             console.error("Refresh VAT rates failed", e);
         }
+    };
+
+    const handleManageFornitori = () => {
+        setShowFornitoriModal(true);
+    };
+
+    const handleCloseFornitoriModal = () => {
+        setShowFornitoriModal(false);
+        // AsyncSelect handles reloading via loadOptions, but we might want to clear current selection if invalid?
+        // Or trigger a reload if we were caching. AsyncSelect cacheOptions is set.
+        // We can force reload by changing a key or just letting user search again.
     };
 
     const handleSave = async () => {
@@ -544,7 +558,11 @@ const ArticoliDetail = () => {
                                                 }}
                                             />
                                         </div>
-                                        {renderConfigButton('/tabelle/fornitori')}
+                                        <span className="input-group-btn">
+                                            <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageFornitori} title="Gestione tabella">
+                                                <FaWrench />
+                                            </button>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -583,8 +601,8 @@ const ArticoliDetail = () => {
                 </div>
 
                 <div className="form-actions">
-                    <button type="button" className="btn btn-default-custom" onClick={() => navigate('/articoli')}>Annulla</button>
-                    <button type="button" className="btn btn-danger-custom" onClick={handleSave}>Salva</button>
+                    <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/articoli')}>Annulla</button>
+                    <button type="button" className="btn btn-premium-save" onClick={handleSave}>Salva</button>
                 </div>
             </form>
             {showCategorieModal && (
@@ -598,6 +616,9 @@ const ArticoliDetail = () => {
             )}
             {showAliquoteIvaModal && (
                 <AliquoteIvaManagementModal onClose={handleCloseAliquoteIvaModal} />
+            )}
+            {showFornitoriModal && (
+                <FornitoriManagementModal onClose={handleCloseFornitoriModal} />
             )}
         </div>
     );

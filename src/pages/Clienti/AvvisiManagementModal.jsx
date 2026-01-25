@@ -241,7 +241,7 @@ const AvvisiManagementModal = ({ onClose }) => {
                             </div>
                             <div className="col-md-6 text-right">
                                 <nav>
-                                    <ul className="pagination" style={{ margin: '0' }}>
+                                    <ul className="pagination" style={{ margin: '0', justifyContent: 'flex-end' }}>
                                         <li className={currentPage === 1 ? 'disabled' : ''}>
                                             <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>
                                                 <span>&laquo;</span>

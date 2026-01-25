@@ -259,8 +259,8 @@ const PreventiviDetail = () => {
 
                         {/* Footer Actions */}
                         <div className="main-box-footer text-right">
-                            <button className="btn btn-default" onClick={() => navigate('/preventivi')}>Annulla</button>
-                            <button className="btn btn-primary" onClick={handleSave} style={{ marginLeft: '10px' }}><FaSave /> Salva</button>
+                            <button className="btn btn-premium-cancel" onClick={() => navigate('/preventivi')}>Annulla</button>
+                            <button className="btn btn-premium-save" onClick={handleSave} style={{ marginLeft: '10px' }}><FaSave /> Salva</button>
                         </div>
                     </div>
                 </div>

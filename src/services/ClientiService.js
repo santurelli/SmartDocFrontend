@@ -34,6 +34,10 @@ class ClientiService {
     generateCodice() {
         return api.get('/clienti/generate-code');
     }
+
+    exportExcel(params) {
+        return api.get('/clienti/export-excel', { params, responseType: 'blob' });
+    }
 }
 
 export default new ClientiService();

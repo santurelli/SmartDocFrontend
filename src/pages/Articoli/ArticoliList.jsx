@@ -4,6 +4,11 @@ import CategorieArticoliService from '../../services/CategorieArticoliService';
 import { useNavigate } from 'react-router-dom';
 import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import FornitoriService from '../../services/FornitoriService';
+import ToniArticoloService from '../../services/ToniArticoloService';
+import CalibriArticoloService from '../../services/CalibriArticoloService';
+import AuthService from '../../services/authService';
+import AsyncSelect from 'react-select/async';
 import './ArticoliList.css';
 
 const ArticoliList = () => {
@@ -18,11 +23,49 @@ const ArticoliList = () => {
     const [sortCol, setSortCol] = useState(1);
     const [sortDir, setSortDir] = useState('asc');
     const [activeDropdownId, setActiveDropdownId] = useState(null);
+
+    // Advanced Search State
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+    const [advancedFilters, setAdvancedFilters] = useState({
+        giacenza: '',
+        operatoreGiacenza: '>=',
+        idFornitore: null,
+        descFornitore: '', // for AsyncSelect label
+        idTono: '',
+        idCalibro: ''
+    });
+    const [config, setConfig] = useState({});
+    const [combos, setCombos] = useState({
+        toni: [],
+        calibri: []
+    });
+
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchCategorie();
+        const conf = AuthService.getConfig();
+        const isCeramica = conf['TIPOSTORE'] === 'CERAMICA';
+        setConfig({ isCeramica });
+        if (isCeramica) {
+            loadCeramicaCombos();
+        }
     }, []);
+
+    const loadCeramicaCombos = async () => {
+        try {
+            const [toniRes, calibriRes] = await Promise.all([
+                ToniArticoloService.getListForCombo(),
+                CalibriArticoloService.getListForCombo()
+            ]);
+            setCombos({
+                toni: toniRes.data.payload || [],
+                calibri: calibriRes.data.payload || []
+            });
+        } catch (e) {
+            console.error("Error loading ceramic combos", e);
+        }
+    };
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
@@ -30,7 +73,7 @@ const ArticoliList = () => {
         }, 300);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [search, page, pageSize, idCategoria, sortCol, sortDir]);
+    }, [search, page, pageSize, idCategoria, sortCol, sortDir, JSON.stringify(advancedFilters)]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -62,7 +105,13 @@ const ArticoliList = () => {
                 search: search,
                 categoria: idCategoria || '0',
                 orderColumn: sortCol,
-                orderDir: sortDir
+                orderDir: sortDir,
+                // Advanced Filters
+                giacenza: advancedFilters.giacenza || null,
+                operatoreGiacenza: advancedFilters.operatoreGiacenza,
+                idFornitore: advancedFilters.idFornitore,
+                idTono: advancedFilters.idTono || null,
+                idCalibro: advancedFilters.idCalibro || null
             });
             setArticoli(response.data.list || []);
             setTotalItems(response.data.totalCount || 0);
@@ -185,6 +234,15 @@ const ArticoliList = () => {
                             <FaSearch className="search-icon" />
                         </div>
 
+                        <button
+                            className={`btn ${showAdvancedSearch ? 'btn-warning' : 'btn-default'}`}
+                            onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                            title="Ricerca Avanzata"
+                            style={{ height: '44px', width: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', border: '1px solid #ddd' }}
+                        >
+                            <FaCog />
+                        </button>
+
                         <button className="btn btn-primary add-btn" onClick={() => navigate('/articoli/new')}>
                             <FaPlusCircle className="btn-icon" /> Aggiungi
                         </button>
@@ -192,6 +250,95 @@ const ArticoliList = () => {
                 </div>
 
                 <div className="main-box-body">
+                    {showAdvancedSearch && (
+                        <div className="advanced-search-panel row" style={{ paddingBottom: '20px', borderBottom: '1px solid #eee', marginBottom: '20px' }}>
+                            <div className="col-md-3">
+                                <div className="form-group">
+                                    <label>Giacenza</label>
+                                    <div className="input-group">
+                                        <div className="input-group-btn" style={{ width: 'auto' }}>
+                                            <select
+                                                className="form-control"
+                                                style={{ width: '60px', padding: '6px' }}
+                                                value={advancedFilters.operatoreGiacenza}
+                                                onChange={(e) => setAdvancedFilters(prev => ({ ...prev, operatoreGiacenza: e.target.value }))}
+                                            >
+                                                <option value=">=">&ge;</option>
+                                                <option value="<=">&le;</option>
+                                                <option value="=">=</option>
+                                            </select>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            placeholder="Qta"
+                                            value={advancedFilters.giacenza}
+                                            onChange={(e) => setAdvancedFilters(prev => ({ ...prev, giacenza: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col-md-3">
+                                <div className="form-group">
+                                    <label>Fornitore</label>
+                                    <AsyncSelect
+                                        cacheOptions
+                                        loadOptions={(inputValue) =>
+                                            FornitoriService.getSuggestion(inputValue).then(res => {
+                                                // API returns List<FornitoreDto> directly, so res.data is the array
+                                                return res.data?.map(f => ({ value: f.id, label: f.denominazione })) || [];
+                                            })
+                                        }
+                                        value={advancedFilters.idFornitore ? { value: advancedFilters.idFornitore, label: advancedFilters.descFornitore } : null}
+                                        onChange={(opt) => setAdvancedFilters(prev => ({
+                                            ...prev,
+                                            idFornitore: opt ? opt.value : null,
+                                            descFornitore: opt ? opt.label : ''
+                                        }))}
+                                        placeholder="Cerca fornitore..."
+                                        loadingMessage={() => "Caricamento..."}
+                                        noOptionsMessage={() => "Nessun risultato"}
+                                        isClearable
+                                        styles={{
+                                            control: (base) => ({ ...base, height: '34px', minHeight: '34px' }),
+                                            menu: (base) => ({ ...base, zIndex: 9999 })
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            {config.isCeramica && (
+                                <>
+                                    <div className="col-md-3">
+                                        <div className="form-group">
+                                            <label>Tono</label>
+                                            <select
+                                                className="form-control"
+                                                value={advancedFilters.idTono}
+                                                onChange={(e) => setAdvancedFilters(prev => ({ ...prev, idTono: e.target.value }))}
+                                            >
+                                                <option value="">Tutti</option>
+                                                {combos.toni.map(t => <option key={t.id} value={t.id}>{t.descrizione}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <div className="form-group">
+                                            <label>Calibro</label>
+                                            <select
+                                                className="form-control"
+                                                value={advancedFilters.idCalibro}
+                                                onChange={(e) => setAdvancedFilters(prev => ({ ...prev, idCalibro: e.target.value }))}
+                                            >
+                                                <option value="">Tutti</option>
+                                                {combos.calibri.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    )}
+
                     <div className="table-responsive">
                         <table className="table table-hover">
                             <thead>
@@ -206,9 +353,9 @@ const ArticoliList = () => {
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan="5" className="text-center">Caricamento...</td></tr>
+                                    <tr><td colSpan="6" className="text-center">Caricamento...</td></tr>
                                 ) : articoli.length === 0 ? (
-                                    <tr><td colSpan="5" className="text-center">Nessun articolo presente</td></tr>
+                                    <tr><td colSpan="6" className="text-center">Nessun articolo presente</td></tr>
                                 ) : (
                                     articoli.map(art => (
                                         <tr key={art.id}>
@@ -259,7 +406,7 @@ const ArticoliList = () => {
                     </div>
 
                     <div className="pagination-container">
-                        <span className="pagination-info">Visualizzati {articoli.length} di {totalItems} risultati</span>
+                        <span className="pagination-info">Visualizzati {articoli.length} of {totalItems} risultati</span>
                         <nav>
                             <ul className="pagination">
                                 <li className={page === 0 ? 'disabled' : ''}>
@@ -268,7 +415,6 @@ const ArticoliList = () => {
                                     </a>
                                 </li>
                                 {[...Array(Math.ceil(totalItems / pageSize))].map((_, i) => {
-                                    // Limit visible pages if there are too many
                                     const totalPages = Math.ceil(totalItems / pageSize);
                                     if (totalPages > 10) {
                                         if (i > 0 && i < totalPages - 1 && (i < page - 2 || i > page + 2)) {
