@@ -9,6 +9,7 @@ const ClientiList = () => {
     const navigate = useNavigate();
     const [clienti, setClienti] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [downloading, setDownloading] = useState(false);
     const [total, setTotal] = useState(0);
     const [search, setSearch] = useState('');
 
@@ -93,6 +94,7 @@ const ClientiList = () => {
     };
 
     const handleExport = async () => {
+        setDownloading(true);
         try {
             const params = { search };
             const response = await ClientiService.exportExcel(params);
@@ -110,6 +112,8 @@ const ClientiList = () => {
                 "Errore durante l'esportazione",
                 'error'
             );
+        } finally {
+            setDownloading(false);
         }
     };
 
@@ -132,8 +136,8 @@ const ClientiList = () => {
                             {/* Toolbar */}
                             <div className="toolbar-container">
                                 <div className="toolbar-left">
-                                    <button className="btn btn-cloud" title="Esporta" onClick={handleExport}>
-                                        <FaCloudDownloadAlt />
+                                    <button className="btn btn-cloud" title="Esporta" onClick={handleExport} disabled={downloading}>
+                                        {downloading ? <span className="fa fa-spinner fa-spin" /> : <FaCloudDownloadAlt />}
                                     </button>
                                     <label className="visualizza-label">
                                         Visualizza

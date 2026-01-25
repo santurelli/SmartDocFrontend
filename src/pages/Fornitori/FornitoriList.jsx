@@ -11,6 +11,7 @@ const FornitoriList = () => {
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
     const [search, setSearch] = useState('');
+    const [downloading, setDownloading] = useState(false);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(0);
@@ -39,13 +40,16 @@ const FornitoriList = () => {
     };
 
     useEffect(() => {
-        fetchFornitori();
-    }, [currentPage, pageSize, sortCol, sortDir]);
+        const delayDebounceFn = setTimeout(() => {
+            fetchFornitori();
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [search, currentPage, pageSize, sortCol, sortDir]);
 
     const handleSearch = (e) => {
         e.preventDefault();
-        setCurrentPage(0);
-        fetchFornitori();
+        // Search is handled by useEffect with debounce
     };
 
     const handleDelete = async (id) => {
@@ -92,6 +96,33 @@ const FornitoriList = () => {
         setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
     };
 
+    const handleExport = async () => {
+        setDownloading(true);
+        try {
+            const params = { search };
+            const response = await FornitoriService.exportExcel(params);
+
+            // Create a blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'elenco_fornitori.xls');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error("Error exporting excel:", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore',
+                text: "Impossibile scaricare l'esportazione.",
+                timer: 2000
+            });
+        } finally {
+            setDownloading(false);
+        }
+    };
+
     return (
         <div className="fornitori-list-container">
             {/* Header Area */}
@@ -111,8 +142,18 @@ const FornitoriList = () => {
                             {/* Toolbar */}
                             <div className="toolbar-container">
                                 <div className="toolbar-left">
-                                    <button className="btn btn-cloud" title="Esporta">
-                                        <FaCloudDownloadAlt />
+                                    <button
+                                        className="btn btn-cloud"
+                                        title="Esporta"
+                                        onClick={handleExport}
+                                        disabled={downloading}
+                                        style={{ opacity: downloading ? 0.6 : 1, cursor: downloading ? 'not-allowed' : 'pointer' }}
+                                    >
+                                        {downloading ? (
+                                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        ) : (
+                                            <FaCloudDownloadAlt />
+                                        )}
                                     </button>
                                     <label className="visualizza-label">
                                         Visualizza
@@ -137,7 +178,10 @@ const FornitoriList = () => {
                                                 className="search-input"
                                                 placeholder="Cerca..."
                                                 value={search}
-                                                onChange={(e) => setSearch(e.target.value)}
+                                                onChange={(e) => {
+                                                    setSearch(e.target.value);
+                                                    setCurrentPage(0);
+                                                }}
                                             />
                                             <button type="submit" className="search-btn">
                                                 <FaSearch />

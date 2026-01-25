@@ -44,6 +44,13 @@ class FornitoriService {
     generateCodice() {
         return api.get('/fornitori/generate-code');
     }
+
+    exportExcel(params) {
+        return api.get('/fornitori/export-excel', {
+            params,
+            responseType: 'blob'
+        });
+    }
 }
 
 export default new FornitoriService();

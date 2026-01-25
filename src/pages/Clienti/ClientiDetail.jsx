@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import ClientiService from '../../services/ClientiService';
+import CittaService from '../../services/CittaService';
+import AsyncCreatableSelect from 'react-select/async-creatable';
+import { components } from 'react-select';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import AvvisiService from '../../services/AvvisiService'; // Import the new service
 import AvvisiManagementModal from './AvvisiManagementModal';
@@ -203,6 +206,78 @@ const ClientiDetail = () => {
     };
 
     // Address Management Methods
+    const loadCityOptions = (inputValue) => {
+        if (!inputValue || inputValue.length < 3) return Promise.resolve([]);
+        return CittaService.getSuggestion(inputValue).then(response => {
+            return response.data;
+        });
+    };
+
+    const handleCityChange = (selectedOption) => {
+        const updatedIndirizzi = [...cliente.elencoIndirizzi];
+
+        let newValues = {};
+        if (selectedOption) {
+            // Check if it's a created option (string or object with __isNew__)
+            if (selectedOption.__isNew__ || !selectedOption.nome) {
+                newValues = {
+                    citta: selectedOption.label || selectedOption.value || selectedOption,
+                    cap: '',
+                    provincia: '',
+                    nazione: ''
+                };
+            } else {
+                newValues = {
+                    citta: selectedOption.nome,
+                    cap: selectedOption.cap,
+                    provincia: selectedOption.provincia,
+                    nazione: 'Italia'
+                };
+            }
+        } else {
+            newValues = { citta: '', cap: '', provincia: '', nazione: '' };
+        }
+
+        updatedIndirizzi[activeAddressIndex] = {
+            ...updatedIndirizzi[activeAddressIndex],
+            ...newValues
+        };
+        setCliente({ ...cliente, elencoIndirizzi: updatedIndirizzi });
+    };
+
+    const CustomMenuList = (props) => {
+        // Hide menu list if there are no options or only the "Create" option (new)
+        const hasOptions = props.options && props.options.length > 0;
+        const onlyNewOption = hasOptions && props.options.length === 1 && props.options[0].__isNew__;
+
+        if (!hasOptions || onlyNewOption) {
+            return null;
+        }
+        return <components.MenuList {...props} />;
+    };
+
+    const formatCityOption = (data, { context }) => {
+        if (context === 'menu') {
+            if (data.__isNew__ || !data.cap) {
+                return (
+                    <div style={{ fontWeight: 'bold' }}>
+                        {data.label || data.nome || data.value}
+                        <span style={{ fontSize: '0.8em', fontStyle: 'italic', fontWeight: 'normal', marginLeft: '8px', color: '#888' }}>(Nuovo)</span>
+                    </div>
+                );
+            }
+            return (
+                <div>
+                    <div style={{ fontWeight: 'bold' }}>{data.nome}</div>
+                    <div style={{ fontSize: '0.85em', color: '#666' }}>
+                        {data.cap} ({data.provincia})
+                    </div>
+                </div>
+            );
+        }
+        return data.nome || data.label;
+    };
+
     const handleAddressChange = (e) => {
         const { name, value } = e.target;
         const updatedIndirizzi = [...cliente.elencoIndirizzi];
@@ -706,13 +781,37 @@ const ClientiDetail = () => {
                                 <div className="col-md-4">
                                     <div className="form-group">
                                         <label>Città</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            name="citta"
-                                            value={currentAddress.citta || ''}
-                                            onChange={handleAddressChange}
-                                            placeholder="Inserisci città"
+                                        <AsyncCreatableSelect
+                                            cacheOptions
+                                            loadOptions={loadCityOptions}
+                                            onChange={handleCityChange}
+                                            formatOptionLabel={formatCityOption}
+                                            value={currentAddress.citta ? { nome: currentAddress.citta, cap: currentAddress.cap, provincia: currentAddress.provincia, label: currentAddress.citta, value: currentAddress.citta } : null}
+                                            getOptionLabel={(option) => option.nome || option.label}
+                                            getOptionValue={(option) => option.nome || option.value}
+                                            placeholder="Cerca o inserisci città..."
+                                            components={{
+                                                DropdownIndicator: null,
+                                                IndicatorSeparator: null,
+                                                MenuList: CustomMenuList,
+                                                NoOptionsMessage: () => null,
+                                                LoadingMessage: () => null
+                                            }}
+                                            formatCreateLabel={(inputValue) => inputValue}
+                                            isValidNewOption={() => true}
+                                            styles={{
+                                                control: (base) => ({ ...base, minHeight: '34px', borderColor: '#ccc', boxShadow: 'none' }),
+                                                menu: (base) => ({ ...base, zIndex: 9999 }),
+                                                option: (base, state) => {
+                                                    if (state.data.__isNew__) {
+                                                        return { ...base, display: 'none' };
+                                                    }
+                                                    return base;
+                                                }
+                                            }}
+                                            allowCreateWhileLoading={true}
+                                            createOptionPosition="last"
+                                            createOptionOnBlur={true}
                                         />
                                     </div>
                                 </div>

@@ -10,6 +10,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [ente, setEnte] = useState(null); // Selected option object: { value, label, dbName }
     const [error, setError] = useState('');
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
 
     // Load options for AsyncSelect
@@ -135,10 +136,11 @@ const Login = () => {
 
     const handleAziendaKeyDown = (e) => {
         if (e.key === 'Enter') {
-            // Allow React-Select to handle selection (don't prevent default immediately if menu open)
-            // But usually we want to trigger login.
-            // If we just trigger login, we might face stale state issue if they just selected.
-            // However, this fulfills "Enter -> Login".
+            // If menu is open, let React Select handle the choice (don't submit)
+            if (isMenuOpen) {
+                return;
+            }
+            // If menu is closed, submit form
             handleLogin(e);
         }
     };
@@ -210,6 +212,8 @@ const Login = () => {
                                                             styles={customStyles}
                                                             components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                                                             openMenuOnFocus
+                                                            onMenuOpen={() => setIsMenuOpen(true)}
+                                                            onMenuClose={() => setIsMenuOpen(false)}
                                                         />
                                                     </div>
                                                 </div>

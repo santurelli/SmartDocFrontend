@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import FornitoriService from '../../services/FornitoriService';
+import CittaService from '../../services/CittaService';
+import AsyncCreatableSelect from 'react-select/async-creatable';
+import { components } from 'react-select';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import AvvisiService from '../../services/AvvisiService'; // Shared
 import NoteDocumentiService from '../../services/NoteDocumentiService'; // Shared
@@ -191,6 +194,79 @@ const FornitoriDetail = () => {
     };
 
     // Address Management Methods
+    const loadCityOptions = (inputValue) => {
+        if (!inputValue || inputValue.length < 3) return Promise.resolve([]);
+        return CittaService.getSuggestion(inputValue).then(response => {
+            return response.data;
+        });
+    };
+
+    const handleCityChange = (selectedOption) => {
+        const updatedIndirizzi = [...fornitore.elencoIndirizzi];
+
+        let newValues = {};
+        if (selectedOption) {
+            // Check if it's a created option (string or object with __isNew__)
+            if (selectedOption.__isNew__ || !selectedOption.nome) {
+                newValues = {
+                    citta: selectedOption.label || selectedOption.value || selectedOption,
+                    // keep other fields empty or as is? Better empty to strictly allow typing
+                    cap: '',
+                    provincia: '',
+                    nazione: ''
+                };
+            } else {
+                newValues = {
+                    citta: selectedOption.nome,
+                    cap: selectedOption.cap,
+                    provincia: selectedOption.provincia,
+                    nazione: 'Italia'
+                };
+            }
+        } else {
+            newValues = { citta: '', cap: '', provincia: '', nazione: '' };
+        }
+
+        updatedIndirizzi[activeAddressIndex] = {
+            ...updatedIndirizzi[activeAddressIndex],
+            ...newValues
+        };
+        setFornitore({ ...fornitore, elencoIndirizzi: updatedIndirizzi });
+    };
+
+    const CustomMenuList = (props) => {
+        // Hide menu list if there are no options or only the "Create" option (new)
+        const hasOptions = props.options && props.options.length > 0;
+        const onlyNewOption = hasOptions && props.options.length === 1 && props.options[0].__isNew__;
+
+        if (!hasOptions || onlyNewOption) {
+            return null;
+        }
+        return <components.MenuList {...props} />;
+    };
+
+    const formatCityOption = (data, { context }) => {
+        if (context === 'menu') {
+            if (data.__isNew__ || !data.cap) {
+                return (
+                    <div style={{ fontWeight: 'bold' }}>
+                        {data.label || data.nome || data.value}
+                        <span style={{ fontSize: '0.8em', fontStyle: 'italic', fontWeight: 'normal', marginLeft: '8px', color: '#888' }}>(Nuovo)</span>
+                    </div>
+                );
+            }
+            return (
+                <div>
+                    <div style={{ fontWeight: 'bold' }}>{data.nome}</div>
+                    <div style={{ fontSize: '0.85em', color: '#666' }}>
+                        {data.cap} ({data.provincia})
+                    </div>
+                </div>
+            );
+        }
+        return data.nome || data.label;
+    };
+
     const handleAddressChange = (e) => {
         const { name, value } = e.target;
         const updatedIndirizzi = [...fornitore.elencoIndirizzi];
@@ -344,6 +420,24 @@ const FornitoriDetail = () => {
         setShowRisorseModal(false);
         const res = await RisorseService.getAllForCombo('BA');
         if (res.data && Array.isArray(res.data)) setBancheList(res.data);
+    };
+
+    // --- IBAN Management ---
+    const handleIbanChange = (e) => {
+        const newIban = e.target.value.toUpperCase();
+        const parsed = parseIban(newIban);
+
+        setFornitore(prev => ({
+            ...prev,
+            iban: newIban,
+            // Only auto-fill if it's an Italian IBAN and we have parsed data
+            ...(parsed.country === 'IT' ? {
+                abi: parsed.abi,
+                cab: parsed.cab,
+                cin: parsed.cin,
+                conto: parsed.conto
+            } : {})
+        }));
     };
 
     const generateCodice = async () => {
@@ -563,13 +657,37 @@ const FornitoriDetail = () => {
                                 <div className="col-md-4">
                                     <div className="form-group">
                                         <label>Città</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            name="citta"
-                                            value={currentAddress.citta || ''}
-                                            onChange={handleAddressChange}
-                                            placeholder="Inserisci città"
+                                        <AsyncCreatableSelect
+                                            cacheOptions
+                                            loadOptions={loadCityOptions}
+                                            onChange={handleCityChange}
+                                            formatOptionLabel={formatCityOption}
+                                            value={currentAddress.citta ? { nome: currentAddress.citta, cap: currentAddress.cap, provincia: currentAddress.provincia, label: currentAddress.citta, value: currentAddress.citta } : null}
+                                            getOptionLabel={(option) => option.nome || option.label}
+                                            getOptionValue={(option) => option.nome || option.value}
+                                            placeholder="Cerca o inserisci città..."
+                                            components={{
+                                                DropdownIndicator: null,
+                                                IndicatorSeparator: null,
+                                                MenuList: CustomMenuList,
+                                                NoOptionsMessage: () => null,
+                                                LoadingMessage: () => null
+                                            }}
+                                            formatCreateLabel={(inputValue) => inputValue}
+                                            isValidNewOption={() => true}
+                                            styles={{
+                                                control: (base) => ({ ...base, minHeight: '34px', borderColor: '#ccc', boxShadow: 'none' }),
+                                                menu: (base) => ({ ...base, zIndex: 9999 }),
+                                                option: (base, state) => {
+                                                    if (state.data.__isNew__) {
+                                                        return { ...base, display: 'none' };
+                                                    }
+                                                    return base;
+                                                }
+                                            }}
+                                            allowCreateWhileLoading={true}
+                                            createOptionPosition="last"
+                                            createOptionOnBlur={true}
                                         />
                                     </div>
                                 </div>
@@ -753,39 +871,71 @@ const FornitoriDetail = () => {
                                 <div className="row">
                                     <div className="col-md-6">
                                         <div className="form-group">
-                                            <label>Coordinate bancarie</label>
-                                            <div className="input-group">
-                                                <input type="text" className="form-control" disabled placeholder="Inserisci coordinate bancarie" value={fornitore.iban} />
-                                                <span className="input-group-btn">
-                                                    <button className="btn btn-primary-custom" type="button" onClick={() => Swal.fire('Implementare modale coordinate bancarie', 'Per ora usa i campi sottostanti (se visibili)', 'info')}>
-                                                        Imposta
-                                                    </button>
-                                                </span>
-                                            </div>
+                                            <label>Banca</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                name="banca"
+                                                value={fornitore.banca || ''}
+                                                onChange={handleChange}
+                                                placeholder="Nome della banca"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-md-6">
+                                        <div className="form-group">
+                                            <label>IBAN</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                name="iban"
+                                                value={fornitore.iban || ''}
+                                                onChange={handleIbanChange}
+                                                placeholder="IT00X0000000000000000000000"
+                                            />
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="row">
-                                    <div className="col-md-3">
+                                    <div className="col-md-2 col-xs-6">
                                         <div className="form-group">
-                                            <label>Nostra banca</label>
-                                            <div className="input-group">
-                                                <select
-                                                    className="form-control"
-                                                    name="idRisorsa"
-                                                    value={fornitore.idRisorsa || ''}
-                                                    onChange={handleChange}
-                                                >
-                                                    <option value="">Seleziona una banca...</option>
-                                                    {bancheList.map(b => (
-                                                        <option key={b.id} value={b.id}>{b.descrizione}</option>
-                                                    ))}
-                                                </select>
-                                                <span className="input-group-btn">
-                                                    <button className="btn btn-default btn-wrench" type="button" onClick={handleManageRisorse}><FaWrench /></button>
-                                                </span>
-                                            </div>
+                                            <label>ABI</label>
+                                            <input type="text" className="form-control input-sm" name="abi" value={fornitore.abi || ''} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-2 col-xs-6">
+                                        <div className="form-group">
+                                            <label>CAB</label>
+                                            <input type="text" className="form-control input-sm" name="cab" value={fornitore.cab || ''} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-2 col-xs-4">
+                                        <div className="form-group">
+                                            <label>CIN</label>
+                                            <input type="text" className="form-control input-sm" name="cin" value={fornitore.cin || ''} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-4 col-xs-8">
+                                        <div className="form-group">
+                                            <label>Conto</label>
+                                            <input type="text" className="form-control input-sm" name="conto" value={fornitore.conto || ''} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="row">
+                                    <div className="col-md-3 col-xs-6">
+                                        <div className="form-group">
+                                            <label>BIC/SWIFT</label>
+                                            <input type="text" className="form-control" name="bic" value={fornitore.bic || ''} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3 col-xs-6">
+                                        <div className="form-group">
+                                            <label>Codice SIA</label>
+                                            <input type="text" className="form-control" name="codSia" value={fornitore.codSia || ''} onChange={handleChange} />
                                         </div>
                                     </div>
                                 </div>
@@ -807,7 +957,7 @@ const FornitoriDetail = () => {
                                                     ))}
                                                 </select>
                                                 <span className="input-group-btn">
-                                                    <button className="btn btn-default btn-wrench" type="button" onClick={() => Swal.fire('Gestione Categorie Spesa', 'Implementazione futura', 'info')}><FaWrench /></button>
+                                                    <button className="btn btn-wrench" type="button" onClick={() => Swal.fire('Gestione Categorie Spesa', 'Implementazione futura', 'info')}><FaWrench /></button>
                                                 </span>
                                             </div>
                                         </div>
@@ -831,7 +981,7 @@ const FornitoriDetail = () => {
                                                     ))}
                                                 </select>
                                                 <span className="input-group-btn">
-                                                    <button className="btn btn-default btn-wrench" type="button" onClick={handleManageVettori}><FaWrench /></button>
+                                                    <button className="btn btn-wrench" type="button" onClick={handleManageVettori}><FaWrench /></button>
                                                 </span>
                                             </div>
                                         </div>
@@ -852,7 +1002,7 @@ const FornitoriDetail = () => {
                                                     ))}
                                                 </select>
                                                 <span className="input-group-btn">
-                                                    <button className="btn btn-default btn-wrench" type="button" onClick={handleManageTipiPorto}><FaWrench /></button>
+                                                    <button className="btn btn-wrench" type="button" onClick={handleManageTipiPorto}><FaWrench /></button>
                                                 </span>
                                             </div>
                                         </div>
@@ -880,7 +1030,7 @@ const FornitoriDetail = () => {
                                             ))}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button className="btn btn-default btn-wrench" type="button" onClick={handleManageAvvisi}><FaWrench /></button>
+                                            <button className="btn btn-wrench" type="button" onClick={handleManageAvvisi}><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
@@ -901,7 +1051,7 @@ const FornitoriDetail = () => {
                                             ))}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button className="btn btn-default btn-wrench" type="button" onClick={handleManageNoteDocumenti}><FaWrench /></button>
+                                            <button className="btn btn-wrench" type="button" onClick={handleManageNoteDocumenti}><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
