@@ -1,43 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import FornitoriService from '../../services/FornitoriService';
+import CausaliMovimentoArticoliService from '../../services/CausaliMovimentoArticoliService';
 import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
-import FornitoreEditModal from './FornitoreEditModal';
 
-const FornitoriManagementModal = ({ onClose }) => {
+const CausaliManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pageSize, setPageSize] = useState(10); // Default to smaller page size for modal
+    const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [totalItems, setTotalItems] = useState(0);
 
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedId, setSelectedId] = useState(null);
-
     useEffect(() => {
         loadData();
-    }, [currentPage, pageSize, searchTerm]); // Reload on pagination/search change
+    }, [currentPage, pageSize, searchTerm]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            // Use getList which supports pagination and search
             const params = {
                 search: searchTerm,
                 start: (currentPage - 1) * pageSize,
                 length: pageSize,
-                orderColumn: 1, // Sort by Denominazione by default
+                orderColumn: 1, // Sort by Descrizione
                 orderDir: 'asc'
             };
-            const res = await FornitoriService.getList(params);
+            const res = await CausaliMovimentoArticoliService.getList(params);
             if (res.data) {
                 setList(res.data.list || []);
                 setTotalItems(res.data.totalCount || 0);
             }
         } catch (error) {
-            console.error("Error loading fornitori:", error);
-            Swal.fire('Errore', 'Impossibile caricare i fornitori', 'error');
+            console.error("Error loading causali:", error);
+            Swal.fire('Errore', 'Impossibile caricare le causali', 'error');
         } finally {
             setLoading(false);
         }
@@ -46,7 +41,7 @@ const FornitoriManagementModal = ({ onClose }) => {
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "Il fornitore verrà eliminato.",
+            text: "La causale verrà eliminata.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sì, elimina',
@@ -55,9 +50,9 @@ const FornitoriManagementModal = ({ onClose }) => {
 
         if (result.isConfirmed) {
             try {
-                await FornitoriService.delete(id);
+                await CausaliMovimentoArticoliService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Fornitore eliminato.', 'success');
+                Swal.fire('Eliminata!', 'Causale eliminata.', 'success');
             } catch (error) {
                 Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
             }
@@ -65,39 +60,82 @@ const FornitoriManagementModal = ({ onClose }) => {
     };
 
     const handleEdit = (item) => {
-        setSelectedId(item.id);
-        setShowEditModal(true);
+        openDetailModal(item);
     };
 
     const handleAdd = () => {
-        setSelectedId(null);
-        setShowEditModal(true);
+        openDetailModal({ id: null, descrizione: '' });
     };
 
-    // Calculate pagination details
+    const openDetailModal = (item) => {
+        const isNew = !item.id;
+        Swal.fire({
+            title: isNew ? 'Nuova Causale' : 'Modifica Causale',
+            html: `
+                <div style="text-align: left;">
+                    <div class="form-group">
+                        <label>Descrizione</label>
+                        <input id="swal-descrizione" class="form-control" value="${item.descrizione || ''}" placeholder="Inserisci descrizione">
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Salva',
+            cancelButtonText: 'Annulla',
+            preConfirm: async () => {
+                const descrizione = document.getElementById('swal-descrizione').value;
+
+                if (!descrizione) {
+                    Swal.showValidationMessage('La descrizione è obbligatoria');
+                    return false;
+                }
+
+                try {
+                    if (isNew) {
+                        await CausaliMovimentoArticoliService.create(descrizione);
+                    } else {
+                        await CausaliMovimentoArticoliService.update(item.id, descrizione);
+                    }
+                    return true;
+                } catch (error) {
+                    let errorMsg = 'Errore durante il salvataggio';
+                    if (error.response && error.response.data && error.response.data.errorText) {
+                        errorMsg = error.response.data.errorText;
+                    }
+                    Swal.showValidationMessage(errorMsg);
+                    return false;
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                loadData();
+                Swal.fire('Salvata!', 'Operazione completata con successo.', 'success');
+            }
+        });
+    };
+
     const totalPages = Math.ceil(totalItems / pageSize);
     const startIdx = (currentPage - 1) * pageSize;
 
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
-            <div className="modal-dialog modal-lg">
+            <div className="modal-dialog modal-md">
                 <div className="modal-content">
                     <div className="modal-header">
                         <button type="button" className="close" onClick={onClose}>&times;</button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Fornitori</h4>
+                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Causali Movimento</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', padding: '25px' }}>
-                        {/* Toolbar */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
                             <button className="btn-premium-save" style={{ margin: 0, padding: '10px 20px', fontSize: '14px' }} onClick={handleAdd}>
-                                <FaPlus style={{ marginRight: '8px' }} /> Nuovo Fornitore
+                                <FaPlus style={{ marginRight: '8px' }} /> Nuova Causale
                             </button>
-                            <div style={{ position: 'relative', flex: '0 0 300px' }}>
+                            <div style={{ position: 'relative', flex: '0 0 250px' }}>
                                 <input
                                     type="text"
                                     className="form-control"
                                     style={{ borderRadius: '10px', paddingRight: '35px', height: '40px' }}
-                                    placeholder="Cerca fornitore..."
+                                    placeholder="Cerca causale..."
                                     value={searchTerm}
                                     onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                                 />
@@ -105,22 +143,19 @@ const FornitoriManagementModal = ({ onClose }) => {
                             </div>
                         </div>
 
-                        {/* Table */}
                         <div className="table-responsive" style={{ border: 'none' }}>
                             <table className="table" style={{ borderCollapse: 'separate', borderSpacing: '0 10px' }}>
                                 <thead>
                                     <tr style={{ background: '#f8f9fa' }}>
-                                        <th style={{ border: 'none', borderRadius: '10px 0 0 10px', padding: '12px 15px' }}>CODICE</th>
-                                        <th style={{ border: 'none', padding: '12px 15px' }}>DENOMINAZIONE</th>
-                                        <th style={{ border: 'none', borderRadius: '0 100px 100px 0', padding: '12px 15px', width: '120px', textAlign: 'center' }}>AZIONI</th>
+                                        <th style={{ border: 'none', borderRadius: '10px 0 0 10px', padding: '12px 15px' }}>DESCRIZIONE</th>
+                                        <th style={{ border: 'none', borderRadius: '0 10px 10px 0', padding: '12px 15px', width: '120px', textAlign: 'center' }}>AZIONI</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {list.length > 0 ? (
                                         list.map(item => (
                                             <tr key={item.id} style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderRadius: '10px' }}>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px', fontWeight: '500' }}>{item.codice}</td>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff' }}>{item.denominazione}</td>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px' }}>{item.descrizione}</td>
                                                 <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
                                                     <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                                                         <button
@@ -145,14 +180,13 @@ const FornitoriManagementModal = ({ onClose }) => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="3" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun fornitore trovato</td>
+                                            <td colSpan="2" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessuna causale trovata</td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
 
-                        {/* Pagination */}
                         {totalItems > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '0 10px' }}>
                                 <small style={{ color: '#777' }}>Visualizzati {startIdx + 1} - {Math.min(startIdx + pageSize, totalItems)} di {totalItems}</small>
@@ -184,14 +218,8 @@ const FornitoriManagementModal = ({ onClose }) => {
                     </div>
                 </div>
             </div>
-            <FornitoreEditModal
-                isOpen={showEditModal}
-                onClose={() => setShowEditModal(false)}
-                fornitoreId={selectedId}
-                onSave={loadData}
-            />
         </div>
     );
 };
 
-export default FornitoriManagementModal;
+export default CausaliManagementModal;

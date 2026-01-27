@@ -285,7 +285,7 @@ const AliquoteIvaManagementModal = ({ onClose }) => {
                             </div>
                         </div>
 
-                        <table className="table table-striped table-bordered table-hover">
+                        <table className="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th style={{ width: '20%', cursor: 'pointer' }} onClick={() => handleSort('codice')}>

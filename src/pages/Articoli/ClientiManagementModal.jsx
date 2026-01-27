@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import FornitoriService from '../../services/FornitoriService';
+import ClientiService from '../../services/ClientiService';
 import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
-import FornitoreEditModal from './FornitoreEditModal';
+import ClienteEditModal from './ClienteEditModal';
 
-const FornitoriManagementModal = ({ onClose }) => {
+const ClientiManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pageSize, setPageSize] = useState(10); // Default to smaller page size for modal
+    const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [totalItems, setTotalItems] = useState(0);
@@ -17,27 +17,26 @@ const FornitoriManagementModal = ({ onClose }) => {
 
     useEffect(() => {
         loadData();
-    }, [currentPage, pageSize, searchTerm]); // Reload on pagination/search change
+    }, [currentPage, pageSize, searchTerm]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            // Use getList which supports pagination and search
             const params = {
                 search: searchTerm,
                 start: (currentPage - 1) * pageSize,
                 length: pageSize,
-                orderColumn: 1, // Sort by Denominazione by default
+                orderColumn: 1, // Sort by Denominazione
                 orderDir: 'asc'
             };
-            const res = await FornitoriService.getList(params);
+            const res = await ClientiService.getList(params);
             if (res.data) {
                 setList(res.data.list || []);
                 setTotalItems(res.data.totalCount || 0);
             }
         } catch (error) {
-            console.error("Error loading fornitori:", error);
-            Swal.fire('Errore', 'Impossibile caricare i fornitori', 'error');
+            console.error("Error loading clienti:", error);
+            Swal.fire('Errore', 'Impossibile caricare i clienti', 'error');
         } finally {
             setLoading(false);
         }
@@ -46,7 +45,7 @@ const FornitoriManagementModal = ({ onClose }) => {
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "Il fornitore verrà eliminato.",
+            text: "Il cliente verrà eliminato.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sì, elimina',
@@ -55,9 +54,9 @@ const FornitoriManagementModal = ({ onClose }) => {
 
         if (result.isConfirmed) {
             try {
-                await FornitoriService.delete(id);
+                await ClientiService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Fornitore eliminato.', 'success');
+                Swal.fire('Eliminato!', 'Cliente eliminato.', 'success');
             } catch (error) {
                 Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
             }
@@ -74,7 +73,6 @@ const FornitoriManagementModal = ({ onClose }) => {
         setShowEditModal(true);
     };
 
-    // Calculate pagination details
     const totalPages = Math.ceil(totalItems / pageSize);
     const startIdx = (currentPage - 1) * pageSize;
 
@@ -84,20 +82,20 @@ const FornitoriManagementModal = ({ onClose }) => {
                 <div className="modal-content">
                     <div className="modal-header">
                         <button type="button" className="close" onClick={onClose}>&times;</button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Fornitori</h4>
+                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Clienti</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', padding: '25px' }}>
                         {/* Toolbar */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
                             <button className="btn-premium-save" style={{ margin: 0, padding: '10px 20px', fontSize: '14px' }} onClick={handleAdd}>
-                                <FaPlus style={{ marginRight: '8px' }} /> Nuovo Fornitore
+                                <FaPlus style={{ marginRight: '8px' }} /> Nuovo Cliente
                             </button>
                             <div style={{ position: 'relative', flex: '0 0 300px' }}>
                                 <input
                                     type="text"
                                     className="form-control"
                                     style={{ borderRadius: '10px', paddingRight: '35px', height: '40px' }}
-                                    placeholder="Cerca fornitore..."
+                                    placeholder="Cerca cliente..."
                                     value={searchTerm}
                                     onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                                 />
@@ -145,7 +143,7 @@ const FornitoriManagementModal = ({ onClose }) => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="3" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun fornitore trovato</td>
+                                            <td colSpan="3" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun cliente trovato</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -184,14 +182,14 @@ const FornitoriManagementModal = ({ onClose }) => {
                     </div>
                 </div>
             </div>
-            <FornitoreEditModal
+            <ClienteEditModal
                 isOpen={showEditModal}
                 onClose={() => setShowEditModal(false)}
-                fornitoreId={selectedId}
+                clienteId={selectedId}
                 onSave={loadData}
             />
         </div>
     );
 };
 
-export default FornitoriManagementModal;
+export default ClientiManagementModal;

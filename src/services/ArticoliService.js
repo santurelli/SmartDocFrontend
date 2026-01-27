@@ -5,6 +5,16 @@ class ArticoliService {
         return api.post('/articoli/list', params);
     }
 
+    getSuggestion(search) {
+        return this.getList({
+            start: 0,
+            length: 20,
+            search: search,
+            orderColumn: 1,
+            orderDir: 'asc'
+        });
+    }
+
     getById(id) {
         return api.get(`/articoli/${id}`);
     }

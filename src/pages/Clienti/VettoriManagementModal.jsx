@@ -202,7 +202,7 @@ const VettoriManagementModal = ({ onClose }) => {
                         </div>
 
                         {/* Table */}
-                        <table className="table table-striped table-bordered table-hover">
+                        <table className="table table-striped table-hover">
                             <thead>
                                 <tr>
                                     <th style={{ verticalAlign: 'middle' }}>DESCRIZIONE</th>

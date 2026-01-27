@@ -9,6 +9,9 @@ import ToniArticoloService from '../../services/ToniArticoloService';
 import CalibriArticoloService from '../../services/CalibriArticoloService';
 import AuthService from '../../services/authService';
 import AsyncSelect from 'react-select/async';
+import CaricoMagazzinoModal from './CaricoMagazzinoModal';
+import ScaricoMagazzinoModal from './ScaricoMagazzinoModal';
+import RettificaMagazzinoModal from './RettificaMagazzinoModal';
 import './ArticoliList.css';
 
 const ArticoliList = () => {
@@ -23,6 +26,10 @@ const ArticoliList = () => {
     const [sortCol, setSortCol] = useState(1);
     const [sortDir, setSortDir] = useState('asc');
     const [activeDropdownId, setActiveDropdownId] = useState(null);
+    const [showCaricoModal, setShowCaricoModal] = useState(false);
+    const [showScaricoModal, setShowScaricoModal] = useState(false);
+    const [showRettificaModal, setShowRettificaModal] = useState(false);
+    const [selectedArticle, setSelectedArticle] = useState(null);
 
     // Advanced Search State
     const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
@@ -185,8 +192,59 @@ const ArticoliList = () => {
         }
     };
 
+    const handleCaricoClick = (art) => {
+        setSelectedArticle(art);
+        setShowCaricoModal(true);
+        setActiveDropdownId(null);
+    };
+
+    const handleCloseCaricoModal = () => {
+        setShowCaricoModal(false);
+        setSelectedArticle(null);
+    };
+
+    const handleScaricoClick = (art) => {
+        setSelectedArticle(art);
+        setShowScaricoModal(true);
+        setActiveDropdownId(null);
+    };
+
+    const handleCloseScaricoModal = () => {
+        setShowScaricoModal(false);
+        setSelectedArticle(null);
+    };
+
+    const handleRettificaClick = (art) => {
+        setSelectedArticle(art);
+        setShowRettificaModal(true);
+        setActiveDropdownId(null);
+    };
+
+    const handleCloseRettificaModal = () => {
+        setShowRettificaModal(false);
+        setSelectedArticle(null);
+    };
+
     return (
         <div className="container-fluid page-content">
+            <CaricoMagazzinoModal
+                show={showCaricoModal}
+                handleClose={handleCloseCaricoModal}
+                article={selectedArticle}
+                refreshList={fetchArticoli}
+            />
+            <ScaricoMagazzinoModal
+                show={showScaricoModal}
+                handleClose={handleCloseScaricoModal}
+                article={selectedArticle}
+                refreshList={fetchArticoli}
+            />
+            <RettificaMagazzinoModal
+                show={showRettificaModal}
+                handleClose={handleCloseRettificaModal}
+                article={selectedArticle}
+                refreshList={fetchArticoli}
+            />
             <div className="header-row">
                 <div className="breadcrumb">
                     <a href="/">Home</a> / <span>Elenco articoli</span>
@@ -383,11 +441,11 @@ const ArticoliList = () => {
                                                             <div className="custom-dropdown-menu">
                                                                 <div className="dropdown-item" onClick={() => navigate(`/articoli/${art.id}`)}>Modifica</div>
                                                                 <div className="dropdown-divider"></div>
-                                                                <div className="dropdown-item">Carica</div>
-                                                                <div className="dropdown-item">Scarica</div>
-                                                                <div className="dropdown-item">Rettifica</div>
+                                                                <div className="dropdown-item" onClick={() => handleCaricoClick(art)}>Carica</div>
+                                                                <div className="dropdown-item" onClick={() => handleScaricoClick(art)}>Scarica</div>
+                                                                <div className="dropdown-item" onClick={() => handleRettificaClick(art)}>Rettifica</div>
                                                                 <div className="dropdown-divider"></div>
-                                                                <div className="dropdown-item">Movimenti magazzino</div>
+                                                                <div className="dropdown-item" onClick={() => navigate('/articoli/movimenti', { state: { filterByArticle: { value: art.id, label: `${art.codice} - ${art.descrizione}` } } })}>Movimenti magazzino</div>
                                                             </div>
                                                         )}
                                                     </div>

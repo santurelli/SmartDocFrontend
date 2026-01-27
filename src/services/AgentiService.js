@@ -1,13 +1,9 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8080/smartdoc/agentiService'; // Check correct endpoint from legacy or new logic
+import api from './api';
 
 class AgentiService {
-    getSuggestion(query) {
-        return axios.get(`${API_URL}/getSuggestion`, { params: { q: query } });
+    getAll() {
+        return api.get('/risorse/combo?tipologia=AG');
     }
-
-    // Add other methods if needed
 }
 
 export default new AgentiService();

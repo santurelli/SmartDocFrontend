@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AsyncSelect from 'react-select/async';
+import Select from 'react-select';
 import PreventiviService from '../../services/PreventiviService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
@@ -29,14 +31,53 @@ const PreventiviList = () => {
     const [sortDir, setSortDir] = useState('asc');
 
     // Dropdowns data
-    const [clientiOptions, setClientiOptions] = useState([]); // Or use async select
     const [agentiOptions, setAgentiOptions] = useState([]);
 
+    // Selected objects for React Select
+    const [selectedCliente, setSelectedCliente] = useState(null);
+    const [selectedAgente, setSelectedAgente] = useState(null);
+
     useEffect(() => {
-        // Load initial data for filters (or just rely on Typeahead/Select2 logic if implemented)
-        // For simplicity, we might load list on mount.
+        // Load initial data
+        loadAgenti();
         fetchPreventivi();
     }, [currentPage, pageSize, sortCol, sortDir]);
+
+    const loadAgenti = async () => {
+        try {
+            const res = await AgentiService.getAll();
+            if (res.data && Array.isArray(res.data)) {
+                const options = res.data.map(a => ({
+                    value: a.id,
+                    label: a.descrizione || a.nome
+                }));
+                setAgentiOptions(options);
+            }
+        } catch (error) {
+            console.error("Error loading agenti:", error);
+        }
+    };
+
+    const loadClientiOptions = (inputValue, callback) => {
+        if (!inputValue || inputValue.length < 3) {
+            callback([]);
+            return;
+        }
+        ClientiService.getSuggestion(inputValue).then(res => {
+            if (res.data) {
+                const options = res.data.map(c => ({
+                    value: c.id,
+                    label: c.denominazione
+                }));
+                callback(options);
+            } else {
+                callback([]);
+            }
+        }).catch(err => {
+            console.error("Error loading clienti:", err);
+            callback([]);
+        });
+    };
 
     const fetchPreventivi = async () => {
         setLoading(true);
@@ -123,17 +164,52 @@ const PreventiviList = () => {
                         <header className="main-box-header clearfix">
                             {/* Filter Block - simplified version */}
                             <div className="filter-block">
-                                <form className="form-inline" onSubmit={handleSearch}>
+                                <form className="form-inline" onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', flexWrap: 'wrap' }}>
                                     <div className="form-group">
-                                        <label>Dal: </label>
-                                        <input type="date" className="form-control" value={dtFrom} onChange={e => setDtFrom(e.target.value)} />
+                                        <label style={{ display: 'block', marginBottom: '5px' }}>Dal: </label>
+                                        <input type="date" className="form-control" value={dtFrom} onChange={e => setDtFrom(e.target.value)} style={{ height: '38px' }} />
                                     </div>
-                                    <div className="form-group" style={{ marginLeft: '10px' }}>
-                                        <label>Al: </label>
-                                        <input type="date" className="form-control" value={dtTo} onChange={e => setDtTo(e.target.value)} />
+                                    <div className="form-group">
+                                        <label style={{ display: 'block', marginBottom: '5px' }}>Al: </label>
+                                        <input type="date" className="form-control" value={dtTo} onChange={e => setDtTo(e.target.value)} style={{ height: '38px' }} />
                                     </div>
-                                    {/* Client/Agent Selects would go here, maybe AsyncSelect */}
-                                    <button type="submit" className="btn btn-primary pull-right" style={{ marginLeft: '10px' }}>
+                                    <div className="form-group" style={{ minWidth: '250px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px' }}>Cliente: </label>
+                                        <AsyncSelect
+                                            cacheOptions
+                                            defaultOptions
+                                            loadOptions={loadClientiOptions}
+                                            onChange={(opt) => {
+                                                setSelectedCliente(opt);
+                                                setIdCliente(opt ? opt.value : '');
+                                            }}
+                                            value={selectedCliente}
+                                            placeholder="Cerca cliente..."
+                                            isClearable
+                                            styles={{
+                                                control: (base) => ({ ...base, minHeight: '38px' }),
+                                                menu: (base) => ({ ...base, zIndex: 9999 })
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ minWidth: '200px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px' }}>Agente: </label>
+                                        <Select
+                                            options={agentiOptions}
+                                            onChange={(opt) => {
+                                                setSelectedAgente(opt);
+                                                setIdAgente(opt ? opt.value : '');
+                                            }}
+                                            value={selectedAgente}
+                                            placeholder="Seleziona agente..."
+                                            isClearable
+                                            styles={{
+                                                control: (base) => ({ ...base, minHeight: '38px' }),
+                                                menu: (base) => ({ ...base, zIndex: 9999 })
+                                            }}
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn btn-primary" style={{ height: '38px' }}>
                                         <FaSearch /> Cerca
                                     </button>
                                 </form>

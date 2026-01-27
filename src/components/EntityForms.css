@@ -1,0 +1,279 @@
+/* Shared styles for Fornitore and Cliente forms - Responsive Refined */
+
+.entity-form-shared .row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: -10px;
+    margin-left: -10px;
+}
+
+.entity-form-shared .col-md-1,
+.entity-form-shared .col-md-2,
+.entity-form-shared .col-md-3,
+.entity-form-shared .col-md-4,
+.entity-form-shared .col-md-5,
+.entity-form-shared .col-md-6,
+.entity-form-shared .col-md-7,
+.entity-form-shared .col-md-8,
+.entity-form-shared .col-md-9,
+.entity-form-shared .col-md-10,
+.entity-form-shared .col-md-11,
+.entity-form-shared .col-md-12 {
+    position: relative;
+    width: 100%;
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+/* Desktop sizing (approximate bootstrap mapping) */
+@media (min-width: 768px) {
+    .entity-form-shared .col-md-1 {
+        flex: 0 0 8.333333%;
+        max-width: 8.333333%;
+    }
+
+    .entity-form-shared .col-md-2 {
+        flex: 0 0 16.666667%;
+        max-width: 16.666667%;
+    }
+
+    .entity-form-shared .col-md-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+
+    .entity-form-shared .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+
+    .entity-form-shared .col-md-5 {
+        flex: 0 0 41.666667%;
+        max-width: 41.666667%;
+    }
+
+    .entity-form-shared .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    .entity-form-shared .col-md-7 {
+        flex: 0 0 58.333333%;
+        max-width: 58.333333%;
+    }
+
+    .entity-form-shared .col-md-8 {
+        flex: 0 0 66.666667%;
+        max-width: 66.666667%;
+    }
+
+    .entity-form-shared .col-md-9 {
+        flex: 0 0 75%;
+        max-width: 75%;
+    }
+
+    .entity-form-shared .col-md-10 {
+        flex: 0 0 83.333333%;
+        max-width: 83.333333%;
+    }
+
+    .entity-form-shared .col-md-11 {
+        flex: 0 0 91.666667%;
+        max-width: 91.666667%;
+    }
+
+    .entity-form-shared .col-md-12 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* Mobile Stacking */
+@media (max-width: 767px) {
+    .entity-form-shared .row {
+        flex-direction: column;
+    }
+
+    .entity-form-shared [class*="col-md-"] {
+        margin-bottom: 10px;
+    }
+}
+
+.nav-tabs-custom {
+    border-bottom: 2px solid #eee;
+    margin-bottom: 25px;
+    display: flex;
+    overflow-x: auto;
+}
+
+.nav-tabs-custom>li {
+    list-style: none;
+}
+
+.nav-tabs-custom>li>a {
+    color: #888;
+    border-radius: 0;
+    padding: 12px 20px;
+    display: block;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+}
+
+.nav-tabs-custom>li.active>a {
+    color: #03a9f4;
+    font-weight: 700;
+    border-bottom: 2px solid #03a9f4;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+    color: #333;
+    font-size: 13px;
+}
+
+.form-group label.required::after {
+    content: " *";
+    color: #f44336;
+}
+
+.form-control {
+    border-radius: 4px;
+    box-shadow: none;
+    border: 1px solid #dcdcdc;
+    height: 38px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #333;
+    background-color: #fff;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: #03a9f4;
+    box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.15);
+    outline: 0;
+}
+
+.smart-tabs-container {
+    margin-bottom: 15px;
+}
+
+.smart-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.smart-tab {
+    background: #f0f0f0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 13px;
+    position: relative;
+    padding-right: 32px;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.smart-tab.active {
+    background: #03a9f4;
+    color: white;
+    border-color: #03a9f4;
+    box-shadow: 0 2px 5px rgba(3, 169, 244, 0.3);
+}
+
+.smart-tab .remove-tab {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+.btn-add-tab {
+    background: #66bb6a;
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.smart-fields-panel {
+    background: #fcfcfc;
+    border: 1px solid #f0f0f0;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+
+.input-group {
+    display: flex;
+    width: 100%;
+}
+
+.input-group .form-control {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group-btn {
+    display: flex;
+}
+
+.input-group-btn>.btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+}
+
+.btn-default {
+    background-color: #fff;
+    border: 1px solid #dcdcdc;
+    color: #666;
+    height: 38px;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.btn-primary-custom {
+    background-color: #03a9f4;
+    border-color: #03a9f4;
+    color: white;
+    height: 38px;
+    padding: 0 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+/* Modal Enforcements */
+@media (min-width: 992px) {
+    .premium-modal .modal-dialog.modal-xl {
+        width: 95%;
+        max-width: 1400px;
+        /* Even wider for desktop */
+    }
+}

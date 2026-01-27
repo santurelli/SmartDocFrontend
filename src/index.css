@@ -100,6 +100,13 @@ button:focus-visible {
   padding: 30px;
 }
 
+.premium-modal form {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
 .premium-modal .modal-footer {
   padding: 20px 30px;
   border-top: 1px solid #eee;
@@ -147,7 +154,7 @@ button:focus-visible {
 .premium-modal .table {
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid #eee;
+  border: none;
 }
 
 .premium-modal .table thead th {
@@ -394,4 +401,51 @@ button:focus-visible {
   background-color: #7f8c8d;
   transform: translateY(-1px);
   color: white;
+}
+
+.premium-modal form {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Modal Article Detail under Title */
+.premium-modal .modal-header-article {
+  font-size: 13px;
+  color: #777 !important;
+  margin-top: 5px;
+  font-weight: 400;
+}
+
+/* Wrench Button for Input Groups - Premium Version */
+.premium-wrench-btn {
+  background-color: #03a9f4;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 0 8px 8px 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 16px;
+  padding: 0;
+  margin: 0;
+}
+
+.premium-wrench-btn:hover {
+  background-color: #0288d1;
+}
+
+.premium-modal .input-group {
+  display: flex !important;
+  width: 100% !important;
+  align-items: stretch !important;
+}
+
+.premium-modal .input-group>div:first-child {
+  flex: 1 !important;
 }
