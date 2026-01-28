@@ -5,31 +5,36 @@
 }
 
 /* Header Styles */
+/* Header Styles (Icon Style) */
 #content-header {
-    margin-bottom: 20px;
+    display: none;
 }
 
-#content-header .breadcrumb {
+h1 {
+    font-size: 28px;
+    font-weight: 300;
+    margin: 0;
+    margin-bottom: 30px;
+    margin-left: 20px;
+    color: #3498db;
+    /* Legacy blue title */
+}
+
+.breadcrumb {
     background-color: transparent;
     padding: 0;
     margin-bottom: 10px;
     font-size: 12px;
+    margin-left: 20px;
 }
 
-#content-header .breadcrumb li a {
-    color: #3f3f3f;
+.breadcrumb li a {
+    color: #999;
     text-decoration: none;
 }
 
-#content-header .breadcrumb li.active {
+.breadcrumb li.active {
     color: #999;
-}
-
-#content-header h1 {
-    font-size: 24px;
-    font-weight: 300;
-    margin: 0;
-    color: #303030;
 }
 
 /* Main Box Styles */

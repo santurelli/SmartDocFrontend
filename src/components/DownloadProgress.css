@@ -1,0 +1,62 @@
+.download-progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.download-progress-container {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    width: 400px;
+}
+
+.download-progress-header h3 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: #34495e;
+    font-weight: 600;
+}
+
+.download-progress-header p {
+    color: #7f8c8d;
+    margin-bottom: 30px;
+}
+
+.thin-progress {
+    height: 8px;
+    background-color: #f1f2f7;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.indeterminate-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 30%;
+    background-color: #3498db;
+    border-radius: 4px;
+    animation: indeterminate-loop 1.5s infinite linear;
+}
+
+@keyframes indeterminate-loop {
+    0% {
+        left: -30%;
+    }
+
+    100% {
+        left: 100%;
+    }
+}

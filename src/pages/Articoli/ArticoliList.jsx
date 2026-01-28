@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ArticoliService from '../../services/ArticoliService';
 import CategorieArticoliService from '../../services/CategorieArticoliService';
 import { useNavigate } from 'react-router-dom';
-import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash } from 'react-icons/fa';
+import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash, FaHome, FaAngleRight } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import FornitoriService from '../../services/FornitoriService';
 import ToniArticoloService from '../../services/ToniArticoloService';
@@ -245,12 +245,11 @@ const ArticoliList = () => {
                 article={selectedArticle}
                 refreshList={fetchArticoli}
             />
-            <div className="header-row">
-                <div className="breadcrumb">
-                    <a href="/">Home</a> / <span>Elenco articoli</span>
-                </div>
-                <h1>Elenco articoli</h1>
-            </div>
+            <ul className="breadcrumb">
+                <li><a href="/"><FaHome /> Home</a></li>
+                <li className="active">Elenco articoli</li>
+            </ul>
+            <h1>Elenco articoli</h1>
 
             <div className="main-box">
                 <div className="main-box-header">

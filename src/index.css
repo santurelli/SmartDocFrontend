@@ -29,11 +29,14 @@ a:hover {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
+  overflow-y: auto !important;
+  /* Forces only one scrollbar at the top level */
 }
 
 h1 {

@@ -4,6 +4,38 @@
     padding-bottom: 50px;
 }
 
+/* Header Styles (Icon Style) */
+#content-header {
+    display: none;
+}
+
+h1 {
+    font-size: 28px;
+    font-weight: 300;
+    margin: 0;
+    margin-bottom: 30px;
+    margin-left: 20px;
+    color: #3498db;
+    /* Legacy blue title */
+}
+
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 10px;
+    font-size: 12px;
+    margin-left: 20px;
+}
+
+.breadcrumb li a {
+    color: #999;
+    text-decoration: none;
+}
+
+.breadcrumb li.active {
+    color: #999;
+}
+
 /* Reuse styles from ClientiList or generic table styles */
 .btn-paginate {
     border: 1px solid #ddd;

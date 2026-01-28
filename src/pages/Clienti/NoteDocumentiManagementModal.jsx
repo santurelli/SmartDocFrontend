@@ -193,7 +193,7 @@ const NoteDocumentiManagementModal = ({ onClose }) => {
                                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                                     />
                                 </div>
-                                <button className="btn btn-primary" onClick={handleAdd}>
+                                <button type="button" className="btn btn-primary" onClick={handleAdd}>
                                     <FaPlus /> Aggiungi
                                 </button>
                             </div>
@@ -213,10 +213,10 @@ const NoteDocumentiManagementModal = ({ onClose }) => {
                                         <tr key={item.id}>
                                             <td style={{ verticalAlign: 'middle' }}>{item.descrizione}</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                                                <button className="btn btn-info btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
+                                                <button type="button" className="btn btn-info btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
                                                     <FaPencilAlt />
                                                 </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
+                                                <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
                                                     <FaTrash />
                                                 </button>
                                             </td>

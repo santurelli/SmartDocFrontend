@@ -9,6 +9,7 @@ import Header from './components/Header';
 import ClientiList from './pages/Clienti/ClientiList';
 import ArticoliList from './pages/Articoli/ArticoliList';
 import MovimentiList from './pages/Articoli/MovimentiList';
+import InventarioMagazzinoList from './pages/Articoli/InventarioMagazzinoList';
 import ArticoliDetail from './pages/Articoli/ArticoliDetail';
 import ClientiDetail from './pages/Clienti/ClientiDetail';
 import PreventiviList from './pages/Preventivi/PreventiviList';
@@ -110,6 +111,7 @@ function App() {
                 {/* Add other protected routes here */}
                 <Route path="/articoli" element={<ArticoliList />} />
                 <Route path="/articoli/movimenti" element={<MovimentiList />} />
+                <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />
                 <Route path="/articoli/new" element={<ArticoliDetail />} />
                 <Route path="/articoli/:id" element={<ArticoliDetail />} />
                 <Route path="*" element={<h2>404 Not Found</h2>} />

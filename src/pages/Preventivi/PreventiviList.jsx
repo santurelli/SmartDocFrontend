@@ -6,11 +6,10 @@ import PreventiviService from '../../services/PreventiviService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaFileAlt } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight } from 'react-icons/fa';
 import './PreventiviList.css'; // Assume CSS exists or reuse generic
-// import DateRangePicker from 'react-bootstrap-daterangepicker'; // If available, or use standard date inputs for now
-// Assuming simple date inputs for now as in legacy migration plan to keep it simple or check "ClientiList" dependencies.
-// ClientiList used custom CSS.
+
+// ...
 
 const PreventiviList = () => {
     const navigate = useNavigate();
@@ -150,13 +149,11 @@ const PreventiviList = () => {
 
     return (
         <div className="preventivi-list-container">
-            <div id="content-header">
-                <ol className="breadcrumb">
-                    <li><a href="/">HOME</a></li>
-                    <li className="active">Elenco preventivi</li>
-                </ol>
-                <h1>Elenco preventivi</h1>
-            </div>
+            <ul className="breadcrumb">
+                <li><a href="/"><FaHome /> Home</a></li>
+                <li className="active">Elenco preventivi</li>
+            </ul>
+            <h1>Elenco preventivi</h1>
 
             <div className="row" style={{ margin: '0 10px' }}>
                 <div className="col-lg-12">

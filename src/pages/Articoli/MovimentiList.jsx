@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import MovimentiMagazzinoService from '../../services/MovimentiMagazzinoService';
 import ArticoliService from '../../services/ArticoliService';
-import { FaSearch, FaChevronLeft, FaChevronRight, FaFileExcel } from 'react-icons/fa';
+import DownloadProgress from '../../components/DownloadProgress';
+import { FaSearch, FaChevronLeft, FaChevronRight, FaFileExcel, FaCloudDownloadAlt, FaHome, FaAngleRight } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
+import Swal from 'sweetalert2';
 import './ArticoliList.css'; // Reusing Articoli CSS
 
 const MovimentiList = () => {
     const [movimenti, setMovimenti] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [downloading, setDownloading] = useState(false);
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(50);
     const location = useLocation();
@@ -44,6 +47,23 @@ const MovimentiList = () => {
     }, [page, pageSize, dtFrom, dtTo, selectedArticle]);
 
     const fetchMovimenti = async () => {
+        // Validate Date Range
+        if (dtFrom && dtTo) {
+            const date1 = new Date(dtFrom);
+            const date2 = new Date(dtTo);
+            const diffTime = Math.abs(date2 - date1);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 365) {
+                Swal.fire('Attenzione', 'L\'intervallo di ricerca non può superare i 365 giorni.', 'warning');
+                return;
+            }
+            if (date1 > date2) {
+                Swal.fire('Attenzione', 'La data di inizio non può essere successiva alla data di fine.', 'warning');
+                return;
+            }
+        }
+
         setLoading(true);
         try {
             // Backend expects format DD/MM/YYYY
@@ -60,6 +80,11 @@ const MovimentiList = () => {
                 dtTo: formatDate(dtTo),
                 idProdotto: selectedArticle ? selectedArticle.value : null
             });
+            if (response.errorText) {
+                Swal.fire('Errore', response.errorText, 'error');
+                setMovimenti([]);
+                return;
+            }
             // Backend returns List<MovimentoMagazzinoDto> directly in payload?
             // Yes, GenericResponseDto.payload
             if (response.payload) {
@@ -80,25 +105,54 @@ const MovimentiList = () => {
         setPage(0);
     };
 
-    const handleExport = () => {
-        alert("Export to Excel not yet implemented");
+    const handleExport = async () => {
+        setDownloading(true);
+        try {
+            const formatDate = (isoDate) => {
+                if (!isoDate) return '';
+                const [yyyy, mm, dd] = isoDate.split('-');
+                return `${dd}/${mm}/${yyyy}`;
+            };
+
+            const criteria = {
+                dtFrom: formatDate(dtFrom),
+                dtTo: formatDate(dtTo),
+                idProdotto: selectedArticle ? selectedArticle.value : null
+            };
+
+            const response = await MovimentiMagazzinoService.exportExcel(criteria);
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'movimenti_magazzino.xls');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.error("Export error", error);
+            Swal.fire('Errore', 'Errore durante l\'esportazione excel', 'error');
+        } finally {
+            setDownloading(false);
+        }
     };
 
     return (
         <div className="container-fluid page-content">
-            <div className="header-row">
-                <div className="breadcrumb">
-                    <a href="/">Home</a> / <span>Movimenti magazzino</span>
-                </div>
-                <h1>Movimenti magazzino</h1>
-            </div>
+            <DownloadProgress visible={downloading} />
+            <ul className="breadcrumb">
+                <li><a href="/"><FaHome /> Home</a></li>
+                <li><FaAngleRight /></li>
+                <li className="active">Movimenti magazzino</li>
+            </ul>
+            <h1>Movimenti magazzino</h1>
 
             <div className="main-box">
                 <div className="main-box-header">
                     <div className="filter-block-left">
-                        <div className="btn-group" style={{ marginRight: '10px' }}>
-                            <button type="button" className="btn btn-info" onClick={handleExport}>
-                                <FaFileExcel /> Excel
+                        <div style={{ marginRight: '10px' }}>
+                            <button className="btn btn-cloud" title="Esporta" onClick={handleExport} disabled={downloading}>
+                                {downloading ? <span className="fa fa-spinner fa-spin" /> : <FaCloudDownloadAlt />}
                             </button>
                         </div>
                         <div className="items-per-page" style={{ display: 'inline-block' }}>
@@ -151,6 +205,8 @@ const MovimentiList = () => {
                                     control: (base) => ({ ...base, height: '34px', minHeight: '34px' }),
                                     menu: (base) => ({ ...base, zIndex: 9999 })
                                 }}
+                                noOptionsMessage={({ inputValue }) => inputValue ? "Nessun risultato" : "Cerca articolo..."}
+                                loadingMessage={() => "Caricamento..."}
                             />
                         </div>
                     </div>
@@ -164,8 +220,8 @@ const MovimentiList = () => {
                                     <th>DATA</th>
                                     <th>ARTICOLO</th>
                                     <th>CLIENTE / FORNITORE</th>
-                                    <th className="text-right">CARICATO</th>
-                                    <th className="text-right">SCARICATO</th>
+                                    <th className="text-right" style={{ textAlign: 'right' }}>CARICATO</th>
+                                    <th className="text-right" style={{ textAlign: 'right' }}>SCARICATO</th>
                                     <th>CAUSALE</th>
                                 </tr>
                             </thead>

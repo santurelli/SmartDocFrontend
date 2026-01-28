@@ -20,6 +20,7 @@ import FornitoriManagementModal from './FornitoriManagementModal';
 import { FaSave, FaArrowLeft, FaWrench, FaAngleRight, FaHome } from 'react-icons/fa';
 import AsyncSelect from 'react-select/async';
 import './ArticoliDetail.css';
+import '../../components/EntityForms.css';
 
 const ArticoliDetail = () => {
     const { id } = useParams();
@@ -288,7 +289,7 @@ const ArticoliDetail = () => {
     // Helper for config buttons
     const renderConfigButton = (path) => (
         <span className="input-group-btn">
-            <button className="btn btn-wrench btn-addon" type="button" onClick={() => navigate(path)} title="Gestione tabella">
+            <button className="btn btn-default btn-addon" type="button" onClick={() => navigate(path)} title="Gestione tabella">
                 <FaWrench />
             </button>
         </span>
@@ -296,6 +297,7 @@ const ArticoliDetail = () => {
 
     return (
         <div className="articoli-detail-container">
+            {/* Breadcrumb */}
             {/* Breadcrumb */}
             <ul className="breadcrumb">
                 <li><a href="/"><FaHome /> Home</a></li>
@@ -333,7 +335,7 @@ const ArticoliDetail = () => {
                                         <div className="input-group">
                                             <input type="text" className="form-control" name="codice" value={formData.codice} onChange={handleChange} placeholder="Inserisci codice" />
                                             <span className="input-group-btn">
-                                                <button className="btn btn-primary-custom btn-addon" type="button" onClick={handleGenerateCode}>Genera codice</button>
+                                                <button className="btn btn-default btn-addon" type="button" onClick={handleGenerateCode}>Genera</button>
                                             </span>
                                         </div>
                                     </div>
@@ -378,35 +380,39 @@ const ArticoliDetail = () => {
 
                         <div className="row">
                             <div className="col-xs-12 col-md-4">
-                                <div className="form-group">
-                                    <label>Categoria</label>
-                                    <div className="input-group">
-                                        <select className="form-control" name="idCategoria" value={formData.idCategoria} onChange={handleChange}>
-                                            <option value="">Seleziona...</option>
-                                            {combos.categorie.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
-                                        </select>
-                                        <span className="input-group-btn">
-                                            <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageCategorie} title="Gestione tabella">
-                                                <FaWrench />
-                                            </button>
-                                        </span>
+                                <div style={{ marginRight: 20 }}>
+                                    <div className="form-group">
+                                        <label>Categoria</label>
+                                        <div className="input-group">
+                                            <select className="form-control" name="idCategoria" value={formData.idCategoria} onChange={handleChange}>
+                                                <option value="">Seleziona...</option>
+                                                {combos.categorie.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
+                                            </select>
+                                            <span className="input-group-btn">
+                                                <button className="btn btn-default btn-addon" type="button" onClick={handleManageCategorie} title="Gestione categorie">
+                                                    <FaWrench />
+                                                </button>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             {config.abilitaSottoCategorie && (
                                 <div className="col-xs-12 col-md-4">
-                                    <div className="form-group">
-                                        <label>Sottocategoria</label>
-                                        <div className="input-group">
-                                            <select className="form-control" name="idSottoCategoria" value={formData.idSottoCategoria} onChange={handleChange}>
-                                                <option value="">Seleziona...</option>
-                                                {combos.sottocategorie.map(s => <option key={s.id} value={s.id}>{s.descrizione}</option>)}
-                                            </select>
-                                            <span className="input-group-btn">
-                                                <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageSottoCategorie} title="Gestione tabella">
-                                                    <FaWrench />
-                                                </button>
-                                            </span>
+                                    <div style={{ marginLeft: 20 }}>
+                                        <div className="form-group">
+                                            <label>Sottocategoria</label>
+                                            <div className="input-group">
+                                                <select className="form-control" name="idSottoCategoria" value={formData.idSottoCategoria} onChange={handleChange}>
+                                                    <option value="">Seleziona...</option>
+                                                    {combos.sottocategorie.map(s => <option key={s.id} value={s.id}>{s.descrizione}</option>)}
+                                                </select>
+                                                <span className="input-group-btn">
+                                                    <button className="btn btn-default btn-addon" type="button" onClick={handleManageSottoCategorie} title="Gestione sottocategorie">
+                                                        <FaWrench />
+                                                    </button>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -473,7 +479,7 @@ const ArticoliDetail = () => {
                                                 {combos.unitaMisura.map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
                                             </select>
                                             <span className="input-group-btn">
-                                                <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageUnitaMisura} title="Gestione tabella">
+                                                <button className="btn btn-default btn-addon" type="button" onClick={handleManageUnitaMisura} title="Gestione unità di misura">
                                                     <FaWrench />
                                                 </button>
                                             </span>
@@ -514,7 +520,7 @@ const ArticoliDetail = () => {
                                             {combos.aliquoteIva.map(a => <option key={a.id} value={a.id}>{a.codice} - {a.descrizione}</option>)}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageAliquoteIva} title="Gestione tabella">
+                                            <button className="btn btn-default btn-addon" type="button" onClick={handleManageAliquoteIva} title="Gestione aliquote IVA">
                                                 <FaWrench />
                                             </button>
                                         </span>
@@ -547,8 +553,8 @@ const ArticoliDetail = () => {
                                                 styles={{
                                                     control: (base) => ({
                                                         ...base,
-                                                        height: '34px',
-                                                        minHeight: '34px',
+                                                        height: '38px',
+                                                        minHeight: '38px',
                                                         borderRadius: '3px 0 0 3px',
                                                         borderColor: '#ccc',
                                                         boxShadow: 'none',
@@ -559,7 +565,7 @@ const ArticoliDetail = () => {
                                             />
                                         </div>
                                         <span className="input-group-btn">
-                                            <button className="btn btn-wrench btn-addon" type="button" onClick={handleManageFornitori} title="Gestione tabella">
+                                            <button className="btn btn-default btn-addon" type="button" onClick={handleManageFornitori} title="Gestione fornitori">
                                                 <FaWrench />
                                             </button>
                                         </span>

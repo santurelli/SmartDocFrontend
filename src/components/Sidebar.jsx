@@ -76,8 +76,8 @@ const Sidebar = ({ user }) => {
                                     <FaAngleRight className="drop-icon" />
                                 </a>
                                 <ul className="submenu">
-                                    <li><NavLink to="/magazzino/movimenti">Movimenti</NavLink></li>
-                                    <li><NavLink to="/magazzino/inventario">Inventario</NavLink></li>
+                                    <li><NavLink to="/articoli/movimenti">Movimenti</NavLink></li>
+                                    <li><NavLink to="/articoli/inventario">Inventario</NavLink></li>
                                 </ul>
                             </li>
 
@@ -88,7 +88,7 @@ const Sidebar = ({ user }) => {
                                     <FaAngleRight className="drop-icon" />
                                 </a>
                                 <ul className="submenu">
-                                    <li><NavLink to="/documenti/preventivi">Preventivi</NavLink></li>
+                                    <li><NavLink to="/preventivi">Preventivi</NavLink></li>
                                     <li><NavLink to="/documenti/ddt">Doc. trasporto</NavLink></li>
                                     <li><NavLink to="/documenti/fatture">Fatture/Note debito</NavLink></li>
                                     <li><NavLink to="/documenti/note-credito">Note di credito</NavLink></li>

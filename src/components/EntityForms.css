@@ -1,90 +1,66 @@
 /* Shared styles for Fornitore and Cliente forms - Responsive Refined */
+.entity-form-shared {
+    padding: 20px;
+    overflow-x: hidden;
+    background-color: #fff;
+}
 
 .entity-form-shared .row {
-    display: flex;
-    flex-wrap: wrap;
-    margin-right: -10px;
-    margin-left: -10px;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    margin-right: -10px !important;
+    margin-left: -10px !important;
+    margin-bottom: 15px !important;
+    justify-content: flex-start !important;
 }
 
 .entity-form-shared .col-md-1,
 .entity-form-shared .col-md-2,
 .entity-form-shared .col-md-3,
 .entity-form-shared .col-md-4,
-.entity-form-shared .col-md-5,
 .entity-form-shared .col-md-6,
-.entity-form-shared .col-md-7,
 .entity-form-shared .col-md-8,
 .entity-form-shared .col-md-9,
 .entity-form-shared .col-md-10,
-.entity-form-shared .col-md-11,
 .entity-form-shared .col-md-12 {
     position: relative;
     width: 100%;
-    padding-right: 10px;
-    padding-left: 10px;
+    padding-right: 15px !important;
+    padding-left: 15px !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 /* Desktop sizing (approximate bootstrap mapping) */
 @media (min-width: 768px) {
     .entity-form-shared .col-md-1 {
-        flex: 0 0 8.333333%;
-        max-width: 8.333333%;
+        flex: 0 0 8.333333% !important;
+        max-width: 8.333333% !important;
     }
 
     .entity-form-shared .col-md-2 {
-        flex: 0 0 16.666667%;
-        max-width: 16.666667%;
+        flex: 0 0 16.666667% !important;
+        max-width: 16.666667% !important;
     }
 
     .entity-form-shared .col-md-3 {
-        flex: 0 0 25%;
-        max-width: 25%;
+        flex: 0 0 25% !important;
+        max-width: 25% !important;
     }
 
     .entity-form-shared .col-md-4 {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-    }
-
-    .entity-form-shared .col-md-5 {
-        flex: 0 0 41.666667%;
-        max-width: 41.666667%;
+        flex: 0 0 33.333333% !important;
+        max-width: 33.333333% !important;
     }
 
     .entity-form-shared .col-md-6 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-
-    .entity-form-shared .col-md-7 {
-        flex: 0 0 58.333333%;
-        max-width: 58.333333%;
-    }
-
-    .entity-form-shared .col-md-8 {
-        flex: 0 0 66.666667%;
-        max-width: 66.666667%;
-    }
-
-    .entity-form-shared .col-md-9 {
-        flex: 0 0 75%;
-        max-width: 75%;
-    }
-
-    .entity-form-shared .col-md-10 {
-        flex: 0 0 83.333333%;
-        max-width: 83.333333%;
-    }
-
-    .entity-form-shared .col-md-11 {
-        flex: 0 0 91.666667%;
-        max-width: 91.666667%;
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
     }
 
     .entity-form-shared .col-md-12 {
-        flex: 0 0 100%;
-        max-width: 100%;
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
     }
 }
 
@@ -103,7 +79,6 @@
     border-bottom: 2px solid #eee;
     margin-bottom: 25px;
     display: flex;
-    overflow-x: auto;
 }
 
 .nav-tabs-custom>li {
@@ -128,15 +103,22 @@
 }
 
 .form-group {
-    margin-bottom: 18px;
+    margin-bottom: 15px;
+}
+
+/* Specific override for compact rows to keep them tight */
+.compact-col .form-group {
+    margin-bottom: 0;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     font-weight: 700;
-    color: #333;
-    font-size: 13px;
+    color: #444;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .form-group label.required::after {
@@ -157,10 +139,134 @@
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.form-control.input-sm {
+    height: 30px;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
 .form-control:focus {
     border-color: #03a9f4;
     box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.15);
     outline: 0;
+}
+
+/* Compact Layout System - Refined for clear separation and width control */
+/* FINALIZED TABLE-BASED LAYOUT - Guaranteed separation */
+.compact-row {
+    display: table !important;
+    table-layout: fixed !important;
+    width: auto !important;
+    border-collapse: collapse !important;
+    /* Changed to collapse to use padding for gaps */
+    margin: 0 0 15px 0 !important;
+    padding: 0 !important;
+}
+
+.compact-col {
+    display: table-cell !important;
+    vertical-align: bottom !important;
+    width: 340px !important;
+    /* 310px content + 30px gap */
+    padding-right: 30px !important;
+    /* THE AIR GAP */
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}
+
+/* Broadway 3 / Table Logic for Input Group - Flexible version */
+.compact-col .input-group {
+    display: table !important;
+    width: 100% !important;
+    /* FILL THE ENTIRE COLUMN */
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+}
+
+.compact-col .input-group .form-control {
+    display: table-cell !important;
+    width: 100% !important;
+    /* EXPAND TO AVAILABLE SPACE */
+    height: 38px !important;
+    /* MATCH BUTTON HEIGHT */
+    float: none !important;
+}
+
+.compact-col .input-group-btn {
+    display: table-cell !important;
+    width: 1% !important;
+    /* SHRINK TO BUTTON SIZE */
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    float: none !important;
+}
+
+/* Exact Widths - strictly enforced via table-cell width */
+.compact-col-xs {
+    width: 100px !important;
+}
+
+.compact-col-sm {
+    width: 160px !important;
+}
+
+.compact-col-md {
+    width: 310px !important;
+}
+
+.compact-col-lg {
+    width: 380px !important;
+}
+
+.compact-col-xl {
+    width: 500px !important;
+}
+
+/* REINFORCEMENT: Force input-groups to respect the column width */
+.compact-col-xs .input-group {
+    width: 100px !important;
+    max-width: 100px !important;
+}
+
+.compact-col-sm .input-group {
+    width: 160px !important;
+    max-width: 160px !important;
+}
+
+.compact-col-md .input-group {
+    width: 310px !important;
+    max-width: 310px !important;
+}
+
+.compact-col-lg .input-group {
+    width: 380px !important;
+    max-width: 380px !important;
+}
+
+.compact-col-xl .input-group {
+    width: 500px !important;
+    max-width: 500px !important;
+}
+
+
+/* Clean up old width classes that might be lingering */
+
+@media (max-width: 767px) {
+    .compact-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 15px !important;
+    }
+
+    .compact-col,
+    .compact-col-xs,
+    .compact-col-sm,
+    .compact-col-md,
+    .compact-col-lg,
+    .compact-col-xl {
+        width: 100% !important;
+        margin-right: 0 !important;
+    }
 }
 
 .smart-tabs-container {
@@ -226,24 +332,35 @@
 }
 
 .input-group {
-    display: flex;
-    width: 100%;
+    display: flex !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    /* CONTAINMENT */
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    /* NO CLIPPING */
 }
 
 .input-group .form-control {
-    flex: 1;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    flex: 1 1 0% !important;
+    /* Allow shrinking to 0 if needed */
+    min-width: 0 !important;
+    /* CRITICAL: allow shrinking below content size */
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    height: 38px !important;
+    /* MATCH BUTTON HEIGHT */
 }
 
 .input-group-btn {
-    display: flex;
+    display: flex !important;
+    flex: 0 0 auto !important;
+    /* Button stays fixed size */
 }
 
 .input-group-btn>.btn {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: none;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
 }
 
 .btn-default {
@@ -256,6 +373,24 @@
     align-items: center;
     justify-content: center;
     border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.input-group-btn .btn-default {
+    background-color: #03a9f4 !important;
+    border-color: #03a9f4 !important;
+    color: white !important;
+}
+
+.input-group-btn .btn-default:hover {
+    background-color: #039be5 !important;
+    border-color: #039be5 !important;
+}
+
+.btn-default:hover {
+    background-color: #f5f5f5;
+    border-color: #ccc;
+    color: #333;
 }
 
 .btn-primary-custom {
@@ -274,6 +409,5 @@
     .premium-modal .modal-dialog.modal-xl {
         width: 95%;
         max-width: 1400px;
-        /* Even wider for desktop */
     }
 }

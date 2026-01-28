@@ -38,6 +38,17 @@ const MovimentiMagazzinoService = {
             console.error("Error fetching movimenti list:", error);
             throw error;
         }
+    },
+    exportExcel: async (criteria) => {
+        try {
+            const response = await api.post('/movimenti/export-excel', criteria, {
+                responseType: 'blob' // Use blob for easier handling
+            });
+            return response;
+        } catch (error) {
+            console.error("Error exporting excel:", error);
+            throw error;
+        }
     }
 };
 

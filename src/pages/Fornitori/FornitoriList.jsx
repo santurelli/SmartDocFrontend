@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FornitoriService from '../../services/FornitoriService';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaFileAlt } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight } from 'react-icons/fa';
 import './FornitoriList.css';
+import DownloadProgress from '../../components/DownloadProgress';
 import Swal from 'sweetalert2';
 
 const FornitoriList = () => {
@@ -125,14 +126,13 @@ const FornitoriList = () => {
 
     return (
         <div className="fornitori-list-container">
+            <DownloadProgress visible={downloading} />
             {/* Header Area */}
-            <div id="content-header">
-                <ol className="breadcrumb">
-                    <li><a href="/">HOME</a></li>
-                    <li className="active">Elenco fornitori</li>
-                </ol>
-                <h1>Elenco fornitori</h1>
-            </div>
+            <ul className="breadcrumb">
+                <li><a href="/"><FaHome /> Home</a></li>
+                <li className="active">Elenco fornitori</li>
+            </ul>
+            <h1>Elenco fornitori</h1>
 
             <div className="row" style={{ margin: '0 10px' }}>
                 <div className="col-lg-12">

@@ -8,45 +8,45 @@
 }
 
 /* Header & Breadcrumb */
+/* Header & Breadcrumb (Icon Style) */
 #content-header {
-    background-color: #e9eaec;
-    /* Light grey background like screenshot */
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #d0d0d0;
+    display: none;
+    /* Hide old if accidentally left */
 }
 
-#content-header h1 {
-    color: #303030;
-    /* Darker grey for title */
+h1 {
+    color: #3498db;
+    /* Legacy blue title */
+    font-weight: 300;
+    margin-top: 0;
+    margin-bottom: 30px;
     font-size: 28px;
-    font-weight: 400;
-    margin: 0;
-    padding: 0;
-    float: none;
+    margin-left: 20px;
+    /* Align with list content */
 }
 
-#content-header .breadcrumb {
+.breadcrumb {
     background: transparent;
     padding: 0;
-    margin: 0 0 5px 0;
-    font-size: 11px;
-    text-transform: uppercase;
-    color: #337ab7;
-    /* Link color */
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #999;
+    margin-left: 20px;
+    /* Align with list content */
 }
 
-#content-header .breadcrumb>li>a {
-    color: #337ab7;
+.breadcrumb a {
+    color: #999;
     text-decoration: none;
 }
 
-#content-header .breadcrumb>li>a:hover {
-    text-decoration: underline;
+.breadcrumb>li {
+    display: inline-block;
 }
 
-#content-header .breadcrumb>.active {
-    color: #707070;
+.breadcrumb>li+li:before {
+    content: none;
+    padding: 0;
 }
 
 /* Main Box */

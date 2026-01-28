@@ -55,8 +55,8 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                     ConfigurazioneService.getByDomain('FORNITORI')
                 ]);
 
-                if (avvisi.data) setAvvisiList(avvisi.data);
-                if (notes.data) setNoteDocumentiList(notes.data);
+                if (avvisi.data) setAvvisiList(avvisi.data.filter(a => a.descrizione && a.descrizione.trim() !== ''));
+                if (notes.data) setNoteDocumentiList(notes.data.filter(n => n.descrizione && n.descrizione.trim() !== ''));
                 if (porto.data) setTipiPortoList(porto.data);
                 if (vect.data) setVettoriList(vect.data);
                 if (banks.data) setBancheList(banks.data);
@@ -202,19 +202,30 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
             <div className="tab-content" style={{ padding: '20px 0' }}>
                 {activeTab === 'general' && (
                     <div className="tab-pane active">
-                        <div className="row">
-                            <div className="col-md-4">
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-md">
                                 <div className="form-group">
                                     <label className="required">Codice</label>
                                     <div className="input-group">
                                         <input type="text" className="form-control" name="codice" value={data.codice} onChange={handleFormChange} required />
-                                        <span className="input-group-btn">
-                                            <button className="btn btn-primary-custom" type="button" onClick={generateCodice}>Genera</button>
-                                        </span>
+                                        <div className="input-group-btn">
+                                            <button className="btn btn-default" type="button" onClick={generateCodice} title="Genera codice automatico">Genera</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <div className="compact-col compact-col-md">
+                                <div className="form-group">
+                                    <label className="required">Tipologia</label>
+                                    <select className="form-control" name="tipologia" value={data.tipologia} onChange={handleFormChange} required>
+                                        <option value="PRIVATO">Privato</option>
+                                        <option value="AZIENDA">Azienda</option>
+                                        <option value="PUBBLICA_AMMINISTRAZIONE">P.A.</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
+                        <div className="row" style={{ height: '1px', background: '#eee', margin: '5px 0 20px 0' }}></div>
 
                         <div className="row">
                             <div className="col-md-12">
@@ -348,14 +359,14 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
 
                 {activeTab === 'other' && (
                     <div className="tab-pane active">
-                        <div className="row">
-                            <div className="col-md-6">
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>IBAN</label>
                                     <input type="text" className="form-control" name="iban" value={data.iban || ''} onChange={handleIbanChange} />
                                 </div>
                             </div>
-                            <div className="col-md-6">
+                            <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Banca Fornitore</label>
                                     <input type="text" className="form-control" name="banca" value={data.banca || ''} onChange={handleFormChange} />
@@ -363,39 +374,39 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                             </div>
                         </div>
 
-                        <div className="row">
-                            <div className="col-md-6">
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Avviso</label>
                                     <div className="input-group">
                                         <select className="form-control" name="idAvviso" value={data.idAvviso || ''} onChange={handleFormChange}>
                                             <option value="">Nessuno</option>
-                                            {avvisiList.map(a => <option key={a.id} value={a.id}>{a.testo}</option>)}
+                                            {avvisiList.map(a => <option key={a.id} value={a.id}>{a.descrizione}</option>)}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowAvvisiModal(true)}><FaWrench /></button>
+                                            <button type="button" className="btn btn-default" onClick={() => setShowAvvisiModal(true)} title="Gestisci avvisi"><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-md-6">
+                            <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Nota Documento</label>
                                     <div className="input-group">
                                         <select className="form-control" name="idNota" value={data.idNota || ''} onChange={handleFormChange}>
                                             <option value="">Nessuna</option>
-                                            {noteDocumentiList.map(n => <option key={n.id} value={n.id}>{n.testo}</option>)}
+                                            {noteDocumentiList.map(n => <option key={n.id} value={n.id}>{n.descrizione}</option>)}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowNoteModal(true)}><FaWrench /></button>
+                                            <button type="button" className="btn btn-default" onClick={() => setShowNoteModal(true)} title="Gestisci note documenti"><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="row">
-                            <div className="col-md-6">
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Nostra Banca</label>
                                     <div className="input-group">
@@ -404,12 +415,12 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                             {bancheList.map(b => <option key={b.id} value={b.id}>{b.descrizione}</option>)}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)}><FaWrench /></button>
+                                            <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)} title="Gestisci risorse/banche"><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-md-6">
+                            <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Tipo Porto</label>
                                     <div className="input-group">
@@ -418,7 +429,7 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                             {tipiPortoList.map(tp => <option key={tp.id} value={tp.id}>{tp.descrizione}</option>)}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowPortoModal(true)}><FaWrench /></button>
+                                            <button type="button" className="btn btn-default" onClick={() => setShowPortoModal(true)} title="Gestisci tipi porto"><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>
@@ -426,8 +437,8 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                         </div>
 
                         {showCommercialData && (
-                            <div className="row">
-                                <div className="col-md-6">
+                            <div className="compact-row">
+                                <div className="compact-col compact-col-lg">
                                     <div className="form-group">
                                         <label>Vettore</label>
                                         <div className="input-group">
@@ -436,12 +447,12 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                                 {vettoriList.map(v => <option key={v.id} value={v.id}>{v.denominazione}</option>)}
                                             </select>
                                             <span className="input-group-btn">
-                                                <button type="button" className="btn btn-default" onClick={() => setShowVettoriModal(true)}><FaWrench /></button>
+                                                <button type="button" className="btn btn-default" onClick={() => setShowVettoriModal(true)} title="Gestisci vettori"><FaWrench /></button>
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="col-md-6">
+                                <div className="compact-col compact-col-md">
                                     <div className="form-group">
                                         <label>Categoria Spesa</label>
                                         <select className="form-control" name="idCategoriaSpesa" value={data.idCategoriaSpesa || ''} onChange={handleFormChange}>
