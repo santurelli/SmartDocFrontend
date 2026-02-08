@@ -1,32 +1,27 @@
-import axios from 'axios';
-import AuthService from './authService';
-
-const API_URL = 'http://localhost:8080/api/sottocategorie';
+import api from './api';
 
 const getList = (filter, length, start, orderCol, orderDir) => {
-    return axios.post(`${API_URL}/list`, filter, {
-        headers: AuthService.authHeader(),
+    return api.post(`/sottocategorie/list`, filter, {
         params: { length, start, 'order[0][column]': orderCol, 'order[0][dir]': orderDir }
     });
 };
 
 const getListForCombo = (idCategoria) => {
-    return axios.post(`${API_URL}/listForCombo`, null, {
-        headers: AuthService.authHeader(),
+    return api.post(`/sottocategorie/listForCombo`, null, {
         params: { idCategoria }
     });
 };
 
 const create = (data) => {
-    return axios.post(API_URL, data, { headers: AuthService.authHeader() });
+    return api.post('/sottocategorie', data);
 };
 
 const update = (id, data) => {
-    return axios.put(`${API_URL}/${id}`, data, { headers: AuthService.authHeader() });
+    return api.put(`/sottocategorie/${id}`, data);
 };
 
 const deleteSottoCategoria = (id) => {
-    return axios.delete(`${API_URL}/${id}`, { headers: AuthService.authHeader() });
+    return api.delete(`/sottocategorie/${id}`);
 };
 
 const SottoCategorieService = {

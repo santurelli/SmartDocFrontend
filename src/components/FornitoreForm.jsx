@@ -14,12 +14,12 @@ import { parseIban } from '../utils/ibanUtils';
 import { FaWrench } from 'react-icons/fa';
 import './EntityForms.css';
 
-// Sub-modals (Assuming relative paths are correct when used from components or pages)
-import AvvisiManagementModal from '../pages/Clienti/AvvisiManagementModal';
-import NoteDocumentiManagementModal from '../pages/Clienti/NoteDocumentiManagementModal';
-import TipiPortoManagementModal from '../pages/Clienti/TipiPortoManagementModal';
-import VettoriManagementModal from '../pages/Clienti/VettoriManagementModal';
-import RisorseManagementModal from '../pages/Clienti/RisorseManagementModal';
+// Sub-modals
+import AvvisiManagementModal from './modals/AvvisiManagementModal';
+import NoteDocumentiManagementModal from './modals/NoteDocumentiManagementModal';
+import TipiPortoManagementModal from './modals/TipiPortoManagementModal';
+import VettoriManagementModal from './modals/VettoriManagementModal';
+import RisorseManagementModal from './modals/RisorseManagementModal';
 
 const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const [activeTab, setActiveTab] = useState('general');

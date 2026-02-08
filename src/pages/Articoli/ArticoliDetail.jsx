@@ -1,158 +1,151 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { FaHome, FaAngleRight, FaWrench, FaPlus } from 'react-icons/fa';
 import ArticoliService from '../../services/ArticoliService';
-import AuthService from '../../services/authService';
-import CategorieArticoliService from '../../services/CategorieArticoliService';
-import SottoCategorieService from '../../services/SottoCategorieService';
-import DivisioniService from '../../services/DivisioniService';
-import UnitaMisuraService from '../../services/UnitaMisuraService';
-import FormatiArticoloService from '../../services/FormatiArticoloService';
-import ScelteArticoloService from '../../services/ScelteArticoloService';
-import ToniArticoloService from '../../services/ToniArticoloService';
-import CalibriArticoloService from '../../services/CalibriArticoloService';
-import AliquoteIvaService from '../../services/AliquoteIvaService';
+import ConfigurazioneService from '../../services/ConfigurazioneService';
 import FornitoriService from '../../services/FornitoriService';
-import CategorieManagementModal from './CategorieManagementModal';
-import SottoCategorieManagementModal from './SottoCategorieManagementModal';
-import UnitaMisuraManagementModal from './UnitaMisuraManagementModal';
-import AliquoteIvaManagementModal from './AliquoteIvaManagementModal';
-import FornitoriManagementModal from './FornitoriManagementModal';
-import { FaSave, FaArrowLeft, FaWrench, FaAngleRight, FaHome } from 'react-icons/fa';
-import AsyncSelect from 'react-select/async';
+import EntitySelectGroup from '../../components/EntitySelectGroup';
+import CategorieManagementModal from '../../components/modals/CategorieManagementModal';
+import SottoCategorieManagementModal from '../../components/modals/SottoCategorieManagementModal';
+import UnitaMisuraManagementModal from '../../components/modals/UnitaMisuraManagementModal';
+import AliquoteIvaManagementModal from '../../components/modals/AliquoteIvaManagementModal';
+import FornitoriManagementModal from '../../components/modals/FornitoriManagementModal';
+import WrenchModalButton from '../../components/WrenchModalButton';
 import './ArticoliDetail.css';
 import '../../components/EntityForms.css';
 
 const ArticoliDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const isNew = !id;
+    const isNew = id === 'new';
 
-    // Config state
-    const [config, setConfig] = useState({
-        prezziIvati: false,
-        abilitaCodice: true,
-        abilitaTipoProdotto: true,
-        abilitaSottoCategorie: true,
-        abilitaUnitaMisura: true,
-        abilitaDivisioni: false,
-        isCeramica: false,
-    });
-    const [showCategorieModal, setShowCategorieModal] = useState(false);
-    const [showSottoCategorieModal, setShowSottoCategorieModal] = useState(false);
-    const [showUnitaMisuraModal, setShowUnitaMisuraModal] = useState(false);
-
-    const [showAliquoteIvaModal, setShowAliquoteIvaModal] = useState(false);
-    const [showFornitoriModal, setShowFornitoriModal] = useState(false);
-
+    const [activeTab, setActiveTab] = useState('general');
     const [formData, setFormData] = useState({
         codice: '',
         descrizione: '',
-        tipologia: 'A', // Default Articolo
+        tipologia: 'A',
+        mqBox: '',
+        pezziBox: '',
+        note: '',
+        scortaMinima: 0,
         idCategoria: '',
         idSottoCategoria: '',
         idDivisione: '',
-        // Ceramica fields
         idFormato: '',
         idScelta: '',
         idTono: '',
         idCalibro: '',
-        mqBox: 0,
-        pezziBox: 0,
-        // Other
         idUnitaMisura: '',
-        scortaMinima: '',
-        codicePerFornitore: '',
-        prezzoFornitore: '',
-        note: '',
         idAliquotaIva: '',
-        idFornitore: null,
-        descFornitore: ''
+        idFornitore: '',
+        prezzoFornitore: '',
+        codicePerFornitore: ''
     });
 
     const [combos, setCombos] = useState({
         categorie: [],
         sottocategorie: [],
         divisioni: [],
-        unitaMisura: [],
         formati: [],
         scelte: [],
         toni: [],
         calibri: [],
-        aliquoteIva: [],
-        fornitori: []
+        unitaMisura: [],
+        aliquoteIva: []
     });
 
-    const [activeTab, setActiveTab] = useState('general');
-    const [loading, setLoading] = useState(true);
+    const [config, setConfig] = useState({
+        isCeramica: false,
+        abilitaSottoCategorie: true,
+        abilitaDivisioni: false,
+        abilitaCodice: true,
+        abilitaUnitaMisura: true
+    });
+
 
     useEffect(() => {
-        loadData();
+        loadConfig();
+        loadCombos();
+        if (!isNew && id && id !== 'undefined') {
+            loadArticolo();
+        }
     }, [id]);
 
-    const loadData = async () => {
+    const loadConfig = async () => {
         try {
-            // 1. Load Config (Placeholder - should come from Service/Auth)
-            const globalConfig = AuthService.getConfig();
-            const newConfig = {
-                prezziIvati: globalConfig['PREZZI_IVATI'] === '1' || globalConfig['ARTICOLI_PREZZI_IVATI'] === '1',
-                abilitaCodice: globalConfig['CODICE_ABILITA'] !== '0' && globalConfig['ARTICOLI_CODICE_ABILITA'] !== '0',
-                abilitaSottoCategorie: globalConfig['ABILITA_SOTTOCATEGORIEARTICOLI'] !== '0' && globalConfig['ARTICOLI_ABILITA_SOTTOCATEGORIEARTICOLI'] !== '0',
-                abilitaUnitaMisura: globalConfig['ABILITA_UNITAMISURA'] !== '0' && globalConfig['ARTICOLI_ABILITA_UNITAMISURA'] !== '0',
-                abilitaDivisioni: globalConfig['ABILITADIVISIONI'] === '1',
-                isCeramica: globalConfig['TIPOSTORE'] === 'CERAMICA',
-            };
-            setConfig(newConfig);
+            const res = await ConfigurazioneService.getByDomain('GLOBAL');
+            const configs = res.data?.payload || [];
+            const divisioniConfig = configs.find(c => c.chiave === 'DIVISIONI');
+            const abilitaDivisioni = divisioniConfig && divisioniConfig.valore === '1';
 
-            // 2. Load Combos
-            const [
-                catRes, divRes, umRes,
-                formatiRes, scelteRes, toniRes, calibriRes,
-                aliquoteRes, fornitoriRes
-            ] = await Promise.all([
-                CategorieArticoliService.getListForCombo(),
-                newConfig.abilitaDivisioni ? DivisioniService.getListForCombo() : Promise.resolve({ data: { payload: [] } }),
-                newConfig.abilitaUnitaMisura ? UnitaMisuraService.getListForCombo() : Promise.resolve({ data: { payload: [] } }),
-                // Ceramica
-                newConfig.isCeramica ? FormatiArticoloService.getListForCombo() : Promise.resolve({ data: { payload: [] } }),
-                newConfig.isCeramica ? ScelteArticoloService.getListForCombo() : Promise.resolve({ data: { payload: [] } }),
-                newConfig.isCeramica ? ToniArticoloService.getListForCombo() : Promise.resolve({ data: { payload: [] } }),
-                newConfig.isCeramica ? CalibriArticoloService.getListForCombo() : Promise.resolve({ data: { payload: [] } }),
-                // Other
-                AliquoteIvaService.getListForCombo(),
-                FornitoriService.getListForCombo()
+            setConfig(prev => ({
+                ...prev,
+                abilitaDivisioni: abilitaDivisioni
+            }));
+        } catch (error) {
+            console.error("Errore caricamento configurazione", error);
+        }
+    };
+
+    const loadCombos = async () => {
+        try {
+            // Unita Misura, Aliquote IVA, Categorie (cached)
+            const [cat, um, iva] = await Promise.all([
+                ArticoliService.getCategorie(),
+                ArticoliService.getUnitaMisura(),
+                ArticoliService.getAliquoteIva()
             ]);
 
-            setCombos({
-                categorie: catRes.data.payload || [],
-                divisioni: divRes.data.payload || [],
-                unitaMisura: umRes.data.payload || [],
-                formati: formatiRes.data.payload || [],
-                scelte: scelteRes.data.payload || [],
-                toni: toniRes.data.payload || [],
-                calibri: calibriRes.data.payload || [],
-                aliquoteIva: aliquoteRes.data.payload || [],
-                fornitori: fornitoriRes.data.payload || [],
-                sottocategorie: [] // Load when category selected
-            });
+            setCombos(prev => ({
+                ...prev,
+                categorie: cat.data?.payload || [],
+                unitaMisura: um.data?.payload || [],
+                aliquoteIva: iva.data?.payload || [],
+                // Divisioni loaded separately if needed, but keeping logic clean
+                divisioni: [] // Will be loaded if enabled or separately
+            }));
 
-            // 3. Load Data if Edit
-            if (!isNew) {
-                const res = await ArticoliService.getById(id);
-                if (res.data && res.data.payload) {
-                    const data = res.data.payload;
-                    setFormData(data);
-                    // Load sottocategorie if category present
-                    if (data.idCategoria) {
-                        const subRes = await SottoCategorieService.getListForCombo(data.idCategoria);
-                        setCombos(prev => ({ ...prev, sottocategorie: subRes.data.payload || [] }));
-                    }
-                }
+            // If enabled, load divisioni too
+            if (config.abilitaDivisioni) {
+                ArticoliService.getDivisioni().then(res =>
+                    setCombos(prev => ({ ...prev, divisioni: res.data?.payload || [] }))
+                );
             }
 
+            // Ceramica specific combos (placeholders)
+            setCombos(prev => ({
+                ...prev,
+                formati: [],
+                scelte: [],
+                toni: [],
+                calibri: []
+            }));
         } catch (error) {
-            console.error("Error loading article data", error);
-        } finally {
-            setLoading(false);
+            console.error("Errore caricamento combo", error);
+        }
+    };
+
+    const loadArticolo = async () => {
+        try {
+            const res = await ArticoliService.getArticolo(id);
+            if (res.data) {
+                setFormData(res.data);
+                if (res.data.idCategoria) {
+                    // Populate sottocategorie based on loaded category
+                    loadSottoCategorie(res.data.idCategoria);
+                }
+            }
+        } catch (error) {
+            console.error("Errore caricamento articolo", error);
+        }
+    };
+
+    const loadSottoCategorie = async (idCat) => {
+        try {
+            const res = await ArticoliService.getSottoCategorie(idCat);
+            setCombos(prev => ({ ...prev, sottocategorie: res.data?.payload || [] }));
+        } catch (error) {
+            console.error("Errore sottocategorie", error);
         }
     };
 
@@ -165,139 +158,49 @@ const ArticoliDetail = () => {
         }
     };
 
-    const handleManageCategorie = () => {
-        setShowCategorieModal(true);
-    };
-
-    const handleCloseCategorieModal = async () => {
-        setShowCategorieModal(false);
+    const handleSave = async () => {
         try {
-            const res = await CategorieArticoliService.getListForCombo();
-            setCombos(prev => ({ ...prev, categorie: res.data.payload || [] }));
-        } catch (e) {
-            console.error("Refresh categories failed", e);
+            if (isNew) {
+                await ArticoliService.createArticolo(formData);
+            } else {
+                await ArticoliService.updateArticolo(id, formData);
+            }
+            navigate('/articoli');
+        } catch (error) {
+            console.error("Errore salvataggio", error);
+            alert("Errore durante il salvataggio");
         }
     };
 
-    const handleManageSottoCategorie = () => {
-        setShowSottoCategorieModal(true);
+    const handleGenerateCode = () => {
+        // Mock generation
+        const newCode = "ART-" + Math.floor(Math.random() * 100000);
+        setFormData(prev => ({ ...prev, codice: newCode }));
     };
 
-    const handleCloseSottoCategorieModal = async () => {
-        setShowSottoCategorieModal(false);
+    const handleCloseCategorieModal = () => {
+        ArticoliService.getCategorie().then(res => setCombos(prev => ({ ...prev, categorie: res.data?.payload || [] })));
+    };
+
+    const handleCloseSottoCategorieModal = () => {
         if (formData.idCategoria) {
             loadSottoCategorie(formData.idCategoria);
         }
     };
 
-    const loadSottoCategorie = async (idCategoria) => {
-        if (!idCategoria) {
-            setCombos(prev => ({ ...prev, sottocategorie: [] }));
-            return;
-        }
-        try {
-            const res = await SottoCategorieService.getListForCombo(idCategoria);
-            setCombos(prev => ({ ...prev, sottocategorie: res.data.payload || [] }));
-        } catch (e) {
-            console.error(e);
-        }
+    const handleCloseUnitaMisuraModal = () => {
+        ArticoliService.getUnitaMisura().then(res => setCombos(prev => ({ ...prev, unitaMisura: res.data?.payload || [] })));
     };
 
-    const handleGenerateCode = async () => {
-        try {
-            const res = await ArticoliService.getNextCode();
-            if (res.data && res.data.codice) {
-                setFormData(prev => ({ ...prev, codice: res.data.codice }));
-            }
-        } catch (e) {
-            console.error("Error generating code", e);
-            alert("Errore durante la generazione del codice.");
-        }
-    };
-
-    const handleManageUnitaMisura = () => {
-        setShowUnitaMisuraModal(true);
-    };
-
-    const handleCloseUnitaMisuraModal = async () => {
-        setShowUnitaMisuraModal(false);
-        try {
-            const res = await UnitaMisuraService.getListForCombo();
-            setCombos(prev => ({ ...prev, unitaMisura: res.data.payload || [] }));
-        } catch (e) {
-            console.error("Refresh units failed", e);
-        }
-    };
-
-    const handleManageAliquoteIva = () => {
-        setShowAliquoteIvaModal(true);
-    };
-
-    const handleCloseAliquoteIvaModal = async () => {
-        setShowAliquoteIvaModal(false);
-        try {
-            const res = await AliquoteIvaService.getListForCombo();
-            setCombos(prev => ({ ...prev, aliquoteIva: res.data.payload || [] }));
-        } catch (e) {
-            console.error("Refresh VAT rates failed", e);
-        }
-    };
-
-    const handleManageFornitori = () => {
-        setShowFornitoriModal(true);
+    const handleCloseAliquoteIvaModal = () => {
+        ArticoliService.getAliquoteIva().then(res => setCombos(prev => ({ ...prev, aliquoteIva: res.data?.payload || [] })));
     };
 
     const handleCloseFornitoriModal = () => {
-        setShowFornitoriModal(false);
-        // AsyncSelect handles reloading via loadOptions, but we might want to clear current selection if invalid?
-        // Or trigger a reload if we were caching. AsyncSelect cacheOptions is set.
-        // We can force reload by changing a key or just letting user search again.
     };
-
-    const handleSave = async () => {
-        // Validation
-        if (config.abilitaCodice && !formData.codice) {
-            // If disabled, code might be empty, backend handles it. 
-            // If enabled, user sees it.
-            // But Wait! User asked: "if disabled... what happens?". I said "auto-generate".
-            // The backend auto-generates if empty.
-            // So if config.abilitaCodice is TRUE, it IS mandatory for the user (or they click generate).
-            // If FALSE, it is hidden, so empty is fine (backend generates).
-            alert("Il campo 'Codice' è obbligatorio.");
-            return;
-        }
-        if (!formData.descrizione) {
-            alert("Il campo 'Descrizione' è obbligatorio.");
-            return;
-        }
-
-        try {
-            if (isNew) {
-                await ArticoliService.create(formData);
-            } else {
-                await ArticoliService.update(formData);
-            }
-            navigate('/articoli');
-        } catch (e) {
-            console.error("Error saving", e);
-            alert("Errore durante il salvataggio: " + (e.response?.data || e.message));
-        }
-    };
-
-    if (loading) return <div>Caricamento...</div>;
-
-    // Helper for config buttons
-    const renderConfigButton = (path) => (
-        <span className="input-group-btn">
-            <button className="btn btn-default btn-addon" type="button" onClick={() => navigate(path)} title="Gestione tabella">
-                <FaWrench />
-            </button>
-        </span>
-    );
 
     return (
-        <div className="articoli-detail-container">
-            {/* Breadcrumb */}
+        <div className="articoli-detail-container entity-form-shared">
             {/* Breadcrumb */}
             <ul className="breadcrumb">
                 <li><a href="/"><FaHome /> Home</a></li>
@@ -309,7 +212,7 @@ const ArticoliDetail = () => {
 
             <h1>{isNew ? 'Nuovo articolo' : 'Modifica articolo'}</h1>
 
-            <form role="form">
+            <form role="form" onSubmit={(e) => e.preventDefault()}>
                 <ul className="nav nav-tabs nav-tabs-custom">
                     <li className={activeTab === 'general' ? 'active' : ''}>
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('general'); }}>
@@ -328,11 +231,11 @@ const ArticoliDetail = () => {
                     <div className={`tab-pane ${activeTab === 'general' ? 'active' : ''}`} style={{ display: activeTab === 'general' ? 'block' : 'none' }}>
 
                         {config.abilitaCodice && (
-                            <div className="row" id="row-codice">
+                            <div className="row">
                                 <div className="col-xs-12 col-md-3">
                                     <div className="form-group">
                                         <label className="required">Codice</label>
-                                        <div className="input-group">
+                                        <div className="flex-input-group">
                                             <input type="text" className="form-control" name="codice" value={formData.codice} onChange={handleChange} placeholder="Inserisci codice" />
                                             <span className="input-group-btn">
                                                 <button className="btn btn-default btn-addon" type="button" onClick={handleGenerateCode}>Genera</button>
@@ -366,12 +269,16 @@ const ArticoliDetail = () => {
                                 <div className="col-xs-12 col-md-4">
                                     <div className="form-group">
                                         <label>Divisione</label>
-                                        <div className="input-group">
+                                        <div className="flex-input-group">
                                             <select className="form-control" name="idDivisione" value={formData.idDivisione} onChange={handleChange}>
                                                 <option value="">Seleziona...</option>
                                                 {combos.divisioni.map(d => <option key={d.id} value={d.id}>{d.descrizione}</option>)}
                                             </select>
-                                            {renderConfigButton('/tabelle/divisioni')}
+                                            <span className="input-group-btn">
+                                                <button className="btn btn-default btn-addon" type="button" onClick={() => navigate('/tabelle/divisioni')} title="Gestione tabella">
+                                                    <FaWrench />
+                                                </button>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -380,39 +287,35 @@ const ArticoliDetail = () => {
 
                         <div className="row">
                             <div className="col-xs-12 col-md-4">
-                                <div style={{ marginRight: 20 }}>
-                                    <div className="form-group">
-                                        <label>Categoria</label>
-                                        <div className="input-group">
-                                            <select className="form-control" name="idCategoria" value={formData.idCategoria} onChange={handleChange}>
-                                                <option value="">Seleziona...</option>
-                                                {combos.categorie.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
-                                            </select>
-                                            <span className="input-group-btn">
-                                                <button className="btn btn-default btn-addon" type="button" onClick={handleManageCategorie} title="Gestione categorie">
-                                                    <FaWrench />
-                                                </button>
-                                            </span>
-                                        </div>
+                                <div className="form-group">
+                                    <label>Categoria</label>
+                                    <div className="flex-input-group">
+                                        <select className="form-control" name="idCategoria" value={formData.idCategoria} onChange={handleChange}>
+                                            <option value="">Seleziona...</option>
+                                            {combos.categorie.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
+                                        </select>
+                                        <WrenchModalButton
+                                            ModalComponent={CategorieManagementModal}
+                                            onClose={handleCloseCategorieModal}
+                                            title="Gestione categorie"
+                                        />
                                     </div>
                                 </div>
                             </div>
                             {config.abilitaSottoCategorie && (
                                 <div className="col-xs-12 col-md-4">
-                                    <div style={{ marginLeft: 20 }}>
-                                        <div className="form-group">
-                                            <label>Sottocategoria</label>
-                                            <div className="input-group">
-                                                <select className="form-control" name="idSottoCategoria" value={formData.idSottoCategoria} onChange={handleChange}>
-                                                    <option value="">Seleziona...</option>
-                                                    {combos.sottocategorie.map(s => <option key={s.id} value={s.id}>{s.descrizione}</option>)}
-                                                </select>
-                                                <span className="input-group-btn">
-                                                    <button className="btn btn-default btn-addon" type="button" onClick={handleManageSottoCategorie} title="Gestione sottocategorie">
-                                                        <FaWrench />
-                                                    </button>
-                                                </span>
-                                            </div>
+                                    <div className="form-group">
+                                        <label>Sottocategoria</label>
+                                        <div className="flex-input-group">
+                                            <select className="form-control" name="idSottoCategoria" value={formData.idSottoCategoria} onChange={handleChange}>
+                                                <option value="">Seleziona...</option>
+                                                {combos.sottocategorie.map(s => <option key={s.id} value={s.id}>{s.descrizione}</option>)}
+                                            </select>
+                                            <WrenchModalButton
+                                                ModalComponent={SottoCategorieManagementModal}
+                                                onClose={handleCloseSottoCategorieModal}
+                                                title="Gestione sottocategorie"
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -446,26 +349,6 @@ const ArticoliDetail = () => {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="col-xs-12 col-md-3">
-                                    <div className="form-group">
-                                        <label>Calibro</label>
-                                        <select className="form-control" name="idCalibro" value={formData.idCalibro} onChange={handleChange}>
-                                            {combos.calibri.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="col-xs-12 col-md-2">
-                                    <div className="form-group">
-                                        <label>MQ/Box</label>
-                                        <input type="number" className="form-control" name="mqBox" value={formData.mqBox} onChange={handleChange} />
-                                    </div>
-                                </div>
-                                <div className="col-xs-12 col-md-2">
-                                    <div className="form-group">
-                                        <label>Pezzi/Box</label>
-                                        <input type="number" className="form-control" name="pezziBox" value={formData.pezziBox} onChange={handleChange} />
-                                    </div>
-                                </div>
                             </div>
                         )}
 
@@ -474,15 +357,15 @@ const ArticoliDetail = () => {
                                 <div className="col-xs-12 col-md-4">
                                     <div className="form-group">
                                         <label>Unità di misura</label>
-                                        <div className="input-group">
+                                        <div className="flex-input-group">
                                             <select className="form-control" name="idUnitaMisura" value={formData.idUnitaMisura} onChange={handleChange}>
                                                 {combos.unitaMisura.map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
                                             </select>
-                                            <span className="input-group-btn">
-                                                <button className="btn btn-default btn-addon" type="button" onClick={handleManageUnitaMisura} title="Gestione unità di misura">
-                                                    <FaWrench />
-                                                </button>
-                                            </span>
+                                            <WrenchModalButton
+                                                ModalComponent={UnitaMisuraManagementModal}
+                                                onClose={handleCloseUnitaMisuraModal}
+                                                title="Gestione unità di misura"
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -497,7 +380,6 @@ const ArticoliDetail = () => {
                                 </div>
                             </div>
                         </div>
-
                     </div>
 
                     {/* TAB ALTRE INFORMAZIONI */}
@@ -514,63 +396,40 @@ const ArticoliDetail = () => {
                             <div className="col-xs-12 col-md-4">
                                 <div className="form-group">
                                     <label>Aliquota IVA</label>
-                                    <div className="input-group">
+                                    <div className="flex-input-group">
                                         <select className="form-control" name="idAliquotaIva" value={formData.idAliquotaIva} onChange={handleChange}>
                                             <option value="">Seleziona...</option>
                                             {combos.aliquoteIva.map(a => <option key={a.id} value={a.id}>{a.codice} - {a.descrizione}</option>)}
                                         </select>
-                                        <span className="input-group-btn">
-                                            <button className="btn btn-default btn-addon" type="button" onClick={handleManageAliquoteIva} title="Gestione aliquote IVA">
-                                                <FaWrench />
-                                            </button>
-                                        </span>
+                                        <WrenchModalButton
+                                            ModalComponent={AliquoteIvaManagementModal}
+                                            onClose={handleCloseAliquoteIvaModal}
+                                            title="Gestione aliquote IVA"
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div className="row">
                             <div className="col-xs-12 col-md-6">
-                                <div className="form-group">
-                                    <label>Fornitore</label>
-                                    <div className="input-group" style={{ display: 'flex' }}>
-                                        <div style={{ flexGrow: 1 }}>
-                                            <AsyncSelect
-                                                cacheOptions
-                                                defaultOptions
-                                                loadOptions={(inputValue) =>
-                                                    FornitoriService.getSuggestion(inputValue).then(res =>
-                                                        res.data?.payload?.map(f => ({ value: f.id, label: f.denominazione })) || []
-                                                    )
-                                                }
-                                                value={formData.idFornitore ? { value: formData.idFornitore, label: formData.descFornitore || 'Fornitore...' } : null}
-                                                onChange={(opt) => setFormData(prev => ({
-                                                    ...prev,
-                                                    idFornitore: opt ? opt.value : '',
-                                                    descFornitore: opt ? opt.label : ''
-                                                }))}
-                                                placeholder="Cerca fornitore..."
-                                                isClearable
-                                                styles={{
-                                                    control: (base) => ({
-                                                        ...base,
-                                                        height: '38px',
-                                                        minHeight: '38px',
-                                                        borderRadius: '3px 0 0 3px',
-                                                        borderColor: '#ccc',
-                                                        boxShadow: 'none',
-                                                        ':hover': { borderColor: '#ccc' }
-                                                    }),
-                                                    menu: (base) => ({ ...base, zIndex: 9999 })
-                                                }}
-                                            />
-                                        </div>
-                                        <span className="input-group-btn">
-                                            <button className="btn btn-default btn-addon" type="button" onClick={handleManageFornitori} title="Gestione fornitori">
-                                                <FaWrench />
-                                            </button>
-                                        </span>
-                                    </div>
-                                </div>
+                                <EntitySelectGroup
+                                    label="Fornitore"
+                                    loadOptions={(inputValue) =>
+                                        FornitoriService.getSuggestion(inputValue).then(res =>
+                                            res.data?.payload?.map(f => ({ value: f.id, label: f.denominazione })) || []
+                                        )
+                                    }
+                                    value={formData.idFornitore ? { value: formData.idFornitore, label: formData.descFornitore || 'Fornitore...' } : null}
+                                    onChange={(opt) => setFormData(prev => ({
+                                        ...prev,
+                                        idFornitore: opt ? opt.value : '',
+                                        descFornitore: opt ? opt.label : ''
+                                    }))}
+                                    ModalComponent={FornitoriManagementModal}
+                                    onModalClose={handleCloseFornitoriModal}
+                                    title="Gestione fornitori"
+                                    placeholder="Cerca fornitore..."
+                                />
                             </div>
                         </div>
 
@@ -611,21 +470,7 @@ const ArticoliDetail = () => {
                     <button type="button" className="btn btn-premium-save" onClick={handleSave}>Salva</button>
                 </div>
             </form>
-            {showCategorieModal && (
-                <CategorieManagementModal onClose={handleCloseCategorieModal} />
-            )}
-            {showSottoCategorieModal && (
-                <SottoCategorieManagementModal onClose={handleCloseSottoCategorieModal} />
-            )}
-            {showUnitaMisuraModal && (
-                <UnitaMisuraManagementModal onClose={handleCloseUnitaMisuraModal} />
-            )}
-            {showAliquoteIvaModal && (
-                <AliquoteIvaManagementModal onClose={handleCloseAliquoteIvaModal} />
-            )}
-            {showFornitoriModal && (
-                <FornitoriManagementModal onClose={handleCloseFornitoriModal} />
-            )}
+
         </div>
     );
 };

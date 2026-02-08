@@ -10,7 +10,8 @@
     flex-wrap: wrap !important;
     margin-right: -10px !important;
     margin-left: -10px !important;
-    margin-bottom: 15px !important;
+    margin-bottom: 20px !important;
+    /* Calibrated for balanced breathing room */
     justify-content: flex-start !important;
 }
 
@@ -75,133 +76,163 @@
     }
 }
 
-.nav-tabs-custom {
-    border-bottom: 2px solid #eee;
-    margin-bottom: 25px;
+.entity-form-shared .nav-tabs-custom {
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 30px;
     display: flex;
+    padding-left: 0 !important;
+    /* Forces removal of browser default ul padding */
+    gap: 0 !important;
+    /* Removes massive space between tabs */
 }
 
-.nav-tabs-custom>li {
+.entity-form-shared .nav-tabs-custom>li {
     list-style: none;
+    margin-bottom: -2px;
+    /* Pull down to overlap border-bottom */
 }
 
-.nav-tabs-custom>li>a {
-    color: #888;
-    border-radius: 0;
-    padding: 12px 20px;
+.entity-form-shared .nav-tabs-custom>li>a {
+    color: #777;
+    border-radius: 4px 4px 0 0;
+    padding: 10px 18px;
+    /* Balanced, professional padding */
     display: block;
     text-decoration: none;
-    transition: all 0.3s ease;
-    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    border: 3px solid transparent;
+    border-bottom-width: 3px;
     white-space: nowrap;
+    font-weight: 500;
+    font-size: 14px;
+    background-color: transparent;
 }
 
-.nav-tabs-custom>li.active>a {
+.entity-form-shared .nav-tabs-custom>li>a:hover {
+    color: #333;
+    border-bottom-color: #ddd;
+}
+
+.entity-form-shared .nav-tabs-custom>li.active>a {
     color: #03a9f4;
     font-weight: 700;
-    border-bottom: 2px solid #03a9f4;
+    border-bottom: 3px solid #03a9f4;
+    background-color: transparent;
+    box-shadow: none !important;
 }
 
-.form-group {
-    margin-bottom: 15px;
+.entity-form-shared .form-group {
+    margin-bottom: 20px;
 }
 
 /* Specific override for compact rows to keep them tight */
-.compact-col .form-group {
-    margin-bottom: 0;
+.entity-form-shared .compact-col .form-group {
+    margin-bottom: 0px !important;
 }
 
-.form-group label {
+.entity-form-shared .form-group label,
+.premium-label {
     display: block;
-    margin-bottom: 4px;
+    margin-top: 8px !important;
+    /* Balanced shelf spacing */
+    margin-bottom: 8px !important;
     font-weight: 700;
     color: #444;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
+    line-height: 1.4;
 }
 
-.form-group label.required::after {
+.entity-form-shared .form-group label.required::after {
     content: " *";
     color: #f44336;
 }
 
-.form-control {
+.entity-form-shared .form-control {
     border-radius: 4px;
     box-shadow: none;
-    border: 1px solid #dcdcdc;
-    height: 38px;
-    padding: 8px 12px;
+    border: 1px solid #dfe4e7;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    /* Force hardware lock */
+    padding: 6px 12px !important;
     font-size: 14px;
     color: #333;
     background-color: #fff;
     width: 100%;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
+    line-height: normal !important;
+    /* Help vertical centering on Chrome */
+    box-sizing: border-box !important;
+    /* Ensure border and padding are inside the 38px */
 }
 
-.form-control.input-sm {
+/* Explicitly target date inputs which sometimes ignore basic height rules */
+.entity-form-shared input[type="date"].form-control,
+.entity-form-shared .form-control[type="date"] {
+    display: flex !important;
+    align-items: center !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    height: 38px !important;
+    min-height: 38px !important;
+}
+
+/* Chrome/Safari date picker inner styling normalization */
+.entity-form-shared input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    height: 18px;
+    width: 18px;
+}
+
+.entity-form-shared input[type="date"]::-webkit-datetime-edit {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    height: 38px !important;
+}
+
+.entity-form-shared select.form-control {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.entity-form-shared .form-control.input-sm {
     height: 30px;
     padding: 5px 10px;
     font-size: 12px;
 }
 
-.form-control:focus {
+.entity-form-shared .form-control:focus {
     border-color: #03a9f4;
     box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.15);
     outline: 0;
 }
 
-/* Compact Layout System - Refined for clear separation and width control */
-/* FINALIZED TABLE-BASED LAYOUT - Guaranteed separation */
+/* Compact Layout System - Robust Flexbox Version */
 .compact-row {
-    display: table !important;
-    table-layout: fixed !important;
-    width: auto !important;
-    border-collapse: collapse !important;
-    /* Changed to collapse to use padding for gaps */
-    margin: 0 0 15px 0 !important;
-    padding: 0 !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    gap: 15px !important;
+    margin-bottom: 20px !important;
 }
 
 .compact-col {
-    display: table-cell !important;
-    vertical-align: bottom !important;
-    width: 340px !important;
-    /* 310px content + 30px gap */
-    padding-right: 30px !important;
-    /* THE AIR GAP */
-    box-sizing: border-box !important;
-    overflow: visible !important;
+    display: block !important;
+    flex: 0 0 auto !important;
 }
 
-/* Broadway 3 / Table Logic for Input Group - Flexible version */
-.compact-col .input-group {
-    display: table !important;
-    width: 100% !important;
-    /* FILL THE ENTIRE COLUMN */
-    max-width: 100% !important;
-    border-collapse: collapse !important;
+.compact-col .form-group {
+    margin-bottom: 0 !important;
 }
 
-.compact-col .input-group .form-control {
-    display: table-cell !important;
-    width: 100% !important;
-    /* EXPAND TO AVAILABLE SPACE */
-    height: 38px !important;
-    /* MATCH BUTTON HEIGHT */
-    float: none !important;
-}
-
-.compact-col .input-group-btn {
-    display: table-cell !important;
-    width: 1% !important;
-    /* SHRINK TO BUTTON SIZE */
-    white-space: nowrap !important;
-    vertical-align: middle !important;
-    float: none !important;
-}
-
-/* Exact Widths - strictly enforced via table-cell width */
 .compact-col-xs {
     width: 100px !important;
 }
@@ -215,38 +246,20 @@
 }
 
 .compact-col-lg {
-    width: 380px !important;
+    width: 400px !important;
 }
 
 .compact-col-xl {
     width: 500px !important;
 }
 
-/* REINFORCEMENT: Force input-groups to respect the column width */
-.compact-col-xs .input-group {
-    width: 100px !important;
-    max-width: 100px !important;
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+    .compact-row {
+        flex-wrap: wrap !important;
+    }
 }
 
-.compact-col-sm .input-group {
-    width: 160px !important;
-    max-width: 160px !important;
-}
-
-.compact-col-md .input-group {
-    width: 310px !important;
-    max-width: 310px !important;
-}
-
-.compact-col-lg .input-group {
-    width: 380px !important;
-    max-width: 380px !important;
-}
-
-.compact-col-xl .input-group {
-    width: 500px !important;
-    max-width: 500px !important;
-}
 
 
 /* Clean up old width classes that might be lingering */
@@ -331,39 +344,68 @@
     margin-bottom: 25px;
 }
 
-.input-group {
+/* PREMIUM UTILITIES - Flexbox based groups to handle complex React-Select + Button nesting */
+.input-group-premium,
+.flex-input-group {
     display: flex !important;
     width: 100% !important;
     max-width: 100% !important;
-    /* CONTAINMENT */
     box-sizing: border-box !important;
     overflow: visible !important;
-    /* NO CLIPPING */
+    height: 38px !important;
+    align-items: stretch !important;
 }
 
-.input-group .form-control {
+.flex-input-group.w-xs {
+    max-width: 120px !important;
+}
+
+.flex-input-group.w-sm {
+    max-width: 180px !important;
+}
+
+.flex-input-group.w-md {
+    max-width: 340px !important;
+}
+
+.flex-input-group.w-lg {
+    max-width: 500px !important;
+}
+
+.flex-input-group.w-xl {
+    max-width: 700px !important;
+}
+
+.input-group-premium .form-control,
+.flex-input-group .form-control {
     flex: 1 1 0% !important;
-    /* Allow shrinking to 0 if needed */
     min-width: 0 !important;
-    /* CRITICAL: allow shrinking below content size */
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
     height: 38px !important;
-    /* MATCH BUTTON HEIGHT */
+    margin: 0 !important;
 }
 
-.input-group-btn {
+.input-group-premium .input-group-btn,
+.flex-input-group .input-group-btn {
     display: flex !important;
     flex: 0 0 auto !important;
-    /* Button stays fixed size */
+    height: 38px !important;
 }
 
-.input-group-btn>.btn {
+.input-group-premium .input-group-btn>.btn,
+.flex-input-group .input-group-btn>.btn,
+.input-group-premium>.btn,
+.flex-input-group>.btn,
+.input-group-premium>.premium-wrench-btn,
+.flex-input-group>.premium-wrench-btn {
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
+    height: 38px !important;
+    margin: 0 !important;
 }
 
-.btn-default {
+.entity-form-shared .btn-default {
     background-color: #fff;
     border: 1px solid #dcdcdc;
     color: #666;
@@ -376,24 +418,24 @@
     transition: all 0.2s;
 }
 
-.input-group-btn .btn-default {
+.entity-form-shared .input-group-btn .btn-default {
     background-color: #03a9f4 !important;
     border-color: #03a9f4 !important;
     color: white !important;
 }
 
-.input-group-btn .btn-default:hover {
+.entity-form-shared .input-group-btn .btn-default:hover {
     background-color: #039be5 !important;
     border-color: #039be5 !important;
 }
 
-.btn-default:hover {
+.entity-form-shared .btn-default:hover {
     background-color: #f5f5f5;
     border-color: #ccc;
     color: #333;
 }
 
-.btn-primary-custom {
+.entity-form-shared .btn-primary-custom {
     background-color: #03a9f4;
     border-color: #03a9f4;
     color: white;
@@ -405,6 +447,65 @@
 }
 
 /* Modal Enforcements */
+.modal-open .modal {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* FORM ACTIONS - Standardized Footer Buttons */
+.entity-form-shared .form-actions {
+    margin-top: 40px;
+    padding-top: 25px;
+    border-top: 1px solid #dfe4e7;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    width: 100%;
+}
+
+.entity-form-shared .btn-premium-cancel {
+    background-color: #fff !important;
+    border: 1px solid #ced4da !important;
+    color: #6c757d !important;
+    height: 38px !important;
+    padding: 0 25px !important;
+    border-radius: 20px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.entity-form-shared .btn-premium-cancel:hover {
+    background-color: #f8f9fa !important;
+    border-color: #adb5bd !important;
+    color: #495057 !important;
+}
+
+.entity-form-shared .btn-premium-save {
+    background-color: #2ecc71 !important;
+    border: 1px solid #2ecc71 !important;
+    color: white !important;
+    height: 38px !important;
+    padding: 0 30px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s !important;
+    box-shadow: 0 2px 4px rgba(46, 204, 113, 0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.entity-form-shared .btn-premium-save:hover {
+    background-color: #27ae60 !important;
+    border-color: #27ae60 !important;
+    box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3) !important;
+    transform: translateY(-1px);
+}
+
 @media (min-width: 992px) {
     .premium-modal .modal-dialog.modal-xl {
         width: 95%;

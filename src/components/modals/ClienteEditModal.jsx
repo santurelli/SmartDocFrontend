@@ -101,8 +101,8 @@ const ClienteEditModal = ({ isOpen, onClose, clienteId, onSave }) => {
                             <ClienteForm data={cliente} onChange={setCliente} isNew={isNew} />
                         </div>
                         <div className="modal-footer">
-                            <button type="button" className="btn-premium-cancel" onClick={onClose}>Annulla</button>
-                            <button type="submit" className="btn-premium-save" disabled={loading}>Salva</button>
+                            <button type="button" className="btn btn-default" onClick={onClose}>Annulla</button>
+                            <button type="submit" className="btn btn-primary" disabled={loading}>Salva</button>
                         </div>
                     </form>
                 </div>

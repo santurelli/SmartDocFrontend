@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import UnitaMisuraService from '../../services/UnitaMisuraService';
 import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-const UnitaMisuraManagementModal = ({ onClose }) => {
+const UnitaMisuraManagementModal = ({ isOpen, onClose, onSave }) => {
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
@@ -16,8 +16,12 @@ const UnitaMisuraManagementModal = ({ onClose }) => {
     // const [editDescrizione, setEditDescrizione] = useState('');
 
     useEffect(() => {
-        loadData();
-    }, [page, search]);
+        if (isOpen) {
+            loadData();
+        }
+    }, [isOpen, page, search]);
+
+    if (!isOpen) return null;
 
     const loadData = async () => {
         setLoading(true);
@@ -111,6 +115,7 @@ const UnitaMisuraManagementModal = ({ onClose }) => {
         }).then((result) => {
             if (result.isConfirmed) {
                 loadData();
+                if (onSave) onSave();
                 Swal.fire({
                     icon: 'success',
                     title: id ? 'Aggiornata!' : 'Creata!',
@@ -146,6 +151,7 @@ const UnitaMisuraManagementModal = ({ onClose }) => {
                         'success'
                     );
                     loadData();
+                    if (onSave) onSave();
                 } catch (error) {
                     Swal.fire('Errore', 'Impossibile eliminare: ' + (error.response?.data?.errorText || error.message), 'error');
                 }

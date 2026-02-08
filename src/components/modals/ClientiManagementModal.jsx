@@ -80,14 +80,16 @@ const ClientiManagementModal = ({ onClose }) => {
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">
-                    <div className="modal-header">
-                        <button type="button" className="close" onClick={onClose}>&times;</button>
+                    <div className="modal-header bg-primary" style={{ color: 'white', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                        <button type="button" className="close" onClick={onClose} style={{ color: 'white', opacity: 0.8 }}>
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                         <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Clienti</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', padding: '25px' }}>
                         {/* Toolbar */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-                            <button className="btn-premium-save" style={{ margin: 0, padding: '10px 20px', fontSize: '14px' }} onClick={handleAdd}>
+                            <button className="btn btn-success" onClick={handleAdd}>
                                 <FaPlus style={{ marginRight: '8px' }} /> Nuovo Cliente
                             </button>
                             <div style={{ position: 'relative', flex: '0 0 300px' }}>
@@ -122,16 +124,14 @@ const ClientiManagementModal = ({ onClose }) => {
                                                 <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
                                                     <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                                                         <button
-                                                            className="btn-premium-save"
-                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, boxShadow: 'none', backgroundColor: '#5bc0de' }}
+                                                            className="btn btn-primary btn-sm"
                                                             onClick={() => handleEdit(item)}
                                                             title="Modifica"
                                                         >
                                                             <FaPencilAlt />
                                                         </button>
                                                         <button
-                                                            className="btn-premium-cancel"
-                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, backgroundColor: '#e74c3c' }}
+                                                            className="btn btn-danger btn-sm"
                                                             onClick={() => handleDelete(item.id)}
                                                             title="Elimina"
                                                         >
@@ -178,7 +178,7 @@ const ClientiManagementModal = ({ onClose }) => {
 
                     </div>
                     <div className="modal-footer" style={{ borderTop: '1px solid #f0f0f0', padding: '15px 25px' }}>
-                        <button type="button" className="btn-premium-cancel" style={{ padding: '10px 25px' }} onClick={onClose}>Chiudi</button>
+                        <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>
                     </div>
                 </div>
             </div>

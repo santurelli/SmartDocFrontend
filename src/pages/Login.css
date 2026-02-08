@@ -15,149 +15,86 @@ body {
 }
 
 #login-box {
-  max-width: 350px;
-  min-width: 280px;
-  margin: 60px auto 20px;
+  max-width: 400px;
+  margin: 10vh auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
   overflow: hidden;
-  border-radius: 3px 3px 0 0;
-  background-clip: padding-box;
-  /* stops bg color from leaking outside the border: */
+  background: #fff;
 }
 
-@media only screen and (max-width: 767px) {
-  #login-box {
-    margin-top: 20px;
-  }
+#login-box-header {
+  height: 6px;
+  display: flex;
 }
 
-#login-box #login-box-header {
-  height: 5px;
-}
-
-#login-box #login-box-header>div {
+#login-box-header>div {
+  flex: 1;
   height: 100%;
-  width: 16.6667%;
-  float: left;
-}
-
-#login-box #login-box-header .login-box-header-red {
-  background: #e84e40;
-}
-
-#login-box #login-box-header .login-box-header-green {
-  background: #8bc34a;
-}
-
-#login-box #login-box-header .login-box-header-yellow {
-  background: #ffc107;
-}
-
-#login-box #login-box-header .login-box-header-purple {
-  background: #9c27b0;
-}
-
-#login-box #login-box-header .login-box-header-blue {
-  background: #03a9f4;
-}
-
-#login-box #login-box-header .login-box-header-gray {
-  background: #90a4ae;
 }
 
 #login-box-inner {
-  background: #fff;
-  border-radius: 0 0 3px 3px;
-  background-clip: padding-box;
-  /* stops bg color from leaking outside the border: */
-  border: 1px solid #e1e1e1;
-  border-bottom-width: 5px;
-  padding: 40px 25px;
+  padding: 30px;
+  border: none;
 }
 
 #login-logo {
-  background: linear-gradient(135deg, #03a9f4 0%, #0288d1 100%);
+  background: #03a9f4;
   color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
+  padding: 40px 20px;
   text-align: center;
-  text-transform: uppercase;
-  border-bottom: 5px solid rgba(0, 0, 0, 0.1);
+  border-bottom: none;
 }
 
-/* 
-#login-logo>img {
-  display: block;
-  height: 40px;
-  margin: 0 auto;
-} 
-*/
+#login-logo svg {
+  margin-bottom: 15px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
 
 #login-box .input-group {
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+  border-radius: 4px;
 }
 
-#login-box .input-group input,
-#login-box .input-group select {
-  font-weight: 300;
-}
-
-/* Input Group Addon Specifics */
-#login-box .input-group .input-group-addon {
-  background-color: #f8f9fa !important;
-  border-color: #e7ebee !important;
+#login-box .input-group-addon {
+  background-color: #f0f3f5 !important;
   color: #03a9f4 !important;
-  /* Blue icon for accent */
-  min-width: 50px;
-  border-right: 0;
+  border: 1px solid #dfe4e7 !important;
+  min-width: 55px;
+  font-size: 1.2em;
 }
 
 #login-box .form-control {
-  height: 46px;
-  /* Legacy height */
-  border-color: #e7ebee !important;
-  color: #555;
-  box-shadow: none !important;
-  /* Legacy flattening */
+  height: 48px;
+  border: 1px solid #dfe4e7 !important;
+  border-left: none !important;
+  padding-left: 15px;
+  font-size: 15px;
 }
 
-/* Ensure focus state matches legacy or is nice */
 #login-box .form-control:focus {
   border-color: #03a9f4 !important;
-  /* Legacy blue focus */
+  z-index: 3;
 }
 
-#login-box .btn {
-  font-size: 1.125em;
-  font-weight: 600;
-  padding-bottom: 10px;
-  padding-top: 10px;
-  text-transform: uppercase;
-  margin-top: 8px;
-  transition: all 0.3s;
+#btn_login {
+  height: 50px;
+  background-color: #2ecc71;
+  border: none;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-top: 10px;
+  box-shadow: 0 4px 0 #27ae60;
+  transition: all 0.1s;
 }
 
-.btn-success {
-  background-color: #03a9f4;
-  border-color: #03a9f4;
-  border-radius: 4px;
-  /* Slightly softer */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+#btn_login:hover {
+  background-color: #27ae60;
+  transform: translateY(1px);
+  box-shadow: 0 2px 0 #27ae60;
 }
 
-.btn-success:hover,
-.btn-success:focus,
-.btn-success:active,
-.btn-success.active {
-  background-color: #0288d1 !important;
-  border-color: #0288d1 !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  transform: translateY(-1px);
-}
-
-/* Municipality Select Specifics to match Input Height */
-#login-box .form-control#frm_azienda {
-  height: 46px;
+#btn_login:active {
+  transform: translateY(4px);
+  box-shadow: none;
 }

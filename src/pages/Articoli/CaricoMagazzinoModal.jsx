@@ -6,8 +6,9 @@ import CausaliMovimentoArticoliService from '../../services/CausaliMovimentoArti
 import MovimentiMagazzinoService from '../../services/MovimentiMagazzinoService';
 
 import { FaWrench } from 'react-icons/fa';
-import FornitoriManagementModal from './FornitoriManagementModal';
-import CausaliManagementModal from './CausaliManagementModal';
+import FornitoriManagementModal from '../../components/modals/FornitoriManagementModal';
+import CausaliManagementModal from '../../components/modals/CausaliManagementModal';
+import WrenchModalButton from '../../components/WrenchModalButton';
 
 const formatYYYYMMDD = (date) => {
     const d = new Date(date);
@@ -157,14 +158,10 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
                                             }}
                                         />
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="premium-wrench-btn"
-                                        onClick={() => setShowFornitoriModal(true)}
+                                    <WrenchModalButton
+                                        ModalComponent={FornitoriManagementModal}
                                         title="Gestione Fornitori"
-                                    >
-                                        <FaWrench />
-                                    </button>
+                                    />
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: '15px', marginBottom: '15px', width: '100%' }}>
@@ -233,14 +230,10 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
                                             }}
                                         />
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="premium-wrench-btn"
-                                        onClick={() => setShowCausaliModal(true)}
+                                    <WrenchModalButton
+                                        ModalComponent={CausaliManagementModal}
                                         title="Gestione Causali"
-                                    >
-                                        <FaWrench />
-                                    </button>
+                                    />
                                 </div>
                             </div>
                         </form>

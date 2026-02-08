@@ -238,30 +238,29 @@ const SottoCategorieManagementModal = ({ onClose }) => {
 
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
-                    <div className="modal-header">
-                        <button type="button" className="close" onClick={onClose} aria-label="Close">
+                    <div className="modal-header bg-primary" style={{ color: 'white', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                        <button type="button" className="close" onClick={onClose} style={{ color: 'white', opacity: 0.8 }}>
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Elenco sottocategorie</h4>
+                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Elenco Sottocategorie</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
-                        {/* Toolbar */}
-                        <div className="row" style={{ marginBottom: '15px' }}>
-                            <div className="col-md-3">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
+                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                 <select
                                     className="form-control input-sm"
+                                    style={{ width: '200px' }}
                                     value={filterCategory}
                                     onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
                                 >
                                     <option value="">Tutte le categorie</option>
                                     {categories.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
                                 </select>
-                            </div>
-                            <div className="col-md-3 form-inline">
-                                <label style={{ fontWeight: 'normal' }}>Righe:
+                                <div className="form-inline">
+                                    <span style={{ marginRight: '15px' }}>RIGHE:</span>
                                     <select
                                         className="form-control input-sm"
-                                        style={{ margin: '0 5px', width: 'auto', display: 'inline-block' }}
+                                        style={{ width: 'auto', display: 'inline-block' }}
                                         value={pageSize}
                                         onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
                                     >
@@ -270,17 +269,19 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                                         <option value="50">50</option>
                                         <option value="100">100</option>
                                     </select>
-                                </label>
+                                </div>
                             </div>
-                            <div className="col-md-6 text-right form-inline">
-                                <div className="form-group" style={{ display: 'inline-block', marginRight: '10px' }}>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{ position: 'relative' }}>
                                     <input
                                         type="text"
-                                        className="form-control input-sm"
+                                        className="form-control"
                                         placeholder="Cerca..."
                                         value={searchTerm}
                                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                        style={{ paddingRight: '30px' }}
                                     />
+                                    <i className="fa fa-search" style={{ position: 'absolute', right: '10px', top: '10px', color: '#ccc' }}></i>
                                 </div>
                                 <button className="btn btn-primary" onClick={handleAdd}>
                                     <FaPlus /> Aggiungi
@@ -318,7 +319,7 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                                             <td style={{ verticalAlign: 'middle' }}>{item.parentDescription}</td>
                                             <td style={{ verticalAlign: 'middle' }}>{item.descrizione}</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                                                <button className="btn btn-info btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
+                                                <button className="btn btn-primary btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
                                                     <FaPencilAlt />
                                                 </button>
                                                 <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
@@ -331,24 +332,33 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                             </tbody>
                         </table>
 
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="text-center">
-                                <ul className="pagination pagination-sm" style={{ margin: 0 }}>
+                        {/* Pagination Footer */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '0 10px' }}>
+                            <small style={{ color: '#777' }}>
+                                Vista da {totalItems > 0 ? startIdx + 1 : 0} a {Math.min(startIdx + pageSize, totalItems)} di {totalItems} elementi
+                            </small>
+                            <nav>
+                                <ul className="pagination pagination-sm" style={{ margin: '0' }}>
                                     <li className={currentPage === 1 ? 'disabled' : ''}>
-                                        <a href="#!" onClick={() => setCurrentPage(1)}>&laquo;</a>
+                                        <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>
+                                            <span>&laquo;</span>
+                                        </a>
                                     </li>
-                                    {[...Array(totalPages)].map((_, i) => (
-                                        <li key={i + 1} className={currentPage === i + 1 ? 'active' : ''}>
-                                            <a href="#!" onClick={() => setCurrentPage(i + 1)}>{i + 1}</a>
+                                    {totalPages > 0 && [...Array(totalPages)].map((_, i) => (
+                                        <li key={i} className={currentPage === i + 1 ? 'active' : ''}>
+                                            <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
+                                                {i + 1}
+                                            </a>
                                         </li>
                                     ))}
-                                    <li className={currentPage === totalPages ? 'disabled' : ''}>
-                                        <a href="#!" onClick={() => setCurrentPage(totalPages)}>&raquo;</a>
+                                    <li className={currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}>
+                                        <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>
+                                            <span>&raquo;</span>
+                                        </a>
                                     </li>
                                 </ul>
-                            </div>
-                        )}
+                            </nav>
+                        </div>
                     </div>
                     <div className="modal-footer">
                         <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>

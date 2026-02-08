@@ -14,11 +14,11 @@ import { FaWrench } from 'react-icons/fa';
 import './EntityForms.css';
 
 // Sub-modals
-import AvvisiManagementModal from '../pages/Clienti/AvvisiManagementModal';
-import NoteDocumentiManagementModal from '../pages/Clienti/NoteDocumentiManagementModal';
-import TipiPortoManagementModal from '../pages/Clienti/TipiPortoManagementModal';
-import VettoriManagementModal from '../pages/Clienti/VettoriManagementModal';
-import RisorseManagementModal from '../pages/Clienti/RisorseManagementModal';
+import AvvisiManagementModal from './modals/AvvisiManagementModal';
+import NoteDocumentiManagementModal from './modals/NoteDocumentiManagementModal';
+import TipiPortoManagementModal from './modals/TipiPortoManagementModal';
+import VettoriManagementModal from './modals/VettoriManagementModal';
+import RisorseManagementModal from './modals/RisorseManagementModal';
 
 const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const [activeTab, setActiveTab] = useState('general');

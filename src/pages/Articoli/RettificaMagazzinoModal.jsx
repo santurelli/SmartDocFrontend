@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import AsyncCreatableSelect from 'react-select/async-creatable';
 import CausaliMovimentoArticoliService from '../../services/CausaliMovimentoArticoliService';
 import MovimentiMagazzinoService from '../../services/MovimentiMagazzinoService';
-import { FaWrench } from 'react-icons/fa';
-import CausaliManagementModal from './CausaliManagementModal';
+import CausaliManagementModal from '../../components/modals/CausaliManagementModal';
+import WrenchModalButton from '../../components/WrenchModalButton';
 const formatYYYYMMDD = (date) => {
     const d = new Date(date);
     const month = '' + (d.getMonth() + 1);
@@ -176,14 +176,10 @@ const RettificaMagazzinoModal = ({ show, handleClose, article, refreshList }) =>
                                             }}
                                         />
                                     </div>
-                                    <button
-                                        type="button"
-                                        className="premium-wrench-btn"
-                                        onClick={() => setShowCausaliModal(true)}
+                                    <WrenchModalButton
+                                        ModalComponent={CausaliManagementModal}
                                         title="Gestione Causali"
-                                    >
-                                        <FaWrench />
-                                    </button>
+                                    />
                                 </div>
                             </div>
                         </form>

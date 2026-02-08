@@ -84,26 +84,26 @@ const Login = () => {
         }
     };
 
-    // Custom styles for react-select to match legacy input height (46px) and colors
+    // Custom styles for react-select to match legacy input height (48px) and colors
     const customStyles = {
         control: (provided, state) => ({
             ...provided,
-            height: '46px',
-            minHeight: '46px',
+            height: '48px',
+            minHeight: '48px',
             borderRadius: '4px',
             borderTopLeftRadius: '0',
             borderBottomLeftRadius: '0',
-            borderColor: '#e7ebee',
+            borderColor: '#dfe4e7',
             boxShadow: 'none',
             '&:hover': {
-                borderColor: '#e7ebee'
+                borderColor: '#03a9f4'
             },
             backgroundColor: '#fff'
         }),
         valueContainer: (provided, state) => ({
             ...provided,
-            height: '46px',
-            padding: '0 6px'
+            height: '48px',
+            padding: '0 12px'
         }),
         input: (provided, state) => ({
             ...provided,
@@ -114,7 +114,7 @@ const Login = () => {
         }),
         indicatorsContainer: (provided, state) => ({
             ...provided,
-            height: '46px',
+            height: '48px',
         }),
         menu: (provided) => ({
             ...provided,
@@ -170,7 +170,7 @@ const Login = () => {
                                         </header>
                                         <div id="login-box-inner">
                                             <form role="form" onSubmit={handleLogin}>
-                                                <div className="input-group" id="grp_username">
+                                                <div className="flex-input-group" id="grp_username">
                                                     <span className="input-group-addon"><FaUser /></span>
                                                     <input
                                                         className="form-control"
@@ -183,7 +183,7 @@ const Login = () => {
                                                         autoFocus
                                                     />
                                                 </div>
-                                                <div className="input-group" id="grp_password">
+                                                <div className="flex-input-group" id="grp_password">
                                                     <span className="input-group-addon"><FaKey /></span>
                                                     <input
                                                         type="password"
@@ -196,8 +196,8 @@ const Login = () => {
                                                         onKeyDown={(e) => handleKeyDown(e, aziendaRef)}
                                                     />
                                                 </div>
-                                                <div className="input-group" id="grp_azienda" style={{ display: 'flex' }}>
-                                                    <span className="input-group-addon" style={{ height: '46px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px' }}><FaBuilding /></span>
+                                                <div className="flex-input-group" id="grp_azienda">
+                                                    <span className="input-group-addon"><FaBuilding /></span>
                                                     <div style={{ flexGrow: 1 }}>
                                                         <AsyncSelect
                                                             ref={aziendaRef}

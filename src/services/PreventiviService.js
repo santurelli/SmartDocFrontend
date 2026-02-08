@@ -2,15 +2,15 @@ import api from './api';
 
 class PreventiviService {
     getList(params) {
-        // Backend uses @RequestParam Map<String, String> on a POST /list
-        // We need to send form-data or x-www-form-urlencoded, not JSON.
-        const formData = new FormData();
-        Object.keys(params).forEach(key => {
-            if (params[key] !== null && params[key] !== undefined) {
-                formData.append(key, params[key]);
-            }
-        });
-        return api.post('/preventivi/list', formData);
+        return api.post('/preventivi/list', params);
+    }
+
+    exportExcel(params) {
+        return api.post('/preventivi/export-excel', params, { responseType: 'blob' });
+    }
+
+    getCombosMap() {
+        return api.get('/preventivi/combos-map');
     }
 
     getById(id) {

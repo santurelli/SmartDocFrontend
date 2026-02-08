@@ -1,9 +1,11 @@
 import axios from 'axios';
+import api from './api';
+import authStorage from './authStorage';
 
-const API_URL = 'http://localhost:8080/api/auth/';
+const AUTH_URL = 'http://localhost:8080/api/auth/';
 
 const login = async (username, password, ente) => {
-  const response = await axios.post(API_URL + 'login', {
+  const response = await axios.post(AUTH_URL + 'login', {
     username,
     password,
     ente,
@@ -11,7 +13,6 @@ const login = async (username, password, ente) => {
 
   if (response.data.token) {
     localStorage.setItem('user', JSON.stringify(response.data));
-    // Decode token to get config immediately
     const token = response.data.token;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -30,24 +31,21 @@ const getConfig = () => {
 }
 
 const updateConfig = (newConfig) => {
-  // For manual updates if backend config changes during session
-  // This allows "immediate update" without logout if we manually refresh this
   localStorage.setItem('appConfig', JSON.stringify(newConfig));
 }
 
 const logout = () => {
-  localStorage.removeItem('user');
+  authStorage.logout();
 };
 
 const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem('user'));
+  return authStorage.getCurrentUser();
 };
 
 const getMunicipalities = async (inputValue) => {
   if (!inputValue) return [];
   try {
-    const response = await axios.get(`http://localhost:8080/api/municipalities/suggestion?q=${inputValue}`);
-    // Map backend DTO to React-Select format { value, label }
+    const response = await api.get(`/municipalities/suggestion?q=${inputValue}`);
     return response.data.map(m => ({ value: m.dbName, label: m.text || m.denominazione || m.dbName, dbName: m.dbName }));
   } catch (error) {
     console.error("Error fetching municipalities", error);
@@ -56,7 +54,7 @@ const getMunicipalities = async (inputValue) => {
 };
 
 const authHeader = () => {
-  const user = JSON.parse(localStorage.getItem('user'));
+  const user = authStorage.getCurrentUser();
   if (user && user.token) {
     return { Authorization: 'Bearer ' + user.token };
   } else {
@@ -67,7 +65,6 @@ const authHeader = () => {
 const authService = {
   login,
   logout,
-  getCurrentUser,
   getCurrentUser,
   getMunicipalities,
   getConfig,

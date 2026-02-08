@@ -1,5 +1,5 @@
 import axios from 'axios';
-import authService from './authService';
+import authStorage from './authStorage';
 
 const instance = axios.create({
     baseURL: 'http://localhost:8080/api',
@@ -10,7 +10,7 @@ const instance = axios.create({
 
 instance.interceptors.request.use(
     (config) => {
-        const user = authService.getCurrentUser();
+        const user = authStorage.getCurrentUser();
         if (user && user.token) {
             config.headers['Authorization'] = 'Bearer ' + user.token;
         }
@@ -26,8 +26,8 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
-        if (error.response && error.response.status === 401) {
-            authService.logout();
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+            authStorage.logout();
             window.location.href = '/login';
         }
         return Promise.reject(error);

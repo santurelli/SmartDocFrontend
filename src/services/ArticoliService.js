@@ -38,6 +38,31 @@ class ArticoliService {
     delete(id) {
         return api.delete(`/articoli/${id}`);
     }
+
+    // Alias for getById to match component usage
+    getArticolo(id) {
+        return this.getById(id);
+    }
+
+    getCategorie() {
+        return api.post('/categorie-articoli/listForCombo');
+    }
+
+    getSottoCategorie(idCategoria) {
+        return api.post(`/sottocategorie/listForCombo`, { idCategoria });
+    }
+
+    getDivisioni() {
+        return api.post('/divisioni/listForCombo');
+    }
+
+    getUnitaMisura() {
+        return api.post('/unitamisura/listForCombo');
+    }
+
+    getAliquoteIva() {
+        return api.post('/aliquoteiva/listForCombo');
+    }
 }
 
 export default new ArticoliService();

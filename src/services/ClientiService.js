@@ -38,6 +38,10 @@ class ClientiService {
     exportExcel(params) {
         return api.get('/clienti/export-excel', { params, responseType: 'blob' });
     }
+
+    getIndirizzi(id) {
+        return api.get(`/indirizzi/clienti/${id}`);
+    }
 }
 
 export default new ClientiService();

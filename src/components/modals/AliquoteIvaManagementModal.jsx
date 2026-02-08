@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import AliquoteIvaService from '../../services/AliquoteIvaService';
 import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaSearch, FaChevronLeft, FaChevronRight, FaSortUp, FaSortDown, FaSort, FaCheck } from 'react-icons/fa';
 
-const AliquoteIvaManagementModal = ({ onClose }) => {
+const AliquoteIvaManagementModal = ({ isOpen, onClose, onSave }) => {
     const [list, setList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
@@ -37,8 +37,12 @@ const AliquoteIvaManagementModal = ({ onClose }) => {
     ];
 
     useEffect(() => {
-        loadData();
-    }, [page, search, sortConfig]);
+        if (isOpen) {
+            loadData();
+        }
+    }, [isOpen, page, search, sortConfig]);
+
+    if (!isOpen) return null;
 
     const loadData = async () => {
         setLoading(true);
@@ -211,6 +215,7 @@ const AliquoteIvaManagementModal = ({ onClose }) => {
         }).then((result) => {
             if (result.isConfirmed) {
                 loadData();
+                if (onSave) onSave();
                 Swal.fire({
                     icon: 'success',
                     title: id ? 'Aggiornata!' : 'Creata!',
@@ -246,6 +251,7 @@ const AliquoteIvaManagementModal = ({ onClose }) => {
                         'success'
                     );
                     loadData();
+                    if (onSave) onSave();
                 } catch (error) {
                     Swal.fire('Errore', 'Impossibile eliminare: ' + (error.response?.data?.errorText || error.message), 'error');
                 }
