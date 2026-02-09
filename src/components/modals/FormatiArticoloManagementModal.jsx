@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import SottoCategorieService from '../../services/SottoCategorieService';
-import CategorieArticoliService from '../../services/CategorieArticoliService';
+import ArticoliService from '../../services/ArticoliService';
 import { FaPencilAlt, FaTrash, FaPlus, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
-const SottoCategorieManagementModal = ({ onClose }) => {
+const FormatiArticoloManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [filterCategory, setFilterCategory] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(50);
     const [currentPage, setCurrentPage] = useState(1);
@@ -16,35 +13,22 @@ const SottoCategorieManagementModal = ({ onClose }) => {
 
     useEffect(() => {
         loadData();
-        loadCategories();
     }, []);
-
-    const loadCategories = async () => {
-        try {
-            const res = await CategorieArticoliService.getListForCombo();
-            setCategories(res.data.payload || []);
-        } catch (error) {
-            console.error("Error loading categories:", error);
-        }
-    };
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const res = await SottoCategorieService.getList({
-                parentId: filterCategory || null,
-                descrizione: null
-            });
+            const res = await ArticoliService.getListFormati({ descrizione: searchTerm });
             if (res.data && res.data.payload) {
                 setList(res.data.payload);
             } else {
                 setList([]);
             }
         } catch (error) {
-            console.error("Error loading sottocategorie:", error);
+            console.error("Error loading formati:", error);
             Swal.fire({
                 title: 'Errore',
-                text: 'Impossibile caricare le sottocategorie',
+                text: 'Impossibile caricare i formati',
                 icon: 'error',
                 buttonsStyling: false,
                 customClass: {
@@ -61,7 +45,7 @@ const SottoCategorieManagementModal = ({ onClose }) => {
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "La sottocategoria verrà eliminata.",
+            text: "Il formato verrà eliminato.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sì, elimina',
@@ -77,7 +61,7 @@ const SottoCategorieManagementModal = ({ onClose }) => {
 
         if (result.isConfirmed) {
             try {
-                const res = await SottoCategorieService.delete(id);
+                const res = await ArticoliService.deleteFormato(id);
                 if (res.data && res.data.errorText) {
                     Swal.fire({
                         title: 'Errore',
@@ -94,7 +78,7 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                     loadData();
                     Swal.fire({
                         title: 'Eliminato!',
-                        text: 'Sottocategoria eliminata.',
+                        text: 'Formato eliminato.',
                         icon: 'success',
                         buttonsStyling: false,
                         customClass: {
@@ -123,32 +107,21 @@ const SottoCategorieManagementModal = ({ onClose }) => {
     };
 
     const handleEdit = (item) => {
-        openDetailModal(item.id, item.parentId, item.descrizione);
+        openDetailModal(item.id, item.descrizione);
     };
 
     const handleAdd = () => {
-        openDetailModal(null, filterCategory || '', '');
+        openDetailModal(null, '');
     };
 
-    const openDetailModal = (id, existingParentId, existingDesc) => {
+    const openDetailModal = (id, existingDesc) => {
         Swal.fire({
-            title: id ? 'Modifica Sottocategoria' : 'Nuova Sottocategoria',
+            title: id ? 'Modifica Formato' : 'Nuovo Formato',
             html: `
                 <div style="text-align: left; padding: 10px 5px;">
                     <div class="form-group">
-                        <label class="premium-swal-label">Categoria Padre</label>
-                        <select id="swal-parent-id" class="form-control premium-swal-input" ${id ? 'disabled' : ''}>
-                            <option value="">Seleziona...</option>
-                            ${categories.map(c => `
-                                <option value="${c.id}" ${Number(c.id) === Number(existingParentId) ? 'selected' : ''}>
-                                    ${c.descrizione}
-                                </option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label class="premium-swal-label">Descrizione</label>
-                        <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Minuterie, Accessori..." value="${existingDesc}">
+                        <label class="premium-swal-label">Descrizione Formato</label>
+                        <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. 30x60, 60x60..." value="${existingDesc}">
                     </div>
                 </div>
             `,
@@ -165,18 +138,17 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                 cancelButton: 'premium-swal-cancel'
             },
             preConfirm: async () => {
-                const parentId = document.getElementById('swal-parent-id').value;
-                const descrizione = document.getElementById('swal-descrizione').value;
-                if (!parentId || !descrizione) {
-                    Swal.showValidationMessage('Tutti i campi sono obbligatori');
+                const value = document.getElementById('swal-descrizione').value;
+                if (!value) {
+                    Swal.showValidationMessage('La descrizione è obbligatoria');
                     return false;
                 }
                 try {
                     let res;
                     if (id) {
-                        res = await SottoCategorieService.update(id, { parentId, descrizione });
+                        res = await ArticoliService.updateFormato(id, { descrizione: value });
                     } else {
-                        res = await SottoCategorieService.create({ parentId, descrizione });
+                        res = await ArticoliService.createFormato({ descrizione: value });
                     }
 
                     if (res.data && res.data.errorText) {
@@ -223,10 +195,7 @@ const SottoCategorieManagementModal = ({ onClose }) => {
         return 0;
     });
 
-    const filteredList = sortedList.filter(item =>
-        item.descrizione?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (filterCategory === '' || Number(item.parentId) === Number(filterCategory))
-    );
+    const filteredList = sortedList;
 
     const totalItems = filteredList.length;
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -234,42 +203,31 @@ const SottoCategorieManagementModal = ({ onClose }) => {
     const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
-        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
-
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1051 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
                     <div className="modal-header bg-primary" style={{ color: 'white', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
                         <button type="button" className="close" onClick={onClose} style={{ color: 'white', opacity: 0.8 }}>
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Elenco Sottocategorie</h4>
+                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Elenco Formati Articolo</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                            <div className="form-inline">
+                                <span style={{ marginRight: '15px' }}>MOSTRA</span>
                                 <select
                                     className="form-control input-sm"
-                                    style={{ width: '200px' }}
-                                    value={filterCategory}
-                                    onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+                                    style={{ width: 'auto', display: 'inline-block' }}
+                                    value={pageSize}
+                                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
                                 >
-                                    <option value="">Tutte le categorie</option>
-                                    {categories.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
                                 </select>
-                                <div className="form-inline">
-                                    <span style={{ marginRight: '15px' }}>RIGHE:</span>
-                                    <select
-                                        className="form-control input-sm"
-                                        style={{ width: 'auto', display: 'inline-block' }}
-                                        value={pageSize}
-                                        onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                                    >
-                                        <option value="10">10</option>
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                </div>
+                                <span style={{ marginLeft: '15px' }}>RIGHE</span>
                             </div>
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <div style={{ position: 'relative' }}>
@@ -279,9 +237,10 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                                         placeholder="Cerca..."
                                         value={searchTerm}
                                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') loadData(); }}
                                         style={{ paddingRight: '30px' }}
                                     />
-                                    <i className="fa fa-search" style={{ position: 'absolute', right: '10px', top: '10px', color: '#ccc' }}></i>
+                                    <i className="fa fa-search" style={{ position: 'absolute', right: '10px', top: '10px', color: '#ccc', cursor: 'pointer' }} onClick={loadData}></i>
                                 </div>
                                 <button className="btn btn-primary" onClick={handleAdd}>
                                     <FaPlus /> Aggiungi
@@ -295,28 +254,17 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                                 <tr>
                                     <th
                                         style={{ verticalAlign: 'middle', cursor: 'pointer', userSelect: 'none' }}
-                                        onClick={() => handleSort('parentDescription')}
-                                    >
-                                        CATEGORIA {getSortIcon('parentDescription')}
-                                    </th>
-                                    <th
-                                        style={{ verticalAlign: 'middle', cursor: 'pointer', userSelect: 'none' }}
                                         onClick={() => handleSort('descrizione')}
                                     >
-                                        SOTTOCATEGORIA {getSortIcon('descrizione')}
+                                        DESCRIZIONE {getSortIcon('descrizione')}
                                     </th>
                                     <th style={{ width: '120px', verticalAlign: 'middle', textAlign: 'center' }}>AZIONI</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {loading ? (
-                                    <tr><td colSpan="3" className="text-center">Caricamento...</td></tr>
-                                ) : currentItems.length === 0 ? (
-                                    <tr><td colSpan="3" className="text-center">Nessun elemento trovato</td></tr>
-                                ) : (
+                                {currentItems.length > 0 ? (
                                     currentItems.map(item => (
                                         <tr key={item.id}>
-                                            <td style={{ verticalAlign: 'middle' }}>{item.parentDescription}</td>
                                             <td style={{ verticalAlign: 'middle' }}>{item.descrizione}</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
@@ -330,6 +278,10 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                                             </td>
                                         </tr>
                                     ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="2" className="text-center">Nessun elemento trovato</td>
+                                    </tr>
                                 )}
                             </tbody>
                         </table>
@@ -371,4 +323,4 @@ const SottoCategorieManagementModal = ({ onClose }) => {
     );
 };
 
-export default SottoCategorieManagementModal;
+export default FormatiArticoloManagementModal;

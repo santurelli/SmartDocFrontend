@@ -17,7 +17,8 @@ body {
 #login-box {
   max-width: 400px;
   margin: 10vh auto;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+  /* Removed as per user request */
   border-radius: 8px;
   overflow: hidden;
   background: #fff;
@@ -81,20 +82,66 @@ body {
   height: 50px;
   background-color: #2ecc71;
   border: none;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 1px;
-  margin-top: 10px;
-  box-shadow: 0 4px 0 #27ae60;
-  transition: all 0.1s;
+  margin-top: 20px;
+  /* More space above button */
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3);
+  /* Soft modern shadow */
 }
 
 #btn_login:hover {
   background-color: #27ae60;
-  transform: translateY(1px);
-  box-shadow: 0 2px 0 #27ae60;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(46, 204, 113, 0.4);
 }
 
 #btn_login:active {
-  transform: translateY(4px);
-  box-shadow: none;
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(46, 204, 113, 0.3);
 }
+
+/* FIX for Login Page: Override global flex-input-group 38px constraint */
+#login-box .flex-input-group {
+  height: 48px !important;
+  margin-bottom: 20px !important;
+  /* Add spacing between rows */
+}
+
+#login-box .flex-input-group .input-group-addon {
+  height: 48px !important;
+  min-width: 50px;
+  /* Slightly wider for icons */
+  font-size: 1.3em;
+  /* Larger icons */
+  border-right: none !important;
+  /* Remove separator */
+  background-color: #f8f9fa !important;
+  /* Ensure light background matches */
+  border-color: #dfe4e7 !important;
+}
+
+#login-box .flex-input-group .form-control {
+  height: 48px !important;
+  font-size: 16px;
+  /* Larger text */
+  border-left: none !important;
+  /* Ensure visual merge */
+  border-color: #dfe4e7 !important;
+}
+
+/* Ensure focus state highlights the whole group nicely */
+#login-box .form-control:focus {
+  border-color: #03a9f4 !important;
+  box-shadow: none !important;
+  /* Remove default glow if any */
+}
+
+/* Add focus style to addon when sibling input is focused (advanced) 
+   or just accept that only the input lights up. 
+   Actually, let's keep it simple. */

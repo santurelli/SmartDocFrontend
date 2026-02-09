@@ -10,6 +10,10 @@ import SottoCategorieManagementModal from '../../components/modals/SottoCategori
 import UnitaMisuraManagementModal from '../../components/modals/UnitaMisuraManagementModal';
 import AliquoteIvaManagementModal from '../../components/modals/AliquoteIvaManagementModal';
 import FornitoriManagementModal from '../../components/modals/FornitoriManagementModal';
+import ScelteArticoloManagementModal from '../../components/modals/ScelteArticoloManagementModal';
+import ToniArticoloManagementModal from '../../components/modals/ToniArticoloManagementModal';
+import FormatiArticoloManagementModal from '../../components/modals/FormatiArticoloManagementModal';
+import CalibriArticoloManagementModal from '../../components/modals/CalibriArticoloManagementModal';
 import WrenchModalButton from '../../components/WrenchModalButton';
 import './ArticoliDetail.css';
 import '../../components/EntityForms.css';
@@ -64,32 +68,50 @@ const ArticoliDetail = () => {
 
 
     useEffect(() => {
-        loadConfig();
-        loadCombos();
-        if (!isNew && id && id !== 'undefined') {
-            loadArticolo();
-        }
+        const init = async () => {
+            const currentConfig = await loadConfig();
+            await loadCombos(currentConfig);
+            if (!isNew && id && id !== 'undefined') {
+                loadArticolo();
+            } else if (isNew) {
+                handleGenerateCode();
+            }
+        };
+        init();
     }, [id]);
 
     const loadConfig = async () => {
         try {
             const res = await ConfigurazioneService.getByDomain('GLOBAL');
-            const configs = res.data?.payload || [];
-            const divisioniConfig = configs.find(c => c.chiave === 'DIVISIONI');
-            const abilitaDivisioni = divisioniConfig && divisioniConfig.valore === '1';
+            const data = res.data?.payload || res.data || {};
 
-            setConfig(prev => ({
-                ...prev,
-                abilitaDivisioni: abilitaDivisioni
-            }));
+            let isCeramica = false;
+            let abilitaDivisioni = false;
+
+            if (Array.isArray(data)) {
+                isCeramica = data.some(c => (c.chiave === 'TIPO_STORE' || c.chiave === 'TIPOSTORE') && c.valore === 'CERAMICA');
+                abilitaDivisioni = data.some(c => c.chiave === 'DIVISIONI' && c.valore === '1');
+            } else {
+                isCeramica = data['TIPO_STORE'] === 'CERAMICA' || data['TIPOSTORE'] === 'CERAMICA';
+                abilitaDivisioni = data['DIVISIONI'] === '1';
+            }
+
+            const newConfig = {
+                ...config,
+                abilitaDivisioni: abilitaDivisioni,
+                isCeramica: isCeramica
+            };
+            setConfig(newConfig);
+            return newConfig;
         } catch (error) {
             console.error("Errore caricamento configurazione", error);
+            return config;
         }
     };
 
-    const loadCombos = async () => {
+    const loadCombos = async (currentConfig = config) => {
         try {
-            // Unita Misura, Aliquote IVA, Categorie (cached)
+            // Standard combos
             const [cat, um, iva] = await Promise.all([
                 ArticoliService.getCategorie(),
                 ArticoliService.getUnitaMisura(),
@@ -101,25 +123,32 @@ const ArticoliDetail = () => {
                 categorie: cat.data?.payload || [],
                 unitaMisura: um.data?.payload || [],
                 aliquoteIva: iva.data?.payload || [],
-                // Divisioni loaded separately if needed, but keeping logic clean
-                divisioni: [] // Will be loaded if enabled or separately
             }));
 
-            // If enabled, load divisioni too
-            if (config.abilitaDivisioni) {
+            // Divisioni if enabled
+            if (currentConfig.abilitaDivisioni) {
                 ArticoliService.getDivisioni().then(res =>
                     setCombos(prev => ({ ...prev, divisioni: res.data?.payload || [] }))
                 );
             }
 
-            // Ceramica specific combos (placeholders)
-            setCombos(prev => ({
-                ...prev,
-                formati: [],
-                scelte: [],
-                toni: [],
-                calibri: []
-            }));
+            // Ceramica specific combos
+            if (currentConfig.isCeramica) {
+                const [formati, scelte, toni, calibri] = await Promise.all([
+                    ArticoliService.getFormati(),
+                    ArticoliService.getScelte(),
+                    ArticoliService.getToni(),
+                    ArticoliService.getCalibri()
+                ]);
+
+                setCombos(prev => ({
+                    ...prev,
+                    formati: formati.data?.payload || [],
+                    scelte: scelte.data?.payload || [],
+                    toni: toni.data?.payload || [],
+                    calibri: calibri.data?.payload || []
+                }));
+            }
         } catch (error) {
             console.error("Errore caricamento combo", error);
         }
@@ -128,11 +157,25 @@ const ArticoliDetail = () => {
     const loadArticolo = async () => {
         try {
             const res = await ArticoliService.getArticolo(id);
-            if (res.data) {
-                setFormData(res.data);
-                if (res.data.idCategoria) {
+            if (res.data && res.data.payload) {
+                const data = res.data.payload;
+                if (data.prezzoFornitore !== null && data.prezzoFornitore !== undefined) {
+                    data.prezzoFornitore = parseFloat(data.prezzoFornitore).toFixed(2);
+                }
+                setFormData(data);
+                if (data.idCategoria) {
                     // Populate sottocategorie based on loaded category
-                    loadSottoCategorie(res.data.idCategoria);
+                    loadSottoCategorie(data.idCategoria);
+                }
+            } else if (res.data) {
+                // Fallback if not wrapped
+                const data = res.data;
+                if (data.prezzoFornitore !== null && data.prezzoFornitore !== undefined) {
+                    data.prezzoFornitore = parseFloat(data.prezzoFornitore).toFixed(2);
+                }
+                setFormData(data);
+                if (data.idCategoria) {
+                    loadSottoCategorie(data.idCategoria);
                 }
             }
         } catch (error) {
@@ -172,10 +215,15 @@ const ArticoliDetail = () => {
         }
     };
 
-    const handleGenerateCode = () => {
-        // Mock generation
-        const newCode = "ART-" + Math.floor(Math.random() * 100000);
-        setFormData(prev => ({ ...prev, codice: newCode }));
+    const handleGenerateCode = async () => {
+        try {
+            const res = await ArticoliService.getNextCode();
+            if (res.data && res.data.codice) {
+                setFormData(prev => ({ ...prev, codice: res.data.codice }));
+            }
+        } catch (error) {
+            console.error("Errore generazione codice", error);
+        }
     };
 
     const handleCloseCategorieModal = () => {
@@ -197,6 +245,22 @@ const ArticoliDetail = () => {
     };
 
     const handleCloseFornitoriModal = () => {
+    };
+
+    const handleCloseFormatiModal = () => {
+        ArticoliService.getFormati().then(res => setCombos(prev => ({ ...prev, formati: res.data?.payload || [] })));
+    };
+
+    const handleCloseScelteModal = () => {
+        ArticoliService.getScelte().then(res => setCombos(prev => ({ ...prev, scelte: res.data?.payload || [] })));
+    };
+
+    const handleCloseToniModal = () => {
+        ArticoliService.getToni().then(res => setCombos(prev => ({ ...prev, toni: res.data?.payload || [] })));
+    };
+
+    const handleCloseCalibriModal = () => {
+        ArticoliService.getCalibri().then(res => setCombos(prev => ({ ...prev, calibri: res.data?.payload || [] })));
     };
 
     return (
@@ -324,32 +388,72 @@ const ArticoliDetail = () => {
 
                         {/* CERAMICA FIELDS */}
                         {config.isCeramica && (
-                            <div className="row">
-                                <div className="col-xs-12 col-md-3">
-                                    <div className="form-group">
-                                        <label>Formato</label>
-                                        <select className="form-control" name="idFormato" value={formData.idFormato} onChange={handleChange}>
-                                            {combos.formati.map(f => <option key={f.id} value={f.id}>{f.descrizione}</option>)}
-                                        </select>
+                            <>
+                                <div className="row">
+                                    <div className="col-xs-12 col-md-3">
+                                        <EntitySelectGroup
+                                            label="Formato"
+                                            isAsync={false}
+                                            options={combos.formati.map(f => ({ value: f.id, label: f.descrizione }))}
+                                            value={formData.idFormato ? { value: formData.idFormato, label: combos.formati.find(f => f.id === formData.idFormato)?.descrizione || '' } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idFormato: opt ? opt.value : '' }))}
+                                            ModalComponent={FormatiArticoloManagementModal}
+                                            onModalClose={handleCloseFormatiModal}
+                                            title="Gestione formati"
+                                        />
+                                    </div>
+                                    <div className="col-xs-12 col-md-3">
+                                        <EntitySelectGroup
+                                            label="Scelta"
+                                            isAsync={false}
+                                            options={combos.scelte.map(s => ({ value: s.id, label: s.descrizione }))}
+                                            value={formData.idScelta ? { value: formData.idScelta, label: combos.scelte.find(s => s.id === formData.idScelta)?.descrizione || '' } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idScelta: opt ? opt.value : '' }))}
+                                            ModalComponent={ScelteArticoloManagementModal}
+                                            onModalClose={handleCloseScelteModal}
+                                            title="Gestione scelte"
+                                        />
+                                    </div>
+                                    <div className="col-xs-12 col-md-3">
+                                        <EntitySelectGroup
+                                            label="Tono"
+                                            isAsync={false}
+                                            options={combos.toni.map(t => ({ value: t.id, label: t.descrizione }))}
+                                            value={formData.idTono ? { value: formData.idTono, label: combos.toni.find(t => t.id === formData.idTono)?.descrizione || '' } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idTono: opt ? opt.value : '' }))}
+                                            ModalComponent={ToniArticoloManagementModal}
+                                            onModalClose={handleCloseToniModal}
+                                            title="Gestione toni"
+                                        />
+                                    </div>
+                                    <div className="col-xs-12 col-md-3">
+                                        <EntitySelectGroup
+                                            label="Calibro"
+                                            isAsync={false}
+                                            options={combos.calibri.map(c => ({ value: c.id, label: c.descrizione }))}
+                                            value={formData.idCalibro ? { value: formData.idCalibro, label: combos.calibri.find(c => c.id === formData.idCalibro)?.descrizione || '' } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idCalibro: opt ? opt.value : '' }))}
+                                            ModalComponent={CalibriArticoloManagementModal}
+                                            onModalClose={handleCloseCalibriModal}
+                                            title="Gestione calibri"
+                                        />
                                     </div>
                                 </div>
-                                <div className="col-xs-12 col-md-3">
-                                    <div className="form-group">
-                                        <label>Scelta</label>
-                                        <select className="form-control" name="idScelta" value={formData.idScelta} onChange={handleChange}>
-                                            {combos.scelte.map(s => <option key={s.id} value={s.id}>{s.descrizione}</option>)}
-                                        </select>
+                                <div className="row">
+                                    <div className="col-xs-12 col-md-3">
+                                        <div className="form-group">
+                                            <label>MQ/Box</label>
+                                            <input type="number" step="0.001" className="form-control" name="mqBox" value={formData.mqBox} onChange={handleChange} placeholder="0.000" />
+                                        </div>
+                                    </div>
+                                    <div className="col-xs-12 col-md-3">
+                                        <div className="form-group">
+                                            <label>Pezzi/Box</label>
+                                            <input type="number" className="form-control" name="pezziBox" value={formData.pezziBox} onChange={handleChange} placeholder="0" />
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="col-xs-12 col-md-3">
-                                    <div className="form-group">
-                                        <label>Tono</label>
-                                        <select className="form-control" name="idTono" value={formData.idTono} onChange={handleChange}>
-                                            {combos.toni.map(t => <option key={t.id} value={t.id}>{t.descrizione}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
+                            </>
                         )}
 
                         {config.abilitaUnitaMisura && (
@@ -457,6 +561,12 @@ const ArticoliDetail = () => {
                                         name="prezzoFornitore"
                                         value={formData.prezzoFornitore || ''}
                                         onChange={handleChange}
+                                        onBlur={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (!isNaN(val)) {
+                                                setFormData(prev => ({ ...prev, prezzoFornitore: val.toFixed(2) }));
+                                            }
+                                        }}
                                         placeholder="Inserisci prezzo fornitore"
                                     />
                                 </div>

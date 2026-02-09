@@ -6,19 +6,44 @@ import './FornitoriList.css';
 import DownloadProgress from '../../components/DownloadProgress';
 import Swal from 'sweetalert2';
 
+import storageHelper from '../../utils/storageHelper';
+
+const MODULE_NAME = 'fornitori';
+
 const FornitoriList = () => {
     const navigate = useNavigate();
+
+    // Load initial state
+    const initialState = storageHelper.loadState(MODULE_NAME, {
+        search: '',
+        currentPage: 0,
+        pageSize: 50,
+        sortCol: 0,
+        sortDir: 'asc'
+    });
+
     const [fornitori, setFornitori] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
-    const [search, setSearch] = useState('');
+    const [search, setSearch] = useState(initialState.search);
     const [downloading, setDownloading] = useState(false);
 
     // Pagination state
-    const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize, setPageSize] = useState(50);
-    const [sortCol, setSortCol] = useState(0);
-    const [sortDir, setSortDir] = useState('asc');
+    const [currentPage, setCurrentPage] = useState(initialState.currentPage);
+    const [pageSize, setPageSize] = useState(initialState.pageSize);
+    const [sortCol, setSortCol] = useState(initialState.sortCol);
+    const [sortDir, setSortDir] = useState(initialState.sortDir);
+
+    // Save state whenever filters or pagination change
+    useEffect(() => {
+        storageHelper.saveState(MODULE_NAME, {
+            search,
+            currentPage,
+            pageSize,
+            sortCol,
+            sortDir
+        });
+    }, [search, currentPage, pageSize, sortCol, sortDir]);
 
     const fetchFornitori = async () => {
         setLoading(true);

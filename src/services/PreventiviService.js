@@ -32,6 +32,10 @@ class PreventiviService {
     delete(id) {
         return api.delete(`/preventivi/${id}`);
     }
+
+    print(id) {
+        return api.get(`/preventivi/print/${id}`, { responseType: 'blob' });
+    }
 }
 
 export default new PreventiviService();

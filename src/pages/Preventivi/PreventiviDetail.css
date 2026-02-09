@@ -417,3 +417,160 @@
 .row-add-actions:hover {
     background: transparent !important;
 }
+
+.btn-premium-print {
+    background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 30px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-premium-print:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    color: white;
+}
+
+.footer-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Split Button Styles - Refined */
+.split-btn-container {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    transition: all 0.3s;
+    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+}
+
+.split-btn-container:hover {
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Specificity boost override */
+.split-btn-container .split-btn-main.btn-premium-save {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 30px !important;
+    border-bottom-left-radius: 30px !important;
+    padding: 10px 20px 10px 25px !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none;
+    color: white !important;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: auto !important;
+    min-height: 38px;
+}
+
+.split-btn-container .split-btn-toggle {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 30px !important;
+    border-bottom-right-radius: 30px !important;
+    padding: 0 15px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border: none !important;
+    color: white !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    height: auto !important;
+    min-height: 38px;
+}
+
+.split-btn-container .split-btn-main:hover,
+.split-btn-container .split-btn-toggle:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.split-btn-menu {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    min-width: 200px;
+    z-index: 1000;
+    border: 1px solid #f0f0f0;
+    display: none;
+    transform-origin: bottom right;
+}
+
+.split-btn-menu.show {
+    display: block;
+    animation: menuPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.split-btn-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #444;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.split-btn-item:hover {
+    background: #f8f9fa;
+    color: #27ae60;
+    padding-left: 25px;
+    /* Slide effect */
+}
+
+.split-btn-item svg {
+    color: #bdc3c7;
+    font-size: 16px;
+    transition: color 0.2s;
+}
+
+.split-btn-item:hover svg {
+    color: #27ae60;
+}
+
+@keyframes menuPop {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}

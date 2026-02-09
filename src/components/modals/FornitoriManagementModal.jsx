@@ -82,75 +82,90 @@ const FornitoriManagementModal = ({ onClose }) => {
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">
-                    <div className="modal-header">
-                        <button type="button" className="close" onClick={onClose}>&times;</button>
+                    <div className="modal-header bg-primary" style={{ color: 'white', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                        <button type="button" className="close" onClick={onClose} style={{ color: 'white', opacity: 0.8 }}>&times;</button>
                         <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Fornitori</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', padding: '25px' }}>
+                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', padding: '30px' }}>
+
                         {/* Toolbar */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-                            <button className="btn-premium-save" style={{ margin: 0, padding: '10px 20px', fontSize: '14px' }} onClick={handleAdd}>
-                                <FaPlus style={{ marginRight: '8px' }} /> Nuovo Fornitore
-                            </button>
-                            <div style={{ position: 'relative', flex: '0 0 300px' }}>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    style={{ borderRadius: '10px', paddingRight: '35px', height: '40px' }}
-                                    placeholder="Cerca fornitore..."
-                                    value={searchTerm}
-                                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                />
-                                <i className="fa fa-search" style={{ position: 'absolute', right: '12px', top: '12px', color: '#ccc' }}></i>
+                            <div className="form-inline">
+                                <span style={{ marginRight: '15px' }}>MOSTRA</span>
+                                <select
+                                    className="form-control input-sm"
+                                    style={{ width: 'auto', display: 'inline-block' }}
+                                    value={pageSize}
+                                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                >
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span style={{ marginLeft: '15px' }}>RIGHE</span>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        style={{ paddingRight: '35px' }}
+                                        placeholder="Cerca fornitore..."
+                                        value={searchTerm}
+                                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                    />
+                                    <i className="fa fa-search" style={{ position: 'absolute', right: '10px', top: '10px', color: '#ccc' }}></i>
+                                </div>
+                                <button className="btn btn-primary" onClick={handleAdd}>
+                                    <FaPlus /> Nuovo Fornitore
+                                </button>
                             </div>
                         </div>
 
-                        {/* Table */}
-                        <div className="table-responsive" style={{ border: 'none' }}>
-                            <table className="table" style={{ borderCollapse: 'separate', borderSpacing: '0 10px' }}>
-                                <thead>
-                                    <tr style={{ background: '#f8f9fa' }}>
-                                        <th style={{ border: 'none', borderRadius: '10px 0 0 10px', padding: '12px 15px' }}>CODICE</th>
-                                        <th style={{ border: 'none', padding: '12px 15px' }}>DENOMINAZIONE</th>
-                                        <th style={{ border: 'none', borderRadius: '0 100px 100px 0', padding: '12px 15px', width: '120px', textAlign: 'center' }}>AZIONI</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {list.length > 0 ? (
-                                        list.map(item => (
-                                            <tr key={item.id} style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderRadius: '10px' }}>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px', fontWeight: '500' }}>{item.codice}</td>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff' }}>{item.denominazione}</td>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
-                                                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                                                        <button
-                                                            className="btn-premium-save"
-                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, boxShadow: 'none', backgroundColor: '#5bc0de' }}
-                                                            onClick={() => handleEdit(item)}
-                                                            title="Modifica"
-                                                        >
-                                                            <FaPencilAlt />
-                                                        </button>
-                                                        <button
-                                                            className="btn-premium-cancel"
-                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, backgroundColor: '#e74c3c' }}
-                                                            onClick={() => handleDelete(item.id)}
-                                                            title="Elimina"
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="3" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun fornitore trovato</td>
+                        {/* Standard Table */}
+                        <table className="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th style={{ verticalAlign: 'middle' }}>CODICE</th>
+                                    <th style={{ verticalAlign: 'middle' }}>DENOMINAZIONE</th>
+                                    <th style={{ width: '150px', verticalAlign: 'middle', textAlign: 'center' }}>AZIONI</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {list.length > 0 ? (
+                                    list.map(item => (
+                                        <tr key={item.id}>
+                                            <td style={{ verticalAlign: 'middle' }}>{item.codice}</td>
+                                            <td style={{ verticalAlign: 'middle' }}>{item.denominazione}</td>
+                                            <td className="text-center" style={{ verticalAlign: 'middle' }}>
+                                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                                    <button
+                                                        className="btn btn-primary btn-sm"
+                                                        onClick={() => handleEdit(item)}
+                                                        title="Modifica"
+                                                    >
+                                                        <FaPencilAlt />
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-danger btn-sm"
+                                                        onClick={() => handleDelete(item.id)}
+                                                        title="Elimina"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan="3" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun fornitore trovato</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
 
                         {/* Pagination */}
                         {totalItems > 0 && (
@@ -179,8 +194,8 @@ const FornitoriManagementModal = ({ onClose }) => {
                         )}
 
                     </div>
-                    <div className="modal-footer" style={{ borderTop: '1px solid #f0f0f0', padding: '15px 25px' }}>
-                        <button type="button" className="btn-premium-cancel" style={{ padding: '10px 25px' }} onClick={onClose}>Chiudi</button>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>
                     </div>
                 </div>
             </div>

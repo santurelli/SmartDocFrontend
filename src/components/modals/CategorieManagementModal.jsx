@@ -269,12 +269,14 @@ const CategorieManagementModal = ({ onClose }) => {
                                         <tr key={item.id}>
                                             <td style={{ verticalAlign: 'middle' }}>{item.descrizione}</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                                                <button className="btn btn-primary btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
-                                                    <FaPencilAlt />
-                                                </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
-                                                    <FaTrash />
-                                                </button>
+                                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                                    <button className="btn btn-primary btn-sm" onClick={() => handleEdit(item)} title="Modifica">
+                                                        <FaPencilAlt />
+                                                    </button>
+                                                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

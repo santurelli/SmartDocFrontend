@@ -9,26 +9,60 @@ import InventarioMagazzinoService from '../../services/InventarioMagazzinoServic
 import DownloadProgress from '../../components/DownloadProgress';
 import './ArticoliList.css';
 
+import storageHelper from '../../utils/storageHelper';
+
+const MODULE_NAME = 'inventario';
+
 const InventarioMagazzinoList = () => {
+    // Load initial state
+    const initialState = storageHelper.loadState(MODULE_NAME, {
+        idCategoria: '',
+        idSottoCategoria: '',
+        selectedFornitore: null,
+        selectedArticolo: null,
+        dataAl: new Date().toISOString().split('T')[0],
+        showFilters: true,
+        page: 0,
+        pageSize: 50,
+        sortCol: 1,
+        sortDir: 'asc'
+    });
+
     const [inventario, setInventario] = useState([]);
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState(false);
-    const [idCategoria, setIdCategoria] = useState('');
-    const [idSottoCategoria, setIdSottoCategoria] = useState('');
-    const [selectedFornitore, setSelectedFornitore] = useState(null);
-    const [selectedArticolo, setSelectedArticolo] = useState(null);
-    const [dataAl, setDataAl] = useState(new Date().toISOString().split('T')[0]);
-    const [showFilters, setShowFilters] = useState(true);
+    const [idCategoria, setIdCategoria] = useState(initialState.idCategoria);
+    const [idSottoCategoria, setIdSottoCategoria] = useState(initialState.idSottoCategoria);
+    const [selectedFornitore, setSelectedFornitore] = useState(initialState.selectedFornitore);
+    const [selectedArticolo, setSelectedArticolo] = useState(initialState.selectedArticolo);
+    const [dataAl, setDataAl] = useState(initialState.dataAl);
+    const [showFilters, setShowFilters] = useState(initialState.showFilters);
     const [error, setError] = useState(null);
 
     const [categorie, setCategorie] = useState([]);
     const [sottoCategorie, setSottoCategorie] = useState([]);
 
-    const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(50);
+    const [page, setPage] = useState(initialState.page);
+    const [pageSize, setPageSize] = useState(initialState.pageSize);
     const [totalItems, setTotalItems] = useState(0);
-    const [sortCol, setSortCol] = useState(1); // Default to Descrizione
-    const [sortDir, setSortDir] = useState('asc');
+    const [sortCol, setSortCol] = useState(initialState.sortCol); // Default to Descrizione
+    const [sortDir, setSortDir] = useState(initialState.sortDir);
+
+    // Save state whenever filters or pagination change
+    useEffect(() => {
+        storageHelper.saveState(MODULE_NAME, {
+            idCategoria,
+            idSottoCategoria,
+            selectedFornitore,
+            selectedArticolo,
+            dataAl,
+            showFilters,
+            page,
+            pageSize,
+            sortCol,
+            sortDir
+        });
+    }, [idCategoria, idSottoCategoria, selectedFornitore, selectedArticolo, dataAl, showFilters, page, pageSize, sortCol, sortDir]);
 
     useEffect(() => {
         fetchCombos();

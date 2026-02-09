@@ -112,7 +112,6 @@ function App() {
                 <Route path="/articoli" element={<ArticoliList />} />
                 <Route path="/articoli/movimenti" element={<MovimentiList />} />
                 <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />
-                <Route path="/articoli/new" element={<ArticoliDetail />} />
                 <Route path="/articoli/:id" element={<ArticoliDetail />} />
                 <Route path="*" element={<h2>404 Not Found</h2>} />
               </Routes>

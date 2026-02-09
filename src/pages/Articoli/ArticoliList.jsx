@@ -5,69 +5,131 @@ import { useNavigate } from 'react-router-dom';
 import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash, FaHome, FaAngleRight } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import FornitoriService from '../../services/FornitoriService';
-import ToniArticoloService from '../../services/ToniArticoloService';
-import CalibriArticoloService from '../../services/CalibriArticoloService';
 import AuthService from '../../services/authService';
+import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
+import ConfigurazioneService from '../../services/ConfigurazioneService';
 import CaricoMagazzinoModal from './CaricoMagazzinoModal';
 import ScaricoMagazzinoModal from './ScaricoMagazzinoModal';
 import RettificaMagazzinoModal from './RettificaMagazzinoModal';
+import storageHelper from '../../utils/storageHelper';
 import './ArticoliList.css';
 
+const MODULE_NAME = 'articoli';
+
 const ArticoliList = () => {
+    // Load initial state from sessionStorage
+    const initialState = storageHelper.loadState(MODULE_NAME, {
+        search: '',
+        idCategoria: '',
+        page: 0,
+        pageSize: 50,
+        sortCol: 1,
+        sortDir: 'asc',
+        showAdvancedSearch: false,
+        advancedFilters: {
+            giacenza: '',
+            operatoreGiacenza: '>=',
+            idFornitore: null,
+            descFornitore: '',
+            idTono: '',
+            idCalibro: '',
+            idFormato: '',
+            idScelta: ''
+        }
+    });
+
     const [articoli, setArticoli] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState('');
-    const [idCategoria, setIdCategoria] = useState('');
+    const [search, setSearch] = useState(initialState.search);
+    const [idCategoria, setIdCategoria] = useState(initialState.idCategoria);
     const [categorie, setCategorie] = useState([]);
-    const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(50);
+    const [page, setPage] = useState(initialState.page);
+    const [pageSize, setPageSize] = useState(initialState.pageSize);
     const [totalItems, setTotalItems] = useState(0);
-    const [sortCol, setSortCol] = useState(1);
-    const [sortDir, setSortDir] = useState('asc');
+    const [sortCol, setSortCol] = useState(initialState.sortCol);
+    const [sortDir, setSortDir] = useState(initialState.sortDir);
     const [activeDropdownId, setActiveDropdownId] = useState(null);
     const [showCaricoModal, setShowCaricoModal] = useState(false);
     const [showScaricoModal, setShowScaricoModal] = useState(false);
     const [showRettificaModal, setShowRettificaModal] = useState(false);
     const [selectedArticle, setSelectedArticle] = useState(null);
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
 
     // Advanced Search State
-    const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-    const [advancedFilters, setAdvancedFilters] = useState({
-        giacenza: '',
-        operatoreGiacenza: '>=',
-        idFornitore: null,
-        descFornitore: '', // for AsyncSelect label
-        idTono: '',
-        idCalibro: ''
-    });
+    const [showAdvancedSearch, setShowAdvancedSearch] = useState(initialState.showAdvancedSearch);
+    const [advancedFilters, setAdvancedFilters] = useState(initialState.advancedFilters);
     const [config, setConfig] = useState({});
     const [combos, setCombos] = useState({
         toni: [],
-        calibri: []
+        calibri: [],
+        formati: [],
+        scelte: []
     });
+
+    // Save state whenever filters or pagination change
+    useEffect(() => {
+        storageHelper.saveState(MODULE_NAME, {
+            search,
+            idCategoria,
+            page,
+            pageSize,
+            sortCol,
+            sortDir,
+            showAdvancedSearch,
+            advancedFilters
+        });
+    }, [search, idCategoria, page, pageSize, sortCol, sortDir, showAdvancedSearch, advancedFilters]);
 
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchCategorie();
-        const conf = AuthService.getConfig();
-        const isCeramica = conf['TIPOSTORE'] === 'CERAMICA';
-        setConfig({ isCeramica });
-        if (isCeramica) {
-            loadCeramicaCombos();
-        }
+        loadConfig();
     }, []);
+
+    const loadConfig = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('GLOBAL');
+            const data = res.data?.payload || res.data || {};
+
+            let isCeramica = false;
+            if (Array.isArray(data)) {
+                isCeramica = data.some(c => (c.chiave === 'TIPO_STORE' || c.chiave === 'TIPOSTORE') && c.valore === 'CERAMICA');
+            } else {
+                // It's a Map<String, String>
+                isCeramica = data['TIPO_STORE'] === 'CERAMICA' || data['TIPOSTORE'] === 'CERAMICA';
+            }
+
+            // Fallback to Auth config
+            if (!isCeramica) {
+                const authConfig = AuthService.getConfig();
+                isCeramica = authConfig['TIPOSTORE'] === 'CERAMICA' || authConfig['TIPO_STORE'] === 'CERAMICA';
+            }
+
+            setConfig(prev => ({ ...prev, isCeramica }));
+
+            if (isCeramica) {
+                loadCeramicaCombos();
+            }
+        } catch (error) {
+            console.error("Errore caricamento configurazione", error);
+        }
+    };
 
     const loadCeramicaCombos = async () => {
         try {
-            const [toniRes, calibriRes] = await Promise.all([
-                ToniArticoloService.getListForCombo(),
-                CalibriArticoloService.getListForCombo()
+            const [toniRes, calibriRes, formatiRes, scelteRes] = await Promise.all([
+                ArticoliService.getToni(),
+                ArticoliService.getCalibri(),
+                ArticoliService.getFormati(),
+                ArticoliService.getScelte()
             ]);
             setCombos({
                 toni: toniRes.data.payload || [],
-                calibri: calibriRes.data.payload || []
+                calibri: calibriRes.data.payload || [],
+                formati: formatiRes.data.payload || [],
+                scelte: scelteRes.data.payload || []
             });
         } catch (e) {
             console.error("Error loading ceramic combos", e);
@@ -84,13 +146,30 @@ const ArticoliList = () => {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (!event.target.closest('.dropdown-container')) {
+            if (!event.target.closest('.dropdown-container') && !event.target.closest('.custom-dropdown-menu')) {
                 setActiveDropdownId(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    const handleGearClick = (e, art) => {
+        e.stopPropagation();
+        if (activeDropdownId === art.id) {
+            setActiveDropdownId(null);
+            return;
+        }
+        const rect = e.currentTarget.getBoundingClientRect();
+        // Calculate position: top = bottom of button, left = right of button - width of menu (approx 250px)
+        // Adjust if it goes off screen? For now standard right-alignment.
+        const menuWidth = 250;
+        setDropdownPosition({
+            top: rect.bottom,
+            left: rect.left - (menuWidth - rect.width) // Align right edges: left = rect.right - menuWidth
+        });
+        setActiveDropdownId(art.id);
+    };
 
     const fetchCategorie = async () => {
         try {
@@ -118,7 +197,9 @@ const ArticoliList = () => {
                 operatoreGiacenza: advancedFilters.operatoreGiacenza,
                 idFornitore: advancedFilters.idFornitore,
                 idTono: advancedFilters.idTono || null,
-                idCalibro: advancedFilters.idCalibro || null
+                idCalibro: advancedFilters.idCalibro || null,
+                idFormato: advancedFilters.idFormato || null,
+                idScelta: advancedFilters.idScelta || null
             });
             setArticoli(response.data.list || []);
             setTotalItems(response.data.totalCount || 0);
@@ -369,28 +450,70 @@ const ArticoliList = () => {
                                 <>
                                     <div className="col-md-3">
                                         <div className="form-group">
+                                            <label>Formato</label>
+                                            <Select
+                                                isClearable
+                                                placeholder="Tutti"
+                                                classNamePrefix="react-select"
+                                                options={combos.formati.map(f => ({ value: f.id, label: f.descrizione }))}
+                                                value={advancedFilters.idFormato ? { value: advancedFilters.idFormato, label: combos.formati.find(f => f.id == advancedFilters.idFormato)?.descrizione } : null}
+                                                onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idFormato: opt ? opt.value : '' }))}
+                                                styles={{
+                                                    control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
+                                                    menu: (base) => ({ ...base, zIndex: 9999 })
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <div className="form-group">
+                                            <label>Scelta</label>
+                                            <Select
+                                                isClearable
+                                                placeholder="Tutti"
+                                                classNamePrefix="react-select"
+                                                options={combos.scelte.map(s => ({ value: s.id, label: s.descrizione }))}
+                                                value={advancedFilters.idScelta ? { value: advancedFilters.idScelta, label: combos.scelte.find(s => s.id == advancedFilters.idScelta)?.descrizione } : null}
+                                                onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idScelta: opt ? opt.value : '' }))}
+                                                styles={{
+                                                    control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
+                                                    menu: (base) => ({ ...base, zIndex: 9999 })
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <div className="form-group">
                                             <label>Tono</label>
-                                            <select
-                                                className="form-control"
-                                                value={advancedFilters.idTono}
-                                                onChange={(e) => setAdvancedFilters(prev => ({ ...prev, idTono: e.target.value }))}
-                                            >
-                                                <option value="">Tutti</option>
-                                                {combos.toni.map(t => <option key={t.id} value={t.id}>{t.descrizione}</option>)}
-                                            </select>
+                                            <Select
+                                                isClearable
+                                                placeholder="Tutti"
+                                                classNamePrefix="react-select"
+                                                options={combos.toni.map(t => ({ value: t.id, label: t.descrizione }))}
+                                                value={advancedFilters.idTono ? { value: advancedFilters.idTono, label: combos.toni.find(t => t.id == advancedFilters.idTono)?.descrizione } : null}
+                                                onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idTono: opt ? opt.value : '' }))}
+                                                styles={{
+                                                    control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
+                                                    menu: (base) => ({ ...base, zIndex: 9999 })
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                     <div className="col-md-3">
                                         <div className="form-group">
                                             <label>Calibro</label>
-                                            <select
-                                                className="form-control"
-                                                value={advancedFilters.idCalibro}
-                                                onChange={(e) => setAdvancedFilters(prev => ({ ...prev, idCalibro: e.target.value }))}
-                                            >
-                                                <option value="">Tutti</option>
-                                                {combos.calibri.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
-                                            </select>
+                                            <Select
+                                                isClearable
+                                                placeholder="Tutti"
+                                                classNamePrefix="react-select"
+                                                options={combos.calibri.map(c => ({ value: c.id, label: c.descrizione }))}
+                                                value={advancedFilters.idCalibro ? { value: advancedFilters.idCalibro, label: combos.calibri.find(c => c.id == advancedFilters.idCalibro)?.descrizione } : null}
+                                                onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idCalibro: opt ? opt.value : '' }))}
+                                                styles={{
+                                                    control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
+                                                    menu: (base) => ({ ...base, zIndex: 9999 })
+                                                }}
+                                            />
                                         </div>
                                     </div>
                                 </>
@@ -405,6 +528,7 @@ const ArticoliList = () => {
                                     <th onClick={() => handleSort(2)} style={{ cursor: 'pointer' }}>CATEGORIA {renderSortIcon(2)}</th>
                                     <th onClick={() => handleSort(0)} style={{ cursor: 'pointer' }}>CODICE {renderSortIcon(0)}</th>
                                     <th onClick={() => handleSort(1)} style={{ cursor: 'pointer' }}>DESCRIZIONE {renderSortIcon(1)}</th>
+                                    <th style={{ textAlign: 'right' }}>PREZZO FORN.</th>
                                     <th onClick={() => handleSort(4)} style={{ cursor: 'pointer', textAlign: 'right' }}>ESISTENZA {renderSortIcon(4)}</th>
                                     <th onClick={() => handleSort(5)} style={{ cursor: 'pointer', textAlign: 'right' }}>DISPONIBILE {renderSortIcon(5)}</th>
                                     <th style={{ width: '1%' }}></th>
@@ -420,7 +544,20 @@ const ArticoliList = () => {
                                         <tr key={art.id}>
                                             <td>{art.descCategoria}</td>
                                             <td>{art.codice}</td>
-                                            <td>{art.descrizione}</td>
+                                            <td>
+                                                {art.descrizione}
+                                                {config.isCeramica && (art.descrFormato || art.descrScelta || art.descrTono || art.descrCalibro) && (
+                                                    <div style={{ fontSize: '0.85em', color: '#777', marginTop: '4px' }}>
+                                                        {[
+                                                            art.descrFormato && `Formato: ${art.descrFormato}`,
+                                                            art.descrScelta && `Scelta: ${art.descrScelta}`,
+                                                            art.descrTono && `Tono: ${art.descrTono}`,
+                                                            art.descrCalibro && `Calibro: ${art.descrCalibro}`
+                                                        ].filter(Boolean).join(' - ')}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="text-right">{(art.prezzoFornitore || 0).toFixed(2)}</td>
                                             <td className="text-right">{(art.quantitaEsistente || 0).toFixed(2)}</td>
                                             <td className="text-right">{((art.quantitaEsistente || 0) - (art.quantitaImpegnata || 0)).toFixed(2)}</td>
                                             <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
@@ -428,25 +565,11 @@ const ArticoliList = () => {
                                                     <div className="dropdown-container">
                                                         <button
                                                             className="btn-action btn-action-gear"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setActiveDropdownId(activeDropdownId === art.id ? null : art.id);
-                                                            }}
+                                                            onClick={(e) => handleGearClick(e, art)}
                                                             title="Azioni"
                                                         >
                                                             <FaCog size={16} color="#ffffff" />
                                                         </button>
-                                                        {activeDropdownId === art.id && (
-                                                            <div className="custom-dropdown-menu">
-                                                                <div className="dropdown-item" onClick={() => navigate(`/articoli/${art.id}`)}>Modifica</div>
-                                                                <div className="dropdown-divider"></div>
-                                                                <div className="dropdown-item" onClick={() => handleCaricoClick(art)}>Carica</div>
-                                                                <div className="dropdown-item" onClick={() => handleScaricoClick(art)}>Scarica</div>
-                                                                <div className="dropdown-item" onClick={() => handleRettificaClick(art)}>Rettifica</div>
-                                                                <div className="dropdown-divider"></div>
-                                                                <div className="dropdown-item" onClick={() => navigate('/articoli/movimenti', { state: { filterByArticle: { value: art.id, label: `${art.codice} - ${art.descrizione}` } } })}>Movimenti magazzino</div>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                     <button
                                                         className="btn-action btn-action-delete"
@@ -499,6 +622,35 @@ const ArticoliList = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Fixed Dropdown Menu */}
+            {activeDropdownId && (
+                (() => {
+                    const art = articoli.find(a => a.id === activeDropdownId);
+                    if (!art) return null;
+                    return (
+                        <div
+                            className="custom-dropdown-menu"
+                            style={{
+                                position: 'fixed',
+                                top: dropdownPosition.top,
+                                left: dropdownPosition.left,
+                                zIndex: 9999,
+                                display: 'block',
+                                marginTop: '5px'
+                            }}
+                        >
+                            <div className="dropdown-item" onClick={() => navigate(`/articoli/${art.id}`)}>Modifica</div>
+                            <div className="dropdown-divider"></div>
+                            <div className="dropdown-item" onClick={() => handleCaricoClick(art)}>Carica</div>
+                            <div className="dropdown-item" onClick={() => handleScaricoClick(art)}>Scarica</div>
+                            <div className="dropdown-item" onClick={() => handleRettificaClick(art)}>Rettifica</div>
+                            <div className="dropdown-divider"></div>
+                            <div className="dropdown-item" onClick={() => navigate('/articoli/movimenti', { state: { filterByArticle: { value: art.id, label: `${art.codice} - ${art.descrizione}` } } })}>Movimenti magazzino</div>
+                        </div>
+                    );
+                })()
+            )}
         </div>
     );
 };

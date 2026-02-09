@@ -7,35 +7,71 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import Swal from 'sweetalert2';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight } from 'react-icons/fa';
+import storageHelper from '../../utils/storageHelper';
 import './PreventiviList.css'; // Assume CSS exists or reuse generic
 
-// ...
+const MODULE_NAME = 'preventivi';
 
 const PreventiviList = () => {
     const navigate = useNavigate();
+
+    // Load initial state
+    const initialState = storageHelper.loadState(MODULE_NAME, {
+        idCliente: '',
+        idAgente: '',
+        dtFrom: '',
+        dtTo: '',
+        currentPage: 0,
+        pageSize: 50,
+        sortCol: 0,
+        sortDir: 'asc',
+        selectedCliente: null,
+        selectedAgente: null,
+        showFilters: true
+    });
+
     const [preventivi, setPreventivi] = useState([]);
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [total, setTotal] = useState(0);
 
     // Filters
-    const [idCliente, setIdCliente] = useState('');
-    const [idAgente, setIdAgente] = useState('');
-    const [dtFrom, setDtFrom] = useState(''); // Initialize with start of year if needed
-    const [dtTo, setDtTo] = useState('');   // Initialize with end of year
+    const [idCliente, setIdCliente] = useState(initialState.idCliente);
+    const [idAgente, setIdAgente] = useState(initialState.idAgente);
+    const [dtFrom, setDtFrom] = useState(initialState.dtFrom);
+    const [dtTo, setDtTo] = useState(initialState.dtTo);
 
     // Pagination
-    const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize, setPageSize] = useState(50);
-    const [sortCol, setSortCol] = useState(0);
-    const [sortDir, setSortDir] = useState('asc');
+    const [currentPage, setCurrentPage] = useState(initialState.currentPage);
+    const [pageSize, setPageSize] = useState(initialState.pageSize);
+    const [sortCol, setSortCol] = useState(initialState.sortCol);
+    const [sortDir, setSortDir] = useState(initialState.sortDir);
 
     // Dropdowns data
     const [agentiOptions, setAgentiOptions] = useState([]);
 
     // Selected objects for React Select
-    const [selectedCliente, setSelectedCliente] = useState(null);
-    const [selectedAgente, setSelectedAgente] = useState(null);
+    const [selectedCliente, setSelectedCliente] = useState(initialState.selectedCliente);
+    const [selectedAgente, setSelectedAgente] = useState(initialState.selectedAgente);
+
+    const [showFilters, setShowFilters] = useState(initialState.showFilters);
+
+    // Save state whenever filters or pagination change
+    useEffect(() => {
+        storageHelper.saveState(MODULE_NAME, {
+            idCliente,
+            idAgente,
+            dtFrom,
+            dtTo,
+            currentPage,
+            pageSize,
+            sortCol,
+            sortDir,
+            selectedCliente,
+            selectedAgente,
+            showFilters
+        });
+    }, [idCliente, idAgente, dtFrom, dtTo, currentPage, pageSize, sortCol, sortDir, selectedCliente, selectedAgente, showFilters]);
 
     useEffect(() => {
         // Load initial data
@@ -170,7 +206,6 @@ const PreventiviList = () => {
         return <span className="sort-icon">{sortDir === 'asc' ? '▲' : '▼'}</span>;
     };
 
-    const [showFilters, setShowFilters] = useState(true);
 
     // Format currency
     const formatMoney = (amount) => {
@@ -310,8 +345,8 @@ const PreventiviList = () => {
                                 ) : preventivi.length === 0 ? (
                                     <tr><td colSpan="7" className="text-center">Nessun dato presente</td></tr>
                                 ) : (
-                                    preventivi.map(prev => (
-                                        <tr key={prev.id}>
+                                    preventivi.map((prev, index) => (
+                                        <tr key={prev.idDocumento || prev.id || index}>
                                             <td>{prev.dataDocumento}</td>
                                             <td>{prev.numeroDocumento}</td>
                                             <td>{prev.soggetto}</td>
@@ -319,10 +354,10 @@ const PreventiviList = () => {
                                             <td>{prev.stato}</td>
                                             <td className="text-right">{formatMoney(prev.totale)}</td>
                                             <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
-                                                <button className="btn-action btn-action-edit" onClick={() => navigate(`/preventivi/${prev.id}`)} title="Modifica">
+                                                <button className="btn-action btn-action-edit" onClick={() => navigate(`/preventivi/${prev.idDocumento || prev.id}`)} title="Modifica">
                                                     <FaEdit size={16} />
                                                 </button>
-                                                <button className="btn-action btn-action-delete" onClick={() => handleDelete(prev.id)} title="Elimina">
+                                                <button className="btn-action btn-action-delete" onClick={() => handleDelete(prev.idDocumento || prev.id)} title="Elimina">
                                                     <FaTrash size={16} />
                                                 </button>
                                             </td>

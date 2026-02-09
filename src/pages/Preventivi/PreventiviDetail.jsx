@@ -8,6 +8,7 @@ import AgentiService from '../../services/AgentiService';
 import ProgettiService from '../../services/ProgettiService';
 import ArticoliService from '../../services/ArticoliService';
 import authService from '../../services/authService';
+import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
 import ClientiManagementModal from '../../components/modals/ClientiManagementModal';
 import AgentiManagementModal from '../../components/modals/AgentiManagementModal';
@@ -19,7 +20,8 @@ import WrenchModalButton from '../../components/WrenchModalButton';
 import EntitySelectGroup from '../../components/EntitySelectGroup';
 import IndirizziSelectionModal from '../../components/modals/IndirizziSelectionModal';
 import Swal from 'sweetalert2';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaCalculator, FaHome, FaAngleRight, FaWrench, FaCogs, FaMapMarkerAlt, FaTruck } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaCalculator, FaHome, FaAngleRight, FaWrench, FaCogs, FaMapMarkerAlt, FaTruck, FaPrint, FaCaretDown, FaFilePdf } from 'react-icons/fa';
+import printJS from 'print-js';
 import CreatableSelect from 'react-select/creatable';
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
 import './PreventiviDetail.css';
@@ -135,6 +137,7 @@ const PreventiviDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isNew = !id || id === 'new';
+    const [isCeramica, setIsCeramica] = useState(false);
 
     const [activeTab, setActiveTab] = useState('generale');
     const [loading, setLoading] = useState(false);
@@ -155,6 +158,7 @@ const PreventiviDetail = () => {
         progetti: []
     });
 
+    const [showActionsMenu, setShowActionsMenu] = useState(false);
     const [formData, setFormData] = useState({
         numDocumento: '',
         dataDocumento: new Date().toISOString().split('T')[0],
@@ -200,7 +204,40 @@ const PreventiviDetail = () => {
         if (!isNew) {
             loadPreventivo();
         } else {
-            fetchNextNum(formData.dataDocumento);
+            // Reset form for new entry
+            setFormData({
+                numDocumento: '',
+                dataDocumento: new Date().toISOString().split('T')[0],
+                particella: '',
+                idCliente: null,
+                denominazione: '',
+                idAgente: null,
+                nomeAgente: '',
+                idProgetto: null,
+                nomeProgetto: '',
+                idTipoPagamento: null,
+                idListino: null,
+                idNsBanca: null,
+                annotazioneEstesa: '',
+                indirizzoIntestazione: '',
+                capIntestazione: '',
+                cittaIntestazione: '',
+                provinciaIntestazione: '',
+                nazioneIntestazione: '',
+                partitaIva: '',
+                codiceFiscale: '',
+                indirizzoDestinazione: '',
+                capDestinazione: '',
+                cittaDestinazione: '',
+                provinciaDestinazione: '',
+                nazioneDestinazione: '',
+            });
+            setProdotti([]);
+            setTotals({ imponibile: 0, iva: 0, totale: 0 });
+            setClientIndirizzi([]);
+
+            // Then fetch next number
+            fetchNextNum(new Date().toISOString().split('T')[0]);
         }
     }, [id]);
 
@@ -213,6 +250,21 @@ const PreventiviDetail = () => {
                     ...res.data.payload
                 }));
             }
+
+            // Fetch configuration for Ceramica
+            const configRes = await ConfigurazioneService.getByDomain('GLOBAL');
+            const data = configRes.data?.payload || configRes.data || {};
+            let ceramica = false;
+            if (Array.isArray(data)) {
+                ceramica = data.some(c => (c.chiave === 'TIPO_STORE' || c.chiave === 'TIPOSTORE') && c.valore === 'CERAMICA');
+            } else {
+                ceramica = data['TIPO_STORE'] === 'CERAMICA' || data['TIPOSTORE'] === 'CERAMICA';
+            }
+            if (!ceramica) {
+                const authConfig = authService.getConfig();
+                ceramica = authConfig['TIPOSTORE'] === 'CERAMICA' || authConfig['TIPO_STORE'] === 'CERAMICA';
+            }
+            setIsCeramica(ceramica);
         } catch (error) {
             console.error("Error fetching combos:", error);
         }
@@ -475,12 +527,31 @@ const PreventiviDetail = () => {
         }));
     };
 
-    const handleSave = async (e) => {
-        e.preventDefault();
+    const formatArticleOptionLabel = ({ label, data }) => {
+        if (!isCeramica) return label;
+        const ceramicInfo = [
+            data.descrFormato && `Formato: ${data.descrFormato}`,
+            data.descrScelta && `Scelta: ${data.descrScelta}`,
+            data.descrTono && `Tono: ${data.descrTono}`,
+            data.descrCalibro && `Calibro: ${data.descrCalibro}`
+        ].filter(Boolean).join(' - ');
 
+        return (
+            <div>
+                <div style={{ fontWeight: '500' }}>{label}</div>
+                {ceramicInfo && (
+                    <div style={{ fontSize: '11px', color: '#777', marginTop: '2px' }}>
+                        {ceramicInfo}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const savePreventivo = async () => {
         if (!formData.numDocumento || !formData.dataDocumento || !formData.idCliente) {
             Swal.fire('Attenzione', 'Numero, Data e Cliente sono obbligatori', 'warning');
-            return;
+            return null;
         }
 
         try {
@@ -505,17 +576,87 @@ const PreventiviDetail = () => {
             };
 
             if (isNew) {
-                await PreventiviService.insert(payload);
-                Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
+                const response = await PreventiviService.insert(payload);
+                // Assuming insert returns the new ID or object with ID. Check service logic.
+                // Based on standard implementation, it might return the ID directly or in data.
+                // For safety, checking response type. If ID is returned:
+                return response.data || response;
             } else {
                 await PreventiviService.update(id, payload);
-                Swal.fire('Successo', 'Preventivo aggiornato', 'success').then(() => navigate('/preventivi'));
+                return id;
             }
         } catch (error) {
             console.error("Error saving:", error);
             Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+            return null;
         }
     };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        const savedId = await savePreventivo();
+        if (savedId) {
+            Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
+        }
+    };
+
+    const handlePrint = async () => {
+        const savedId = await savePreventivo();
+        if (!savedId) return; // Save failed or validation error
+
+        try {
+            // Use the savedId because for new items 'id' variable might be 'new' or undefined
+            const response = await PreventiviService.print(savedId);
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+
+            printJS({
+                printable: url,
+                type: 'pdf',
+                documentTitle: `Preventivo_${savedId}`
+            });
+
+            // Cleanup URL after a delay
+            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+            setShowActionsMenu(false);
+
+            // If it was new, we should probably navigate to the detail of the new ID or reload
+            if (isNew) {
+                navigate(`/preventivi/detail/${savedId}`);
+            }
+        } catch (error) {
+            console.error("Error printing:", error);
+            Swal.fire('Errore', 'Errore durante la stampa', 'error');
+        }
+    };
+
+    const handleExportPdf = async () => {
+        const savedId = await savePreventivo();
+        if (!savedId) return;
+
+        try {
+            const response = await PreventiviService.print(savedId);
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `Preventivo_${savedId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            setShowActionsMenu(false);
+
+            if (isNew) {
+                navigate(`/preventivi/detail/${savedId}`);
+            }
+        } catch (error) {
+            console.error("Error exporting PDF:", error);
+            Swal.fire('Errore', 'Errore durante l\'esportazione PDF', 'error');
+        }
+    };
+
+
 
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val || 0);
@@ -865,12 +1006,13 @@ const PreventiviDetail = () => {
                                                             isClearable
                                                             cacheOptions
                                                             loadOptions={loadArticoli}
+                                                            formatOptionLabel={formatArticleOptionLabel}
                                                             styles={tableSelectStyles}
                                                             placeholder="Cerca art..."
                                                             noOptionsMessage={() => "Nessun risultato"}
                                                             loadingMessage={() => "Caricamento..."}
                                                             menuPortalTarget={document.body}
-                                                            value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}` } : null}
+                                                            value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
                                                             onChange={(opt) => {
                                                                 const a = opt?.data || {};
                                                                 handleRowUpdate(idx, {
@@ -884,7 +1026,43 @@ const PreventiviDetail = () => {
                                                             }}
                                                         />
                                                     ) : row.tipo === 'F' ? (
-                                                        <input type="text" className="form-control" value={row.fmDescrizione || ''} onChange={(e) => handleRowChange(idx, 'fmDescrizione', e.target.value)} placeholder="Descrizione libera..." />
+                                                        <div className="flex-column gap-1">
+                                                            {isCeramica && (
+                                                                <div style={{ marginBottom: '5px' }}>
+                                                                    <AsyncSelect
+                                                                        isClearable
+                                                                        cacheOptions
+                                                                        loadOptions={loadArticoli}
+                                                                        formatOptionLabel={formatArticleOptionLabel}
+                                                                        styles={tableSelectStyles}
+                                                                        placeholder="Usa art. come base..."
+                                                                        noOptionsMessage={() => "Nessun risultato"}
+                                                                        loadingMessage={() => "Caricamento..."}
+                                                                        menuPortalTarget={document.body}
+                                                                        onChange={(opt) => {
+                                                                            if (opt) {
+                                                                                const a = opt.data;
+                                                                                handleRowUpdate(idx, {
+                                                                                    fmDescrizione: a.descProdotto || '',
+                                                                                    fmScelta: a.descrScelta || '',
+                                                                                    fmTono: a.descrTono || '',
+                                                                                    fmTaglia: a.descrCalibro || '',
+                                                                                    prezzo: a.prezzo || 0,
+                                                                                    idUnitaMisura: a.idUnitaMisura,
+                                                                                    idAliquotaIva: a.idAliquotaIva
+                                                                                });
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <input type="text" className="form-control" value={row.fmDescrizione || ''} onChange={(e) => handleRowChange(idx, 'fmDescrizione', e.target.value)} placeholder="Descrizione libera..." />
+                                                            <div className="d-flex gap-2 mt-1">
+                                                                <input type="text" className="form-control form-control-xs" value={row.fmScelta || ''} onChange={(e) => handleRowChange(idx, 'fmScelta', e.target.value)} placeholder="Scelta" style={{ width: '33%' }} />
+                                                                <input type="text" className="form-control form-control-xs" value={row.fmTono || ''} onChange={(e) => handleRowChange(idx, 'fmTono', e.target.value)} placeholder="Tono" style={{ width: '33%' }} />
+                                                                <input type="text" className="form-control form-control-xs" value={row.fmTaglia || ''} onChange={(e) => handleRowChange(idx, 'fmTaglia', e.target.value)} placeholder="Cal." style={{ width: '33%' }} />
+                                                            </div>
+                                                        </div>
                                                     ) : (
                                                         <input type="text" className="form-control" value={row.nota || ''} onChange={(e) => handleRowChange(idx, 'nota', e.target.value)} placeholder="Testo della nota..." />
                                                     )}
@@ -977,9 +1155,27 @@ const PreventiviDetail = () => {
                         <FaArrowLeft /> Annulla
                     </button>
                     <div className="footer-right">
-                        <button className="btn btn-premium-save" onClick={handleSave}>
-                            <FaSave /> Salva Preventivo
-                        </button>
+                        <div className="split-btn-container">
+                            <button type="button" className="btn-premium-save split-btn-main" onClick={handleSave}>
+                                <FaSave /> Salva
+                            </button>
+                            <button type="button" className="split-btn-toggle" onClick={() => setShowActionsMenu(!showActionsMenu)}>
+                                <FaCaretDown />
+                            </button>
+                            {showActionsMenu && (
+                                <div className="split-btn-menu show">
+                                    <button type="button" className="split-btn-item" onClick={handleSave}>
+                                        <FaSave /> Salva solo
+                                    </button>
+                                    <button type="button" className="split-btn-item" onClick={handlePrint}>
+                                        <FaPrint /> Stampa Diretto
+                                    </button>
+                                    <button type="button" className="split-btn-item" onClick={handleExportPdf}>
+                                        <FaFilePdf /> Esporta PDF
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </footer>
                 {/* Modals */}

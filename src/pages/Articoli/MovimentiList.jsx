@@ -8,32 +8,51 @@ import AsyncSelect from 'react-select/async';
 import Swal from 'sweetalert2';
 import './ArticoliList.css'; // Reusing Articoli CSS
 
+import storageHelper from '../../utils/storageHelper';
+
+const MODULE_NAME = 'movimenti';
+
 const MovimentiList = () => {
+    // Default dates: current month
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const fmt = (d) => d.toISOString().split('T')[0];
+
+    // Load initial state
+    const initialState = storageHelper.loadState(MODULE_NAME, {
+        dtFrom: fmt(firstDay),
+        dtTo: fmt(lastDay),
+        page: 0,
+        pageSize: 50,
+        selectedArticle: null
+    });
+
     const [movimenti, setMovimenti] = useState([]);
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState(false);
-    const [page, setPage] = useState(0);
-    const [pageSize, setPageSize] = useState(50);
+    const [page, setPage] = useState(initialState.page);
+    const [pageSize, setPageSize] = useState(initialState.pageSize);
     const location = useLocation();
 
     // Filters
-    const [dtFrom, setDtFrom] = useState('');
-    const [dtTo, setDtTo] = useState('');
-    const [selectedArticle, setSelectedArticle] = useState(null);
+    const [dtFrom, setDtFrom] = useState(initialState.dtFrom);
+    const [dtTo, setDtTo] = useState(initialState.dtTo);
+    const [selectedArticle, setSelectedArticle] = useState(initialState.selectedArticle);
+
+    // Save state whenever filters or pagination change
+    useEffect(() => {
+        storageHelper.saveState(MODULE_NAME, {
+            dtFrom,
+            dtTo,
+            page,
+            pageSize,
+            selectedArticle
+        });
+    }, [dtFrom, dtTo, page, pageSize, selectedArticle]);
 
     useEffect(() => {
-        // Init dates to current month? Or empty? 
-        // Legacy used current month.
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-        // Helper to format YYYY-MM-DD for input type="date"
-        const fmt = (d) => d.toISOString().split('T')[0];
-        setDtFrom(fmt(firstDay));
-        setDtTo(fmt(lastDay));
-
-        // Check for navigation state to pre-fill filter
+        // Check for navigation state to pre-fill filter (overrides saved state if present)
         if (location.state?.filterByArticle) {
             setSelectedArticle(location.state.filterByArticle);
         }
