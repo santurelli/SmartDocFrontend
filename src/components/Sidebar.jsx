@@ -89,11 +89,12 @@ const Sidebar = ({ user }) => {
                                 </a>
                                 <ul className="submenu">
                                     <li><NavLink to="/preventivi">Preventivi</NavLink></li>
-                                    <li><NavLink to="/documenti/ddt">Doc. trasporto</NavLink></li>
-                                    <li><NavLink to="/documenti/fatture">Fatture/Note debito</NavLink></li>
-                                    <li><NavLink to="/documenti/note-credito">Note di credito</NavLink></li>
-                                    <li><NavLink to="/documenti/fatture-fornitore">Fatture fornitore</NavLink></li>
-                                    <li><NavLink to="/documenti/note-credito-fornitore">Note credito fornitore</NavLink></li>
+                                    <li><NavLink to="/conf-ordine">Conferme d'ordine</NavLink></li>
+                                    <li><NavLink to="/ddt">Doc. trasporto</NavLink></li>
+                                    <li><NavLink to="/fatture">Fatture/Note debito</NavLink></li>
+                                    <li><NavLink to="/note-credito">Note di credito</NavLink></li>
+                                    <li><NavLink to="/fatture-fornitore">Fatture fornitore</NavLink></li>
+                                    <li><NavLink to="/note-credito-fornitore">Note credito fornitore</NavLink></li>
                                 </ul>
                             </li>
 
@@ -152,9 +153,9 @@ const Sidebar = ({ user }) => {
 
                         </ul>
                     </div>
-                </div>
-            </section>
-        </div>
+                </div >
+            </section >
+        </div >
     );
 };
 

@@ -217,8 +217,8 @@ const CategorieManagementModal = ({ onClose }) => {
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-                            <div className="form-inline">
-                                <span style={{ marginRight: '15px' }}>MOSTRA</span>
+                            <div className="form-inline items-per-page" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>Visualizza</span>
                                 <select
                                     className="form-control input-sm"
                                     style={{ width: 'auto', display: 'inline-block' }}
@@ -230,7 +230,7 @@ const CategorieManagementModal = ({ onClose }) => {
                                     <option value="50">50</option>
                                     <option value="100">100</option>
                                 </select>
-                                <span style={{ marginLeft: '15px' }}>RIGHE</span>
+                                <span>elementi per pagina</span>
                             </div>
                             <div style={{ display: 'flex', gap: '10px' }}>
                                 <div style={{ position: 'relative' }}>

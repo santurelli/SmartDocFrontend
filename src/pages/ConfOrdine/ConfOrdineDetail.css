@@ -1,8 +1,8 @@
-.preventivi-detail-container {
+.conf-ordine-detail-container {
     padding: 20px;
 }
 
-#preventivi-content-header {
+#confordine-content-header {
     margin-bottom: 30px;
     display: flex;
     justify-content: space-between;
@@ -196,7 +196,7 @@
 }
 
 .row-n {
-    background-color: #fffdf0;
+    background-color: #fff;
 }
 
 .cell-tipo .label {
@@ -287,11 +287,11 @@
 }
 
 /* Tab Visibility Fix */
-.preventivi-detail-container .tab-content>.tab-pane {
+.conf-ordine-detail-container .tab-content>.tab-pane {
     display: none !important;
 }
 
-.preventivi-detail-container .tab-content>.tab-pane.active {
+.conf-ordine-detail-container .tab-content>.tab-pane.active {
     display: block !important;
 }
 
@@ -573,4 +573,9 @@
         opacity: 1;
         transform: scale(1) translateY(0);
     }
+}
+
+.conf-ordine-detail-container.entity-form-shared .tab-content .row {
+    margin-left: 0px !important;
+    margin-right: 0px !important;
 }

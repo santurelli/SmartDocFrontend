@@ -115,6 +115,39 @@ button {
   color: #333;
 }
 
+/* Global Modal Close Button - ABSOLUTE BLACK */
+.close,
+.close span,
+button.close,
+.premium-modal .close,
+.premium-modal .close span {
+  opacity: 1 !important;
+  color: #000000 !important;
+  text-shadow: none !important;
+  font-size: 28px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  transition: all 0.2s !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  filter: none !important;
+  -webkit-appearance: none !important;
+}
+
+.close:hover,
+.close span:hover {
+  color: #e74c3c !important;
+  opacity: 1 !important;
+}
+
+
+
+
+
+
+
+
 .premium-modal .modal-body {
   padding: 30px;
 }

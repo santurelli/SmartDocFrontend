@@ -1,12 +1,12 @@
-/* PreventiviList.css - Vibrant Overhaul - DEFINITIVE */
+/* NoteCreditoList.css - Vibrant Overhaul */
 
-.preventivi-list-container {
+.note-credito-list-container {
     padding: 20px;
     padding-bottom: 50px;
 }
 
 /* Breadcrumbs */
-.preventivi-list-container .breadcrumb {
+.note-credito-list-container .breadcrumb {
     background: transparent;
     padding: 0;
     margin-bottom: 5px;
@@ -20,12 +20,12 @@
     list-style: none;
 }
 
-.preventivi-list-container .breadcrumb a {
+.note-credito-list-container .breadcrumb a {
     color: #999;
     text-decoration: none;
 }
 
-.preventivi-list-container .breadcrumb li.active {
+.note-credito-list-container .breadcrumb li.active {
     color: #333;
     font-weight: 600;
 }
@@ -38,22 +38,11 @@
     margin-bottom: 25px;
 }
 
-.preventivi-list-container h1 {
+.note-credito-list-container h1 {
     color: #03a9f4;
     font-weight: 300;
     margin: 0;
     font-size: 32px;
-}
-
-#total-display-header {
-    font-size: 14px;
-    color: #444;
-    font-weight: 600;
-}
-
-#total-display-header strong {
-    font-size: 18px;
-    color: #333;
 }
 
 /* Toolbar Row */
@@ -73,45 +62,6 @@
     display: flex;
     align-items: center;
     gap: 20px;
-}
-
-.btn-toolbar-icon,
-.btn-cloud {
-    background: #03a9f4;
-    color: #fff;
-    border: none;
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-cloud svg {
-    font-size: 20px;
-}
-
-.fa-spin {
-    animation: fa-spin 2s infinite linear;
-}
-
-@keyframes fa-spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(359deg);
-    }
-}
-
-.btn-toolbar-icon:hover,
-.btn-cloud:hover {
-    background: #039be5;
 }
 
 .rows-per-page {
@@ -312,15 +262,19 @@
     cursor: not-allowed;
 }
 
+.sort-icon {
+    margin-left: 5px;
+    font-size: 10px;
+}
+
 /* Action Menu Dropdown */
 .action-menu-container {
     position: relative;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    flex-wrap: nowrap !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 5px;
-    white-space: nowrap !important;
+    white-space: nowrap;
     z-index: 10;
 }
 
@@ -330,7 +284,8 @@
 
 /* Ensure table container doesn't clip dropdowns */
 .main-box,
-.table-responsive {
+.table-responsive,
+.table-container-vibrant {
     overflow: visible !important;
 }
 
@@ -444,6 +399,23 @@
 .table thead th input[type="checkbox"],
 .table tbody td input[type="checkbox"] {
     cursor: pointer;
+}
+
+/* Fix generic column table-vibrant for unified looks */
+.table-vibrant thead th {
+    background: #f9fafb;
+    color: #888;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 12px 10px;
+    border-bottom: 2px solid #f1f2f7;
+}
+
+.table-vibrant tbody td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f1f2f7;
+    vertical-align: middle;
 }
 
 /* Contextual Bulk Header */

@@ -63,7 +63,8 @@ const ArticoliDetail = () => {
         abilitaSottoCategorie: true,
         abilitaDivisioni: false,
         abilitaCodice: true,
-        abilitaUnitaMisura: true
+        abilitaUnitaMisura: true,
+        abilitaScelteColori: false
     });
 
 
@@ -96,10 +97,15 @@ const ArticoliDetail = () => {
                 abilitaDivisioni = data['DIVISIONI'] === '1';
             }
 
+            const abilitaScelteColori = Array.isArray(data)
+                ? data.some(c => (c.chiave === 'SCELTE_COLORI' || c.chiave === 'ABILITA_SCELTE_COLORI') && c.valore === '1')
+                : (data['SCELTE_COLORI'] === '1' || data['ABILITA_SCELTE_COLORI'] === '1');
+
             const newConfig = {
                 ...config,
                 abilitaDivisioni: abilitaDivisioni,
-                isCeramica: isCeramica
+                isCeramica: isCeramica,
+                abilitaScelteColori: abilitaScelteColori
             };
             setConfig(newConfig);
             return newConfig;
@@ -324,7 +330,9 @@ const ArticoliDetail = () => {
                                 <div className="form-group">
                                     <label>Tipologia</label>
                                     <select className="form-control" name="tipologia" value={formData.tipologia} onChange={handleChange}>
-                                        <option value="A">Articolo Magazzino</option>
+                                        <option value="A">Articolo</option>
+                                        <option value="AM">Articolo con magazzino</option>
+                                        {config.abilitaScelteColori && <option value="AMSC">Articolo con scelte/colori</option>}
                                         <option value="S">Servizio</option>
                                     </select>
                                 </div>

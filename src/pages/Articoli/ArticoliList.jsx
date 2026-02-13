@@ -391,63 +391,66 @@ const ArticoliList = () => {
 
                 <div className="main-box-body">
                     {showAdvancedSearch && (
-                        <div className="advanced-search-panel row" style={{ paddingBottom: '20px', borderBottom: '1px solid #eee', marginBottom: '20px' }}>
-                            <div className="col-md-3">
-                                <div className="form-group">
-                                    <label>Giacenza</label>
-                                    <div className="input-group">
-                                        <div className="input-group-btn" style={{ width: 'auto' }}>
-                                            <select
+                        <div className="advanced-search-panel">
+                            <h5 style={{ marginBottom: '20px', color: '#3498db', fontWeight: 'bold', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '1px' }}>Filtri Avanzati</h5>
+                            <div className="row">
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label>Giacenza</label>
+                                        <div className="input-group">
+                                            <div className="input-group-btn" style={{ width: 'auto' }}>
+                                                <select
+                                                    className="form-control"
+                                                    style={{ width: '60px', padding: '6px' }}
+                                                    value={advancedFilters.operatoreGiacenza}
+                                                    onChange={(e) => setAdvancedFilters(prev => ({ ...prev, operatoreGiacenza: e.target.value }))}
+                                                >
+                                                    <option value=">=">&ge;</option>
+                                                    <option value="<=">&le;</option>
+                                                    <option value="=">=</option>
+                                                </select>
+                                            </div>
+                                            <input
+                                                type="number"
                                                 className="form-control"
-                                                style={{ width: '60px', padding: '6px' }}
-                                                value={advancedFilters.operatoreGiacenza}
-                                                onChange={(e) => setAdvancedFilters(prev => ({ ...prev, operatoreGiacenza: e.target.value }))}
-                                            >
-                                                <option value=">=">&ge;</option>
-                                                <option value="<=">&le;</option>
-                                                <option value="=">=</option>
-                                            </select>
+                                                placeholder="Qta"
+                                                value={advancedFilters.giacenza}
+                                                onChange={(e) => setAdvancedFilters(prev => ({ ...prev, giacenza: e.target.value }))}
+                                            />
                                         </div>
-                                        <input
-                                            type="number"
-                                            className="form-control"
-                                            placeholder="Qta"
-                                            value={advancedFilters.giacenza}
-                                            onChange={(e) => setAdvancedFilters(prev => ({ ...prev, giacenza: e.target.value }))}
+                                    </div>
+                                </div>
+                                <div className="col-md-5">
+                                    <div className="form-group">
+                                        <label>Fornitore</label>
+                                        <AsyncSelect
+                                            cacheOptions
+                                            loadOptions={(inputValue) =>
+                                                FornitoriService.getSuggestion(inputValue).then(res => {
+                                                    // API returns List<FornitoreDto> directly, so res.data is the array
+                                                    return res.data?.map(f => ({ value: f.id, label: f.denominazione })) || [];
+                                                })
+                                            }
+                                            value={advancedFilters.idFornitore ? { value: advancedFilters.idFornitore, label: advancedFilters.descFornitore } : null}
+                                            onChange={(opt) => setAdvancedFilters(prev => ({
+                                                ...prev,
+                                                idFornitore: opt ? opt.value : null,
+                                                descFornitore: opt ? opt.label : ''
+                                            }))}
+                                            placeholder="Cerca fornitore..."
+                                            loadingMessage={() => "Caricamento..."}
+                                            noOptionsMessage={() => "Nessun risultato"}
+                                            isClearable
+                                            styles={{
+                                                control: (base) => ({ ...base, height: '34px', minHeight: '34px' }),
+                                                menu: (base) => ({ ...base, zIndex: 9999 })
+                                            }}
                                         />
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-md-3">
-                                <div className="form-group">
-                                    <label>Fornitore</label>
-                                    <AsyncSelect
-                                        cacheOptions
-                                        loadOptions={(inputValue) =>
-                                            FornitoriService.getSuggestion(inputValue).then(res => {
-                                                // API returns List<FornitoreDto> directly, so res.data is the array
-                                                return res.data?.map(f => ({ value: f.id, label: f.denominazione })) || [];
-                                            })
-                                        }
-                                        value={advancedFilters.idFornitore ? { value: advancedFilters.idFornitore, label: advancedFilters.descFornitore } : null}
-                                        onChange={(opt) => setAdvancedFilters(prev => ({
-                                            ...prev,
-                                            idFornitore: opt ? opt.value : null,
-                                            descFornitore: opt ? opt.label : ''
-                                        }))}
-                                        placeholder="Cerca fornitore..."
-                                        loadingMessage={() => "Caricamento..."}
-                                        noOptionsMessage={() => "Nessun risultato"}
-                                        isClearable
-                                        styles={{
-                                            control: (base) => ({ ...base, height: '34px', minHeight: '34px' }),
-                                            menu: (base) => ({ ...base, zIndex: 9999 })
-                                        }}
-                                    />
-                                </div>
-                            </div>
                             {config.isCeramica && (
-                                <>
+                                <div className="row" style={{ marginTop: '15px' }}>
                                     <div className="col-md-3">
                                         <div className="form-group">
                                             <label>Formato</label>
@@ -516,8 +519,9 @@ const ArticoliList = () => {
                                             />
                                         </div>
                                     </div>
-                                </>
+                                </div>
                             )}
+
                         </div>
                     )}
 

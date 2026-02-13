@@ -238,15 +238,30 @@ const SottoCategorieManagementModal = ({ onClose }) => {
 
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content">
-                    <div className="modal-header bg-primary" style={{ color: 'white', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
-                        <button type="button" className="close" onClick={onClose} style={{ color: 'white', opacity: 0.8 }}>
+                    <div className="modal-header" style={{ borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
+                        <button type="button" className="close" onClick={onClose}>
                             <span aria-hidden="true">&times;</span>
                         </button>
                         <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Elenco Sottocategorie</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                            <div className="form-inline items-per-page" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span>Visualizza</span>
+                                <select
+                                    className="form-control input-sm"
+                                    style={{ width: 'auto', display: 'inline-block' }}
+                                    value={pageSize}
+                                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                >
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>elementi per pagina</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
                                 <select
                                     className="form-control input-sm"
                                     style={{ width: '200px' }}
@@ -256,22 +271,6 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                                     <option value="">Tutte le categorie</option>
                                     {categories.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
                                 </select>
-                                <div className="form-inline">
-                                    <span style={{ marginRight: '15px' }}>RIGHE:</span>
-                                    <select
-                                        className="form-control input-sm"
-                                        style={{ width: 'auto', display: 'inline-block' }}
-                                        value={pageSize}
-                                        onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                                    >
-                                        <option value="10">10</option>
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '10px' }}>
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type="text"

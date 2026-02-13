@@ -18,6 +18,14 @@ import DatiAziendaPage from './pages/Configurazione/DatiAziendaPage';
 import ParametriPage from './pages/Configurazione/ParametriPage';
 import FornitoriList from './pages/Fornitori/FornitoriList';
 import FornitoriDetail from './pages/Fornitori/FornitoriDetail';
+import ConfOrdineList from './pages/ConfOrdine/ConfOrdineList';
+import ConfOrdineDetail from './pages/ConfOrdine/ConfOrdineDetail';
+import DDTList from './pages/DDT/DDTList';
+import DDTDetail from './pages/DDT/DDTDetail';
+import FattureList from './pages/Fatture/FattureList';
+import FattureDetail from './pages/Fatture/FattureDetail';
+import NoteCreditoList from './pages/NoteCredito/NoteCreditoList';
+import NoteCreditoDetail from './pages/NoteCredito/NoteCreditoDetail';
 
 const ProtectedRoute = ({ children }) => {
   const user = authService.getCurrentUser();
@@ -41,8 +49,6 @@ const ProtectedRoute = ({ children }) => {
 
 const Dashboard = () => {
   const user = authService.getCurrentUser();
-  // console.log('Current User in Dashboard:', user);
-
   const handleLogout = () => {
     authService.logout();
     window.location.reload();
@@ -98,17 +104,28 @@ function App() {
           element={
             <ProtectedRoute>
               <Routes>
-                <Route path="/" element={<h2>Dashboard - Work in Progress</h2>} />
+                <Route path="/" element={<Dashboard />} />
                 <Route path="/clienti" element={<ClientiList />} />
                 <Route path="/clienti/:id" element={<ClientiDetail />} />
                 <Route path="/preventivi" element={<PreventiviList />} />
                 <Route path="/preventivi/new" element={<PreventiviDetail />} />
                 <Route path="/preventivi/:id" element={<PreventiviDetail />} />
+                <Route path="/conf-ordine" element={<ConfOrdineList />} />
+                <Route path="/conf-ordine/new" element={<ConfOrdineDetail />} />
+                <Route path="/conf-ordine/:id" element={<ConfOrdineDetail />} />
                 <Route path="/configurazione/dati-azienda" element={<DatiAziendaPage />} />
                 <Route path="/configurazione/dati-sistema" element={<ParametriPage />} />
                 <Route path="/fornitori" element={<FornitoriList />} />
                 <Route path="/fornitori/:id" element={<FornitoriDetail />} />
-                {/* Add other protected routes here */}
+                <Route path="/ddt" element={<DDTList />} />
+                <Route path="/ddt/new" element={<DDTDetail />} />
+                <Route path="/ddt/:id" element={<DDTDetail />} />
+                <Route path="/fatture" element={<FattureList />} />
+                <Route path="/fatture/new" element={<FattureDetail />} />
+                <Route path="/fatture/:id" element={<FattureDetail />} />
+                <Route path="/note-credito" element={<NoteCreditoList />} />
+                <Route path="/note-credito/new" element={<NoteCreditoDetail />} />
+                <Route path="/note-credito/:id" element={<NoteCreditoDetail />} />
                 <Route path="/articoli" element={<ArticoliList />} />
                 <Route path="/articoli/movimenti" element={<MovimentiList />} />
                 <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />

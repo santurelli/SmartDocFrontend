@@ -22,24 +22,46 @@
 .breadcrumb {
     background: transparent;
     padding: 0;
-    margin-bottom: 10px;
-    font-size: 12px;
-    color: #999;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: #888;
+    display: flex;
+    align-items: center;
 }
 
 .breadcrumb a {
-    color: #999;
+    color: #3498db;
     text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+.breadcrumb a svg {
+    margin-right: 6px;
+    font-size: 14px;
 }
 
 .breadcrumb>li {
-    display: inline-block;
+    display: flex;
+    align-items: center;
 }
 
 .breadcrumb>li+li:before {
-    content: none;
-    /* Remove default slash if using icons or handle manually */
-    padding: 0;
+    content: "/";
+    padding: 0 10px;
+    color: #ccc;
+    font-size: 14px;
+}
+
+.breadcrumb .active {
+    color: #666;
+    font-weight: 500;
 }
 
 .main-box {
@@ -461,6 +483,7 @@
     border-right: 4px solid transparent;
     border-left: 4px solid transparent;
 }
+
 /* Alerts */
 .alert {
     padding: 15px;
@@ -501,4 +524,29 @@
 
 .text-right {
     text-align: right !important;
+}
+
+
+/* Advanced Search Panel */
+.advanced-search-panel {
+    padding: 30px 25px !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 12px !important;
+    margin: 25px 0 !important;
+    background-color: #f8f9fa !important;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.advanced-search-panel .form-group label {
+    font-weight: 600 !important;
+    color: #495057 !important;
+    margin-bottom: 12px !important;
+    font-size: 13px !important;
+    display: block !important;
+}
+
+.advanced-search-panel .form-control {
+    border: 1px solid #ced4da !important;
+    border-radius: 8px !important;
+    height: 38px !important;
 }

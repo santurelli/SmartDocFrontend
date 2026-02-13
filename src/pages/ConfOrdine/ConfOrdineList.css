@@ -1,120 +1,39 @@
-/* PreventiviList.css - Vibrant Overhaul - DEFINITIVE */
-
-.preventivi-list-container {
+/* Reuse PreventiviList styles */
+.conf-ordine-list-container {
     padding: 20px;
-    padding-bottom: 50px;
 }
 
-/* Breadcrumbs */
-.preventivi-list-container .breadcrumb {
-    background: transparent;
-    padding: 0;
-    margin-bottom: 5px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #999;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    list-style: none;
-}
-
-.preventivi-list-container .breadcrumb a {
-    color: #999;
-    text-decoration: none;
-}
-
-.preventivi-list-container .breadcrumb li.active {
-    color: #333;
-    font-weight: 600;
-}
-
-/* Header & Total */
-.header-row {
+.conf-ordine-list-container .header-row {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 25px;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.preventivi-list-container h1 {
-    color: #03a9f4;
-    font-weight: 300;
-    margin: 0;
-    font-size: 32px;
-}
-
-#total-display-header {
-    font-size: 14px;
+.conf-ordine-list-container h1 {
+    font-size: 24px;
     color: #444;
-    font-weight: 600;
+    margin: 0;
 }
 
-#total-display-header strong {
-    font-size: 18px;
-    color: #333;
-}
-
-/* Toolbar Row */
-.toolbar-row {
+.conf-ordine-list-container .toolbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
     background: #fff;
     padding: 10px 15px;
-    margin-bottom: 15px;
-    border-radius: 3px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.conf-ordine-list-container .toolbar-left {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e7ebee;
+    gap: 15px;
 }
 
-.toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.btn-toolbar-icon,
-.btn-cloud {
-    background: #03a9f4;
-    color: #fff;
-    border: none;
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-cloud svg {
-    font-size: 20px;
-}
-
-.fa-spin {
-    animation: fa-spin 2s infinite linear;
-}
-
-@keyframes fa-spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
-        transform: rotate(359deg);
-    }
-}
-
-.btn-toolbar-icon:hover,
-.btn-cloud:hover {
-    background: #039be5;
-}
-
-.rows-per-page {
+.conf-ordine-list-container .rows-per-page {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -122,205 +41,123 @@
     color: #666;
 }
 
-.rows-per-page select {
-    height: 32px;
+.conf-ordine-list-container .rows-per-page select {
+    padding: 4px 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    padding: 0 5px;
-    background: #fff;
 }
 
-.btn-new-vibrant {
-    background-color: #03a9f4;
+.conf-ordine-list-container .btn-new-vibrant {
+    background: #03a9f4;
+    color: white;
     border: none;
-    color: #fff;
-    padding: 0 20px;
-    height: 38px;
-    border-radius: 4px;
-    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 8px;
-    text-decoration: none;
     transition: background 0.2s;
-    cursor: pointer;
 }
 
-.btn-new-vibrant:hover {
-    background-color: #039be5;
-    color: #fff;
+.conf-ordine-list-container .btn-new-vibrant:hover {
+    background: #039be5;
 }
 
-/* Filter Box */
-.filter-box-vibrant {
+.conf-ordine-list-container .filter-box-vibrant {
     background: #fff;
-    border-radius: 3px;
-    border: 1px solid #e7ebee;
+    border-radius: 8px;
     margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
-.filter-header-vibrant {
-    background-color: #03a9f4;
-    color: #fff;
+.conf-ordine-list-container .filter-header-vibrant {
+    background: #f8f9fa;
     padding: 10px 15px;
-    font-weight: 600;
-    font-size: 14px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    cursor: pointer;
+    font-weight: 500;
+    color: #555;
 }
 
-.filter-body-vibrant {
-    padding: 20px 15px;
+.conf-ordine-list-container .filter-body-vibrant {
+    padding: 15px;
     display: flex;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 15px;
     align-items: flex-end;
 }
 
-.filter-field {
+.conf-ordine-list-container .filter-field {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-.filter-field label {
-    font-weight: 700;
-    font-size: 11px;
-    color: #666;
-    text-transform: uppercase;
+.conf-ordine-list-container .filter-field label {
+    font-size: 12px;
+    color: #888;
+    margin: 0;
 }
 
-.filter-field .form-control {
-    height: 38px !important;
-    border: 1px solid #ddd !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    padding: 6px 12px;
-}
-
-.btn-search-vibrant {
-    background-color: #03a9f4;
-    color: #fff;
-    border: none;
+.conf-ordine-list-container .filter-field .form-control {
     height: 38px;
-    padding: 0 25px;
+    border-radius: 0;
+    border-color: #ddd;
+}
+
+.conf-ordine-list-container .btn-search-vibrant {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 0 20px;
+    height: 38px;
     border-radius: 4px;
-    font-weight: 700;
+    font-weight: 500;
     display: flex;
     align-items: center;
     gap: 8px;
-    cursor: pointer;
 }
 
-/* Table */
-.main-box {
-    background: #fff;
-    border-radius: 3px;
-    border: 1px solid #e7ebee;
-    padding: 20px;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-}
-
-.table thead th {
-    text-transform: uppercase;
-    font-size: 11px;
-    font-weight: 700;
-    color: #888;
-    border-bottom: 2px solid #f1f2f7;
-    padding: 12px 10px;
-    background: #f9fafb;
-}
-
-.table tbody td {
-    padding: 12px 10px;
-    color: #444;
-    font-size: 13px;
-    border-bottom: 1px solid #f1f2f7;
-    vertical-align: middle;
-}
-
-.table-hover tbody tr:hover {
-    background-color: #f7f9fa;
-}
-
-.text-right {
-    text-align: right;
-}
-
-.text-center {
-    text-align: center;
-}
-
-/* Action Buttons */
-.btn-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    border: none;
-    margin-left: 5px;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.btn-action-edit {
-    background-color: #f1c40f;
-    color: #fff;
-}
-
-.btn-action-delete {
-    background-color: #e74c3c;
-    color: #fff;
-}
-
-.btn-action:hover {
-    opacity: 0.8;
-}
-
-/* Pagination */
-.pagination-container {
-    padding-top: 20px;
+.conf-ordine-list-container .pagination-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
 }
 
-.pagination-info {
-    color: #999;
+.conf-ordine-list-container .pagination-info {
     font-size: 13px;
+    color: #777;
 }
 
-.btn-paginate {
-    height: 34px;
-    padding: 0 15px;
+.conf-ordine-list-container .btn-paginate {
     background: #fff;
     border: 1px solid #ddd;
-    color: #666;
-    margin-left: 5px;
-    border-radius: 4px;
-    cursor: pointer;
+    color: #555;
+    padding: 6px 12px;
+    transition: all 0.2s;
 }
 
-.btn-paginate:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.conf-ordine-list-container .btn-paginate:hover:not(:disabled) {
+    background: #f0f0f0;
+    border-color: #ccc;
 }
 
 /* Action Menu Dropdown */
 .action-menu-container {
     position: relative;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: flex-end !important;
-    flex-wrap: nowrap !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 5px;
-    white-space: nowrap !important;
+    white-space: nowrap;
     z-index: 10;
 }
 
@@ -364,6 +201,7 @@
     height: auto !important;
     margin: 0 !important;
     border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 .action-dropdown-item:hover {

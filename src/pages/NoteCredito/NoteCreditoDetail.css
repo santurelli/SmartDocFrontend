@@ -1,0 +1,305 @@
+/* NoteCreditoDetail.css - Vibrant Styling */
+
+.note-credito-detail-container {
+    padding: 20px;
+    padding-bottom: 80px;
+}
+
+#note-credito-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 25px;
+}
+
+#note-credito-content-header h1 {
+    font-size: 28px;
+    font-weight: 300;
+    margin: 0;
+    color: #333;
+}
+
+#note-credito-content-header .breadcrumb {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+}
+
+#note-credito-content-header .breadcrumb span {
+    cursor: pointer;
+}
+
+#note-credito-content-header .breadcrumb span:hover {
+    color: #03a9f4;
+}
+
+/* Totals in Header */
+.header-totals {
+    display: flex;
+    gap: 20px;
+}
+
+.total-box {
+    background: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #e7ebee;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 150px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.total-box .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #999;
+    font-weight: 700;
+}
+
+.total-box .value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #444;
+}
+
+.total-box.highlight {
+    background: #03a9f4;
+    border-color: #03a9f4;
+}
+
+.total-box.highlight .label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.total-box.highlight .value {
+    color: #fff;
+}
+
+/* Tabs */
+.nav-tabs-custom {
+    border-bottom: 2px solid #f1f2f7;
+    margin-bottom: 0;
+    padding: 0 30px;
+    background: #fdfdfd;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.nav-tabs-custom li a {
+    border: none !important;
+    padding: 15px 25px;
+    color: #888;
+    font-weight: 600;
+    font-size: 14px;
+    background: transparent !important;
+    position: relative;
+}
+
+.nav-tabs-custom li.active a {
+    color: #03a9f4 !important;
+}
+
+.nav-tabs-custom li.active a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #03a9f4;
+}
+
+.main-box {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e7ebee;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+}
+
+.main-box-body {
+    padding: 25px 30px;
+}
+
+/* Compact Forms */
+.compact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.compact-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.compact-col label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.compact-col-sm {
+    flex: 0 0 140px;
+}
+
+.compact-col-md {
+    flex: 0 0 220px;
+}
+
+.compact-col-lg {
+    flex: 1;
+    min-width: 250px;
+}
+
+.compact-col-xl {
+    flex: 2;
+    min-width: 350px;
+}
+
+/* Premium Inputs */
+.premium-input {
+    height: 38px !important;
+    border-radius: 8px !important;
+    border: 1px solid #dfe4e7 !important;
+    font-size: 14px !important;
+    box-shadow: none !important;
+}
+
+.premium-input:focus {
+    border-color: #03a9f4 !important;
+}
+
+.flex-input-group {
+    display: flex;
+    align-items: center;
+}
+
+.flex-input-group.w-md {
+    width: 300px;
+}
+
+.flex-input-group .premium-input {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.premium-wrench-btn {
+    height: 38px;
+    width: 38px;
+    background: #f8f9fa;
+    border: 1px solid #dfe4e7;
+    border-left: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.premium-wrench-btn:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+/* Cards */
+.premium-card {
+    border: 1px solid #e7ebee;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 100%;
+    background: #fff;
+    transition: transform 0.2s;
+}
+
+.card-header-vibrant {
+    background: #f8f9fa;
+    padding: 12px 18px;
+    border-bottom: 1px solid #e7ebee;
+    font-weight: 700;
+    font-size: 13px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-header-vibrant svg {
+    color: #03a9f4;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.premium-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+/* Floating Actions */
+.form-actions-floating {
+    position: fixed;
+    bottom: 20px;
+    right: 40px;
+    display: flex;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 12px 20px;
+    border-radius: 50px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.form-actions-floating .btn {
+    height: 45px;
+    padding: 0 25px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-success {
+    background-color: #2ecc71;
+    border-color: #27ae60;
+}
+
+.btn-success:hover {
+    background-color: #27ae60;
+}
+
+/* Address Card Inner Margins */
+.address-card .row.mb-4 {
+    margin-bottom: 12px !important;
+}
+
+hr {
+    border-color: #f1f2f7;
+    margin: 20px 0;
+}
+
+/* Tab Visibility Fix */
+.entity-form-shared .tab-content>.tab-pane {
+    display: none !important;
+}
+
+.entity-form-shared .tab-content>.tab-pane.active {
+    display: block !important;
+}

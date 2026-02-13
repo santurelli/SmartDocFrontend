@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import Select from 'react-select';
-import PreventiviService from '../../services/PreventiviService';
+import ConfOrdineService from '../../services/ConfOrdineService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import { formatStato } from '../../utils/documentUtils';
-import './PreventiviList.css';
+import './ConfOrdineList.css';
 
-const MODULE_NAME = 'preventivi';
+const MODULE_NAME = 'conf-ordine';
 
-const PreventiviList = () => {
+const ConfOrdineList = () => {
     const navigate = useNavigate();
 
     // Load initial state
@@ -32,9 +32,8 @@ const PreventiviList = () => {
         showFilters: true
     });
 
-    const [preventivi, setPreventivi] = useState([]);
+    const [conferme, setConferme] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [downloading, setDownloading] = useState(false);
     const [total, setTotal] = useState(0);
 
     // Filters
@@ -69,51 +68,17 @@ const PreventiviList = () => {
 
     // Selection handlers
     const toggleSelect = (id) => {
-        const strId = String(id);
         setSelectedIds(prev =>
-            prev.includes(strId) ? prev.filter(item => item !== strId) : [...prev, strId]
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
         );
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === preventivi.length && preventivi.length > 0) {
+        if (selectedIds.length === conferme.length && conferme.length > 0) {
             setSelectedIds([]);
         } else {
-            setSelectedIds(preventivi.map(p => String(p.idDocumento || p.id)));
+            setSelectedIds(conferme.map(c => c.idDocumento || c.id));
         }
-    };
-
-    const handleBulkDelete = async () => {
-        const result = await Swal.fire({
-            title: `Elimina ${selectedIds.length} preventivi?`,
-            text: "L'operazione è irreversibile!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Sì, elimina tutti'
-        });
-
-        if (result.isConfirmed) {
-            setLoading(true);
-            try {
-                for (const id of selectedIds) {
-                    await PreventiviService.delete(id);
-                }
-                Swal.fire('Eliminati!', 'I preventivi selezionati sono stati eliminati.', 'success');
-                setSelectedIds([]);
-                handleSearch();
-            } catch (error) {
-                console.error("Bulk delete error:", error);
-                Swal.fire('Errore', "Errore durante l'eliminazione massiva", 'error');
-            } finally {
-                setLoading(false);
-            }
-        }
-    };
-
-    const handleBulkGenerateConfOrdine = () => {
-        if (selectedIds.length === 0) return;
-        navigate(`/conf-ordine/new?fromPreventivi=${selectedIds.join(',')}`);
     };
 
     // Save state whenever filters or pagination change
@@ -134,9 +99,8 @@ const PreventiviList = () => {
     }, [idCliente, idAgente, dtFrom, dtTo, currentPage, pageSize, sortCol, sortDir, selectedCliente, selectedAgente, showFilters]);
 
     useEffect(() => {
-        // Load initial data
         loadAgenti();
-        fetchPreventivi();
+        fetchConferme();
     }, [currentPage, pageSize, sortCol, sortDir]);
 
     const loadAgenti = async () => {
@@ -175,7 +139,7 @@ const PreventiviList = () => {
         });
     };
 
-    const fetchPreventivi = async () => {
+    const fetchConferme = async () => {
         setLoading(true);
         try {
             const params = {
@@ -188,70 +152,44 @@ const PreventiviList = () => {
                 orderColumn: sortCol,
                 orderDir: sortDir
             };
-            const response = await PreventiviService.getList(params);
-            setPreventivi(response.data.list || []);
+            const response = await ConfOrdineService.getList(params);
+            setConferme(response.data.list || []);
             setTotal(response.data.totalCount || 0);
         } catch (error) {
-            console.error("Error fetching preventivi:", error);
-            Swal.fire('Errore', 'Errore nel caricamento dei preventivi', 'error');
+            console.error("Error fetching conferme d'ordine:", error);
+            Swal.fire('Errore', 'Errore nel caricamento delle conferme d\'ordine', 'error');
         } finally {
             setLoading(false);
         }
     };
 
     const handleSearch = (e) => {
-        if (e) e.preventDefault();
+        e.preventDefault();
         setCurrentPage(0);
-        fetchPreventivi();
+        fetchConferme();
     };
 
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "Vuoi eliminare questo preventivo?",
+            text: "Vuoi eliminare questa conferma d'ordine?",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
             confirmButtonText: 'Sì, elimina',
             cancelButtonText: 'Annulla'
         });
 
         if (result.isConfirmed) {
             try {
-                await PreventiviService.delete(id);
-                fetchPreventivi();
-                Swal.fire('Eliminato!', 'Il preventivo è stato eliminato.', 'success');
+                await ConfOrdineService.delete(id);
+                fetchConferme();
+                Swal.fire('Eliminata!', 'La conferma d\'ordine è stata eliminata.', 'success');
             } catch (error) {
-                console.error("Error deleting preventivo:", error);
+                console.error("Error deleting conferma d'ordine:", error);
                 Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
             }
-        }
-    };
-
-    const handleExport = async () => {
-        setDownloading(true);
-        try {
-            const params = {
-                idCliente,
-                idAgente,
-                dtFrom,
-                dtTo,
-                orderColumn: sortCol,
-                orderDir: sortDir
-            };
-            const response = await PreventiviService.exportExcel(params);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'elenco_preventivi.xls');
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } catch (error) {
-            console.error("Error exporting:", error);
-            Swal.fire('Errore', "Errore durante l'esportazione", 'error');
-        } finally {
-            setDownloading(false);
         }
     };
 
@@ -265,17 +203,14 @@ const PreventiviList = () => {
         return <span className="sort-icon">{sortDir === 'asc' ? '▲' : '▼'}</span>;
     };
 
-
-    // Format currency
-    const formatMoney = (amount) => {
-        return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount || 0);
+    const handleBulkGenerateDDT = () => {
+        if (selectedIds.length === 0) return;
+        navigate(`/ddt/new?fromConferme=${selectedIds.join(',')}`);
     };
-
-    const totalAmount = preventivi.reduce((sum, item) => sum + (item.totale || 0), 0);
 
     const handlePrintItem = async (id) => {
         try {
-            const response = await PreventiviService.print(id);
+            const response = await ConfOrdineService.print(id);
             const blob = new Blob([response.data], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
             printJS({ printable: url, type: 'pdf' });
@@ -289,11 +224,11 @@ const PreventiviList = () => {
 
     const handleExportPdfItem = async (id, num) => {
         try {
-            const response = await PreventiviService.print(id);
+            const response = await ConfOrdineService.print(id);
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `Preventivo_${num}.pdf`);
+            link.setAttribute('download', `ConfOrdine_${num}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -305,26 +240,19 @@ const PreventiviList = () => {
     };
 
     return (
-        <div className="preventivi-list-container">
+        <div className="conf-ordine-list-container">
             <ul className="breadcrumb">
                 <li><a href="/"><FaHome /> Home</a></li>
                 <li><FaAngleRight /></li>
-                <li className="active">Elenco preventivi</li>
+                <li className="active">Conferme d'ordine</li>
             </ul>
 
             <div className="header-row">
-                <h1>Elenco preventivi</h1>
-                <div id="total-display-header" className="hidden-xs">
-                    <strong>{formatMoney(totalAmount)}</strong> Totale
-                </div>
+                <h1>Conferme d'ordine</h1>
             </div>
 
-            {/* Toolbar Row */}
             <div className="toolbar-row">
                 <div className="toolbar-left">
-                    <button className="btn btn-cloud" title="Esporta" onClick={handleExport} disabled={downloading}>
-                        {downloading ? <FaSync className="fa-spin" /> : <FaCloudDownloadAlt />}
-                    </button>
                     <div className="rows-per-page">
                         <span>Mostra</span>
                         <select value={pageSize} onChange={e => { setPageSize(parseInt(e.target.value)); setCurrentPage(0); }}>
@@ -336,39 +264,26 @@ const PreventiviList = () => {
                         <span>righe per pagina</span>
                     </div>
 
-
-                    <div className="vibrant-bulk-toolbar" style={{ marginLeft: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div className="toolbar-divider"></div>
-                        <span className="selected-count-vibrant" style={{ opacity: selectedIds.length === 0 ? 0.5 : 1 }}>
-                            {selectedIds.length} selezionat{selectedIds.length === 1 ? 'o' : 'i'}
-                        </span>
-                        <button
-                            className="btn-bulk-vibrant btn-bulk-generate"
-                            onClick={handleBulkGenerateConfOrdine}
-                            disabled={selectedIds.length === 0}
-                            style={selectedIds.length === 0 ? { opacity: 0.6, cursor: 'not-allowed', filter: 'grayscale(1)' } : {}}
-                        >
-                            <FaArrowRight /> Genera conferma ({selectedIds.length})
-                        </button>
-                        <button
-                            className="btn-bulk-vibrant btn-bulk-delete"
-                            onClick={handleBulkDelete}
-                            disabled={selectedIds.length === 0}
-                            style={selectedIds.length === 0 ? { opacity: 0.6, cursor: 'not-allowed', filter: 'grayscale(1)' } : {}}
-                        >
-                            <FaTrash /> Elimina ({selectedIds.length})
-                        </button>
-                    </div>
-
+                    {selectedIds.length > 0 && (
+                        <div className="vibrant-bulk-toolbar">
+                            <div className="toolbar-divider"></div>
+                            <span className="selected-count-vibrant">{selectedIds.length} selezionat{selectedIds.length === 1 ? 'o' : 'i'}</span>
+                            <button className="btn-bulk-vibrant btn-bulk-generate" onClick={handleBulkGenerateDDT}>
+                                <FaArrowRight /> Genera DDT ({selectedIds.length})
+                            </button>
+                            <button className="btn-bulk-vibrant btn-bulk-delete" onClick={handleBulkDelete}>
+                                <FaTrash /> Elimina ({selectedIds.length})
+                            </button>
+                        </div>
+                    )}
                 </div>
                 <div className="toolbar-right">
-                    <button className="btn-new-vibrant" onClick={() => navigate('/preventivi/new')}>
-                        <FaPlus size={14} /> Nuovo preventivo
+                    <button className="btn-new-vibrant" onClick={() => navigate('/conf-ordine/new')}>
+                        <FaPlus size={14} /> Nuova conferma d'ordine
                     </button>
                 </div>
             </div>
 
-            {/* Filter Box */}
             <div className="filter-box-vibrant">
                 <div className="filter-header-vibrant" onClick={() => setShowFilters(!showFilters)}>
                     <span>Filtri ricerca</span>
@@ -439,8 +354,6 @@ const PreventiviList = () => {
                 )}
             </div>
 
-
-
             <div className="main-box">
                 <div className="main-box-body">
                     <div className="table-responsive">
@@ -451,7 +364,7 @@ const PreventiviList = () => {
                                         <input
                                             type="checkbox"
                                             onChange={toggleSelectAll}
-                                            checked={selectedIds.length === preventivi.length && preventivi.length > 0}
+                                            checked={selectedIds.length === conferme.length && conferme.length > 0}
                                         />
                                     </th>
                                     <th onClick={() => handleSort(0)} style={{ cursor: 'pointer' }}>Data {renderSortIcon(0)}</th>
@@ -459,44 +372,38 @@ const PreventiviList = () => {
                                     <th onClick={() => handleSort(2)} style={{ cursor: 'pointer' }}>Cliente {renderSortIcon(2)}</th>
                                     <th onClick={() => handleSort(3)} style={{ cursor: 'pointer' }}>Agente {renderSortIcon(3)}</th>
                                     <th>Stato</th>
-                                    <th>Totale</th>
                                     <th style={{ width: '1%' }}></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan="8" className="text-center">Caricamento...</td></tr>
-                                ) : preventivi.length === 0 ? (
-                                    <tr><td colSpan="8" className="text-center">Nessun dato presente</td></tr>
+                                    <tr><td colSpan="6" className="text-center">Caricamento...</td></tr>
+                                ) : conferme.length === 0 ? (
+                                    <tr><td colSpan="6" className="text-center">Nessun dato presente</td></tr>
                                 ) : (
-                                    preventivi.map((prev, index) => {
-                                        const docId = prev.idDocumento || prev.id;
-                                        const strId = String(docId);
+                                    conferme.map((conf, index) => {
+                                        const docId = conf.idDocumento || conf.id;
                                         return (
                                             <tr key={docId || index}>
                                                 <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedIds.includes(strId)}
-                                                            onChange={() => toggleSelect(docId)}
-                                                            disabled={!docId}
-                                                        />
-                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.includes(docId)}
+                                                        onChange={() => toggleSelect(docId)}
+                                                    />
                                                 </td>
-                                                <td>{prev.dataDocumento}</td>
-                                                <td>{prev.numeroDocumento}</td>
-                                                <td>{prev.soggetto}</td>
-                                                <td>{prev.agente}</td>
+                                                <td>{conf.dataDocumento}</td>
+                                                <td>{conf.numeroDocumento}</td>
+                                                <td>{conf.soggetto}</td>
+                                                <td>{conf.agente}</td>
                                                 <td style={{ whiteSpace: 'nowrap' }}>
-                                                    {formatStato(prev.stato).split('\n').map((line, i) => (
+                                                    {formatStato(conf.stato).split('\n').map((line, i) => (
                                                         <React.Fragment key={i}>
                                                             {line}
-                                                            {i < formatStato(prev.stato).split('\n').length - 1 && <br />}
+                                                            {i < formatStato(conf.stato).split('\n').length - 1 && <br />}
                                                         </React.Fragment>
                                                     ))}
                                                 </td>
-                                                <td className="text-right">{formatMoney(prev.totale)}</td>
                                                 <td className="text-right">
                                                     <div className="action-menu-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
                                                         <button
@@ -511,17 +418,17 @@ const PreventiviList = () => {
                                                         </button>
                                                         {activeActionMenu === docId && (
                                                             <div className="action-dropdown-menu">
-                                                                <button className="action-dropdown-item" onClick={() => navigate(`/preventivi/${docId}`)}>
+                                                                <button className="action-dropdown-item" onClick={() => navigate(`/conf-ordine/${docId}`)}>
                                                                     <FaEdit /> Modifica
-                                                                </button>
-                                                                <button className="action-dropdown-item" onClick={() => navigate(`/conf-ordine/new?fromPreventivi=${docId}`)}>
-                                                                    <FaArrowRight /> Genera Conferma
                                                                 </button>
                                                                 <button className="action-dropdown-item" onClick={() => handlePrintItem(docId)}>
                                                                     <FaPrint /> Stampa
                                                                 </button>
-                                                                <button className="action-dropdown-item" onClick={() => handleExportPdfItem(docId, prev.numeroDocumento)}>
+                                                                <button className="action-dropdown-item" onClick={() => handleExportPdfItem(docId, conf.numeroDocumento)}>
                                                                     <FaFilePdf /> Esporta PDF
+                                                                </button>
+                                                                <button className="action-dropdown-item" onClick={() => navigate(`/ddt/new?fromConferme=${docId}`)}>
+                                                                    <FaArrowRight /> Genera DDT
                                                                 </button>
                                                                 <div className="action-dropdown-divider"></div>
                                                                 <button className="action-dropdown-item text-danger" onClick={() => handleDelete(docId)}>
@@ -540,7 +447,7 @@ const PreventiviList = () => {
                     </div>
 
                     <div className="pagination-container">
-                        <span className="pagination-info">Visualizzati {preventivi.length} di {total} risultati</span>
+                        <span className="pagination-info">Visualizzati {conferme.length} di {total} risultati</span>
                         <div className="btn-group">
                             <button className="btn btn-paginate" disabled={currentPage === 0} onClick={() => setCurrentPage(c => c - 1)}><FaChevronLeft /></button>
                             <button className="btn btn-paginate" disabled={(currentPage + 1) * pageSize >= total} onClick={() => setCurrentPage(c => c + 1)}><FaChevronRight /></button>
@@ -552,4 +459,4 @@ const PreventiviList = () => {
     );
 };
 
-export default PreventiviList;
+export default ConfOrdineList;

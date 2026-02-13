@@ -1,33 +1,32 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import AsyncSelect from 'react-select/async';
-import Select from 'react-select';
-import PreventiviService from '../../services/PreventiviService';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import ConfOrdineService from '../../services/ConfOrdineService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
-import ProgettiService from '../../services/ProgettiService';
-import ArticoliService from '../../services/ArticoliService';
-import authService from '../../services/authService';
-import DocumentRows from '../../components/common/DocumentRows';
-import { getRowValues } from '../../utils/documentUtils';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
-import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
+import ArticoliService from '../../services/ArticoliService';
+import PreventiviService from '../../services/PreventiviService';
+import { FaSave, FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import Select from 'react-select';
+import AsyncSelect from 'react-select/async';
+import CreatableSelect from 'react-select/creatable';
+import printJS from 'print-js';
+import './ConfOrdineDetail.css';
+import '../../components/EntityForms.css';
 import ClientiManagementModal from '../../components/modals/ClientiManagementModal';
 import AgentiManagementModal from '../../components/modals/AgentiManagementModal';
-import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
+import EntitySelectGroup from '../../components/EntitySelectGroup';
+import IndirizziSelectionModal from '../../components/modals/IndirizziSelectionModal';
 import TipiPagamentoManagementModal from '../../components/modals/TipiPagamentoManagementModal';
 import UnitaMisuraManagementModal from '../../components/modals/UnitaMisuraManagementModal';
 import AliquoteIvaManagementModal from '../../components/modals/AliquoteIvaManagementModal';
-import WrenchModalButton from '../../components/WrenchModalButton';
-import EntitySelectGroup from '../../components/EntitySelectGroup';
-import IndirizziSelectionModal from '../../components/modals/IndirizziSelectionModal';
-import Swal from 'sweetalert2';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaCalculator, FaHome, FaAngleRight, FaWrench, FaCogs, FaMapMarkerAlt, FaTruck, FaPrint, FaCaretDown, FaFilePdf, FaArrowRight } from 'react-icons/fa';
-import printJS from 'print-js';
-import CreatableSelect from 'react-select/creatable';
+import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
-import './PreventiviDetail.css';
-import '../../components/EntityForms.css';
+import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
+import authService from '../../services/authService';
+import DocumentRows from '../../components/common/DocumentRows';
+import { getRowValues } from '../../utils/documentUtils';
 
 const premiumSelectStyles = {
     control: (base) => ({
@@ -56,64 +55,37 @@ const premiumSelectStyles = {
     menu: (base) => ({ ...base, zIndex: 9999 })
 };
 
+const particellaSelectStyles = {
+    ...premiumSelectStyles,
+    control: (base) => ({
+        ...base,
+        borderTopLeftRadius: '0px',
+        borderBottomLeftRadius: '0px',
+        borderTopRightRadius: '0px',
+        borderBottomRightRadius: '0px',
+        borderColor: '#dfe4e7',
+        borderLeft: 'none',
+        minHeight: '38px',
+        height: '38px',
+        boxShadow: 'none',
+        backgroundColor: '#f8f9fa',
+        '&:hover': { borderColor: '#ccc' }
+    })
+};
+
 const tableSelectStyles = {
     control: (base) => ({
         ...base,
         minHeight: '34px',
         height: '34px',
-        fontSize: '12px',
-        borderRadius: '4px 0 0 4px',
-        borderColor: '#dfe4e7',
+        fontSize: '13px',
+        borderColor: '#dee2e6',
         boxShadow: 'none',
-        '&:hover': { borderColor: '#ccc' }
+        '&:hover': { borderColor: '#ced4da' }
     }),
     valueContainer: (base) => ({
         ...base,
         height: '34px',
-        padding: '0 8px',
-        display: 'flex',
-        alignItems: 'center'
-    }),
-    singleValue: (base) => ({
-        ...base,
-        margin: 0,
-        color: '#333',
-        fontWeight: 500
-    }),
-    input: (base) => ({
-        ...base,
-        margin: 0,
-        padding: 0,
-        color: '#333'
-    }),
-    indicatorsContainer: (base) => ({
-        ...base,
-        height: '32px'
-    }),
-    menu: (base) => ({ ...base, zIndex: 9999, fontSize: '12px' }),
-    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-    dropdownIndicator: (base) => ({ ...base, padding: '2px' }),
-    clearIndicator: (base) => ({ ...base, padding: '2px' })
-};
-
-const particellaSelectStyles = {
-    ...premiumSelectStyles,
-    control: (base) => ({
-        ...base,
-        minHeight: '38px',
-        height: '38px',
-        borderTopLeftRadius: '0px',
-        borderBottomLeftRadius: '0px',
-        borderTopRightRadius: '0px',
-        borderBottomRightRadius: '0px',
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderColor: '#dfe4e7',
-        boxShadow: 'none'
-    }),
-    valueContainer: (base) => ({
-        ...base,
-        height: '36px',
         padding: '0 8px'
     }),
     input: (base) => ({
@@ -122,218 +94,259 @@ const particellaSelectStyles = {
     }),
     indicatorsContainer: (base) => ({
         ...base,
-        height: '36px'
+        height: '34px'
     }),
-    dropdownIndicator: (base) => ({
+    menu: (base) => ({
         ...base,
-        padding: '4px'
-    }),
-    clearIndicator: (base) => ({
-        ...base,
-        padding: '4px'
-    }),
-    menu: (base) => ({ ...base, zIndex: 9999, width: '150px' })
+        fontSize: '13px',
+        zIndex: 9999
+    })
 };
 
-const PreventiviDetail = () => {
+const ConfOrdineDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const fromPreventiviId = searchParams.get('fromPreventivi');
     const isNew = !id || id === 'new';
+    const [activeTab, setActiveTab] = useState('generale'); // generale, articoli, note, pagamento
     const [isCeramica, setIsCeramica] = useState(false);
 
-    const [activeTab, setActiveTab] = useState('generale');
-    const [loading, setLoading] = useState(false);
-    const [showProgettoModal, setShowProgettoModal] = useState(false);
-    const [showAddressModal, setShowAddressModal] = useState(false);
-    const [showParticelleModal, setShowParticelleModal] = useState(false);
-    const [showUMModal, setShowUMModal] = useState(false);
-    const [showIVAModal, setShowIVAModal] = useState(false);
-    const [addressTarget, setAddressTarget] = useState('intestazione'); // 'intestazione' or 'destinazione'
-    const [combos, setCombos] = useState({
-        aliquoteIva: [],
-        unitaMisura: [],
-        particelle: [],
-        tipiPagamento: [],
-        listini: [],
-        risorse: [],
-        agenti: [],
-        progetti: []
-    });
-
-    const [showActionsMenu, setShowActionsMenu] = useState(false);
     const [formData, setFormData] = useState({
         numDocumento: '',
-        dataDocumento: new Date().toISOString().split('T')[0],
         particella: '',
+        dataDocumento: new Date().toISOString().split('T')[0],
         idCliente: null,
-        denominazione: '',
+        nomeCliente: '',
         idAgente: null,
         nomeAgente: '',
         idProgetto: null,
         nomeProgetto: '',
+        idListino: '', // '' means default
         idTipoPagamento: null,
-        idListino: null,
         idNsBanca: null,
-        annotazioneEstesa: '',
+        descrizioneBanca: '',
+        iban: '',
+        cittaIntestazione: '',
         indirizzoIntestazione: '',
         capIntestazione: '',
-        cittaIntestazione: '',
         provinciaIntestazione: '',
-        nazioneIntestazione: '',
-        partitaIva: '',
         codiceFiscale: '',
+        partitaIva: '',
+        cittaDestinazione: '',
         indirizzoDestinazione: '',
         capDestinazione: '',
-        cittaDestinazione: '',
         provinciaDestinazione: '',
-        nazioneDestinazione: '',
+        noteConsegna: '',
+        colli: '',
+        pesoNetto: '',
+        pesoLordo: '',
+        pallet: '',
+        idVettore: null,
+        annotazioneEstesa: ''
+    });
+
+    const [prodotti, setProdotti] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // Combos
+    const [combos, setCombos] = useState({
+        particelle: [],
+        listini: [],
+        tipiPagamento: [],
+        risorse: [], // Banche
+        aliquoteIva: [],
+        unitaMisura: [],
+        vettori: [],
+        causaliTrasporto: [],
+        aspettiBeni: [],
+        tipiPorto: [],
+        agenti: [], // For sync usage if needed
+        progetti: []
     });
 
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
+    const [showAddressModal, setShowAddressModal] = useState(false);
+    const [addressTarget, setAddressTarget] = useState('intestazione'); // 'intestazione' or 'destinazione'
+    const [showProgettoModal, setShowProgettoModal] = useState(false);
 
-    const [prodotti, setProdotti] = useState([]);
-    const [totals, setTotals] = useState({
-        imponibile: 0,
-        iva: 0,
-        totale: 0
-    });
+    // Management Modals
+    const [showParticelleModal, setShowParticelleModal] = useState(false);
+    const [showUMModal, setShowUMModal] = useState(false);
+    const [showIVAModal, setShowIVAModal] = useState(false);
+
+    const [showActionsMenu, setShowActionsMenu] = useState(false);
 
     useEffect(() => {
+        checkCeramica();
         fetchCombos();
-    }, []);
-
-    useEffect(() => {
         if (!isNew) {
-            loadPreventivo();
+            fetchData();
+        } else if (fromPreventiviId) {
+            fetchDataFromPreventivo(fromPreventiviId);
         } else {
-            // Reset form for new entry
-            setFormData({
-                numDocumento: '',
-                dataDocumento: new Date().toISOString().split('T')[0],
-                particella: '',
-                idCliente: null,
-                denominazione: '',
-                idAgente: null,
-                nomeAgente: '',
-                idProgetto: null,
-                nomeProgetto: '',
-                idTipoPagamento: null,
-                idListino: null,
-                idNsBanca: null,
-                annotazioneEstesa: '',
-                indirizzoIntestazione: '',
-                capIntestazione: '',
-                cittaIntestazione: '',
-                provinciaIntestazione: '',
-                nazioneIntestazione: '',
-                partitaIva: '',
-                codiceFiscale: '',
-                indirizzoDestinazione: '',
-                capDestinazione: '',
-                cittaDestinazione: '',
-                provinciaDestinazione: '',
-                nazioneDestinazione: '',
-            });
-            setProdotti([]);
-            setTotals({ imponibile: 0, iva: 0, totale: 0 });
-            setClientIndirizzi([]);
-
-            // Then fetch next number
-            fetchNextNum(new Date().toISOString().split('T')[0]);
+            fetchNextNum(formData.dataDocumento);
         }
-    }, [id]);
+    }, [id, fromPreventiviId]);
+
+    const checkCeramica = async () => {
+        const conf = authService.getConfig();
+        if (conf && conf.TIPO_NEGOZIO === 'ceramica') {
+            setIsCeramica(true);
+        }
+    };
 
     const fetchCombos = async () => {
         try {
-            const res = await PreventiviService.getCombosMap();
+            const res = await ConfOrdineService.getCombosMap();
             if (res.data && res.data.payload) {
-                setCombos(prev => ({
-                    ...prev,
-                    ...res.data.payload
+                setCombos(res.data.payload);
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Errore', 'Impossibile caricare i dati di base', 'error');
+        }
+    };
+
+    const fetchData = async () => {
+        try {
+            const res = await ConfOrdineService.getById(id);
+            if (res.data && res.data.payload) {
+                const data = res.data.payload;
+                // Fix date format if needed
+                if (data.dataDocumento && data.dataDocumento.includes('/')) {
+                    const parts = data.dataDocumento.split('/');
+                    data.dataDocumento = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                setFormData(prev => ({ ...prev, ...data }));
+
+                // Map produits to local state with calculation fields and 'tipo'
+                const mappedProdotti = (data.prodotti || []).map(p => ({
+                    ...p,
+                    tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N')
                 }));
+                setProdotti(mappedProdotti);
+
+                // If client selected, load addresses
+                if (data.idCliente) {
+                    loadClientAddresses(data.idCliente);
+                }
             }
-
-            // Fetch configuration for Ceramica
-            const configRes = await ConfigurazioneService.getByDomain('GLOBAL');
-            const data = configRes.data?.payload || configRes.data || {};
-
-            console.log('--- CERAMICA DEBUG ---');
-            console.log('API Config Data:', data);
-
-            let ceramica = false;
-            if (Array.isArray(data)) {
-                ceramica = data.some(c => (c.chiave === 'TIPO_STORE' || c.chiave === 'TIPOSTORE') && c.valore === 'CERAMICA');
-            } else {
-                ceramica = data['TIPO_STORE'] === 'CERAMICA' || data['TIPOSTORE'] === 'CERAMICA';
-            }
-
-            console.log('Is Ceramica after API:', ceramica);
-
-            if (!ceramica) {
-                const authConfig = authService.getConfig();
-                console.log('Auth Service Config:', authConfig);
-                ceramica = authConfig['TIPOSTORE'] === 'CERAMICA' || authConfig['TIPO_STORE'] === 'CERAMICA';
-            }
-
-            console.log('Final Is Ceramica:', ceramica);
-            console.log('----------------------');
-
-            setIsCeramica(ceramica);
         } catch (error) {
-            console.error("Error fetching combos:", error);
+            console.error(error);
+            Swal.fire('Errore', 'Impossibile caricare la conferma d\'ordine', 'error');
+            navigate('/conf-ordine');
         }
     };
 
-    const fetchNextNum = async (date) => {
+    const fetchDataFromPreventivo = async (prevIdsStr) => {
+        setLoading(true);
         try {
-            const res = await PreventiviService.getNextNum(date);
-            setFormData(prev => ({ ...prev, numDocumento: res.data.payload }));
-        } catch (error) {
-            console.error("Error fetching next num:", error);
-        }
-    };
+            const ids = prevIdsStr.split(',');
+            let allProdotti = [];
+            let firstPrevData = null;
 
-    const loadPreventivo = async () => {
-        try {
-            setLoading(true);
-            const res = await PreventiviService.getById(id);
-            const data = res.data.payload;
+            for (const prevId of ids) {
+                const res = await PreventiviService.getById(prevId);
+                if (res.data && res.data.payload) {
+                    const prevData = res.data.payload;
+                    if (!firstPrevData) firstPrevData = prevData;
 
-            setFormData({
-                ...data,
-                dataDocumento: data.dataDocumento ? data.dataDocumento.split('/').reverse().join('-') : '',
-                denominazione: data.denominazioneCliente || '',
-                nomeAgente: data.agente || '',
-                nomeProgetto: data.progetto || '',
-            });
+                    // Add a reference note row
+                    const refNum = prevData.numDocumento || prevData.numeroDocumento || prevId || '';
+                    const refDate = prevData.dataDocumento || prevData.dataDoc || '';
+                    const refText = `Rif. preventivo num. ${refNum} del ${refDate}`;
 
-            // Map productos to local state with calculation fields
-            const mappedProdotti = (data.prodotti || []).map(p => ({
-                ...p,
-                tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
-                rowTotal: calculateRowTotal(p)
-            }));
-            setProdotti(mappedProdotti);
-            if (data.idCliente) {
-                fetchClientIndirizzi(data.idCliente, false); // false = don't overwrite existing
+                    allProdotti.push({
+                        id: 0,
+                        idDocumento: 0,
+                        tipo: 'N',
+                        nota: refText,
+                        fmDescrizione: refText,
+                        descrizione: refText,
+                        quantita: 0,
+                        prezzo: 0,
+                        sconto: 0,
+                        iva: 0
+                    });
+
+                    // Add products of this preventivo
+                    if (prevData.prodotti) {
+                        const mappedProdotti = prevData.prodotti.map(p => ({
+                            ...p,
+                            id: 0,
+                            idDocumento: 0,
+                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
+                            nota: p.nota || p.fmDescrizione // Ensure note is populated if present in source
+                        }));
+                        allProdotti = [...allProdotti, ...mappedProdotti];
+                    }
+                }
+            }
+
+            if (firstPrevData) {
+                setFormData(prev => ({
+                    ...prev,
+                    idCliente: firstPrevData.idCliente,
+                    nomeCliente: firstPrevData.denominazioneCliente,
+                    idAgente: firstPrevData.idAgente,
+                    idProgetto: firstPrevData.idProgetto,
+                    idListino: firstPrevData.idListino || '',
+                    idTipoPagamento: firstPrevData.idTipoPagamento,
+                    idNsBanca: firstPrevData.idNsBanca,
+                    descrizioneBanca: firstPrevData.descrizioneBanca,
+                    iban: firstPrevData.iban,
+                    cittaIntestazione: firstPrevData.cittaIntestazione,
+                    indirizzoIntestazione: firstPrevData.indirizzoIntestazione,
+                    capIntestazione: firstPrevData.capIntestazione,
+                    provinciaIntestazione: firstPrevData.provinciaIntestazione,
+                    codiceFiscale: firstPrevData.codiceFiscale,
+                    partitaIva: firstPrevData.partitaIva,
+                    cittaDestinazione: firstPrevData.cittaDestinazione,
+                    indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
+                    capDestinazione: firstPrevData.capDestinazione,
+                    provinciaDestinazione: firstPrevData.provinciaDestinazione,
+                    annotazioneEstesa: firstPrevData.annotazioneEstesa
+                }));
+
+                setProdotti(allProdotti);
+                fetchNextNum(formData.dataDocumento);
+
+                // If client selected, load addresses
+                if (firstPrevData.idCliente) {
+                    loadClientAddresses(firstPrevData.idCliente, false);
+                }
             }
         } catch (error) {
-            console.error("Error loading preventivo:", error);
-            Swal.fire('Errore', 'Impossibile caricare il preventivo', 'error');
+            console.error("Error loading preventivo data:", error);
+            Swal.fire('Errore', 'Impossibile caricare i dati del preventivo', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchClientIndirizzi = async (idCliente, autoFill = true) => {
+    const fetchNextNum = async (dateStr) => {
+        if (!dateStr) return;
+        try {
+            const formattedDate = dateStr.split('-').reverse().join('/');
+            const res = await ConfOrdineService.getNextNum(formattedDate);
+            if (res.data && res.data.payload) {
+                setFormData(prev => ({ ...prev, numDocumento: res.data.payload }));
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const loadClientAddresses = async (clientId, autoFill = true) => {
         try {
             // Parallel fetch: addresses + full client details
             const [resIndirizzi, resClient] = await Promise.all([
-                ClientiService.getIndirizzi(idCliente),
-                ClientiService.getById(idCliente)
+                ClientiService.getIndirizzi(clientId),
+                ClientiService.getById(clientId)
             ]);
 
-            const indirizzi = resIndirizzi.data || [];
+            const indirizzi = resIndirizzi.data?.payload || resIndirizzi.data || [];
             const clientFull = resClient.data?.payload || resClient.data || {};
 
             setClientIndirizzi(indirizzi);
@@ -354,7 +367,6 @@ const PreventiviDetail = () => {
                 };
 
                 // Prioritize Sede Legale -> Sede Operativa -> Main Client Address
-                // Only use mainAddress if it has at least an address line
                 const validMain = mainAddress.indirizzo ? mainAddress : null;
 
                 const header = sedeLegale || sedeOperativa || validMain;
@@ -367,46 +379,130 @@ const PreventiviDetail = () => {
                         cittaIntestazione: header.citta || '',
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
-                        nazioneIntestazione: header.nazione || '',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
                         cittaDestinazione: shipping.citta || '',
                         capDestinazione: shipping.cap || '',
                         provinciaDestinazione: shipping.provincia || '',
-                        nazioneDestinazione: shipping.nazione || '',
                     } : {}),
-                    // Ensure core fields are populated if missing from suggestion
+                    // Ensure core fields are populated
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
-                    // Update payment method if not already set or if we want to enforce client's default
                     idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento
                 }));
             }
         } catch (error) {
-            console.error("Error fetching client addresses:", error);
+            console.error("Error loading client addresses:", error);
         }
     };
 
-    const handleSelectIndirizzo = (ind) => {
-        if (addressTarget === 'intestazione') {
+    const handleHeaderChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'dataDocumento' && isNew) {
+            fetchNextNum(value);
+        }
+    };
+
+    // --- Product Table Handlers ---
+
+    const handleAddArticolo = () => {
+        setProdotti([...prodotti, { tipo: 'A', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null }]);
+        setActiveTab('articoli');
+    };
+
+    const handleAddFM = () => {
+        setProdotti([...prodotti, { tipo: 'F', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null, fmDescrizione: '' }]);
+        setActiveTab('articoli');
+    };
+
+    const handleAddNota = () => {
+        setProdotti([...prodotti, { tipo: 'N', nota: '' }]);
+        setActiveTab('articoli');
+    };
+
+    const handleDeleteRow = (idx) => {
+        const newP = [...prodotti];
+        newP.splice(idx, 1);
+        setProdotti(newP);
+    };
+
+    const handleRowChange = (idx, field, value) => {
+        const newP = [...prodotti];
+        newP[idx][field] = value;
+        setProdotti(newP);
+    };
+
+    const handleRowUpdate = (idx, updates) => {
+        const newP = [...prodotti];
+        newP[idx] = { ...newP[idx], ...updates };
+        setProdotti(newP);
+    };
+
+    // getRowValues from utils
+    const calculateRowTotal = (row) => {
+        return getRowValues(row, combos.aliquoteIva).total;
+    };
+
+    const calculateTotalDocument = () => {
+        return prodotti.reduce((acc, row) => acc + calculateRowTotal(row), 0);
+    };
+
+    const calculateTotalImponibile = () => {
+        return prodotti.reduce((acc, row) => acc + getRowValues(row, combos.aliquoteIva).imponibile, 0);
+    };
+
+    // --- Async Select Loaders ---
+
+    const loadClienti = (inputValue, callback) => {
+        if (!inputValue || inputValue.length < 3) return callback([]);
+        ClientiService.getSuggestion(inputValue).then(res => {
+            // Updated to match ClientiService.getSuggestion response structure (direct list in res.data)
+            const list = Array.isArray(res.data) ? res.data : (res.data && res.data.payload) || [];
+
+            if (list.length > 0) {
+                callback(list.map(c => ({
+                    value: c.id,
+                    label: c.denominazione || c.denominazioneData,
+                    data: c
+                })));
+            } else callback([]);
+        }).catch(err => {
+            console.error("Error loading clienti:", err);
+            callback([]);
+        });
+    };
+
+    // loadArticoli and formatArticleOptionLabel removed as handled by DocumentRows
+
+    const handleSelectCliente = (opt) => {
+        if (opt) {
+            const c = opt.data;
             setFormData(prev => ({
                 ...prev,
-                indirizzoIntestazione: ind.indirizzo || '',
-                cittaIntestazione: ind.citta || '',
-                capIntestazione: ind.cap || '',
-                provinciaIntestazione: ind.provincia || '',
-                nazioneIntestazione: ind.nazione || '',
+                idCliente: c.id,
+                nomeCliente: c.denominazione,
+                idListino: c.idListino || '',
+                idTipoPagamento: c.idTipoPagamento,
+                idAgente: c.idAgente,
+                nomeAgente: c.agnRagioneSociale, // Check property name from search
+                cittaIntestazione: c.citta,
+                indirizzoIntestazione: c.indirizzo,
+                capIntestazione: c.cap,
+                provinciaIntestazione: c.provincia,
+                partitaIva: c.partitaIva || '',
+                codiceFiscale: c.codiceFiscale || '',
+                cittaDestinazione: c.citta,
+                indirizzoDestinazione: c.indirizzo,
+                capDestinazione: c.cap,
+                provinciaDestinazione: c.provincia
             }));
+            loadClientAddresses(c.id);
         } else {
-            setFormData(prev => ({
-                ...prev,
-                indirizzoDestinazione: ind.indirizzo || '',
-                cittaDestinazione: ind.citta || '',
-                capDestinazione: ind.cap || '',
-                provinciaDestinazione: ind.provincia || '',
-                nazioneDestinazione: ind.nazione || '',
-            }));
+            setFormData(prev => ({ ...prev, idCliente: null, nomeCliente: '', idListino: '', idTipoPagamento: null, idAgente: null }));
+            setClientIndirizzi([]);
         }
     };
 
@@ -419,262 +515,187 @@ const PreventiviDetail = () => {
         setShowAddressModal(true);
     };
 
-    // Calculation Logic
-    // getRowValues imported from utils
-    const calculateRowTotal = useCallback((row) => {
-        return getRowValues(row, combos.aliquoteIva).total;
-    }, [combos.aliquoteIva]);
-
-    useEffect(() => {
-        let imp = 0;
-        let tot = 0;
-        prodotti.forEach(p => {
-            const vals = getRowValues(p, combos.aliquoteIva);
-            imp += vals.imponibile;
-            tot += vals.total;
-        });
-        setTotals({
-            imponibile: imp,
-            iva: tot - imp,
-            totale: tot
-        });
-    }, [prodotti, combos.aliquoteIva]);
-
-    const handleHeaderChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const addRow = (type) => {
-        const defaultAliquota = combos.aliquoteIva.find(a => a.predefinita === 1) || (combos.aliquoteIva.length > 0 ? combos.aliquoteIva[0] : null);
-        const defaultUM = combos.unitaMisura.length > 0 ? combos.unitaMisura[0] : null;
-
-        let newRow = { tipo: type };
-        if (type === 'N') {
-            newRow.nota = '';
+    const handleSelectIndirizzo = (addr) => {
+        if (addressTarget === 'intestazione') {
+            setFormData(prev => ({
+                ...prev,
+                indirizzoIntestazione: addr.indirizzo,
+                cittaIntestazione: addr.citta,
+                capIntestazione: addr.cap,
+                provinciaIntestazione: addr.provincia
+            }));
         } else {
-            newRow = {
-                ...newRow,
-                idProdotto: null,
-                codiceProdotto: '',
-                descProdotto: '',
-                quantita: 1,
-                idUnitaMisura: defaultUM?.id || null,
-                prezzo: 0,
-                sconto: '',
-                idAliquotaIva: defaultAliquota?.id || null,
-                nota: ''
-            };
-            if (type === 'F') {
-                newRow.fmDescrizione = '';
-            }
+            setFormData(prev => ({
+                ...prev,
+                indirizzoDestinazione: addr.indirizzo,
+                cittaDestinazione: addr.citta,
+                capDestinazione: addr.cap,
+                provinciaDestinazione: addr.provincia
+            }));
         }
-        setProdotti(prev => [...prev, newRow]);
+        setShowAddressModal(false);
     };
 
-    const handleAddArticolo = () => addRow('A');
-    const handleAddFM = () => addRow('F');
-    const handleAddNota = () => addRow('N');
-
-    const handleDeleteRow = (index) => {
-        setProdotti(prev => prev.filter((_, i) => i !== index));
+    const validate = () => {
+        if (!formData.numDocumento) { Swal.fire('Errore', 'Inserire il numero documento', 'error'); return false; }
+        if (!formData.dataDocumento) { Swal.fire('Errore', 'Inserire la data documento', 'error'); return false; }
+        if (!formData.idCliente) { Swal.fire('Errore', 'Selezionare un cliente', 'error'); return false; }
+        return true;
     };
 
-    const handleRowChange = (index, field, value) => {
-        setProdotti(prev => {
-            const newProdotti = [...prev];
-            newProdotti[index] = { ...newProdotti[index], [field]: value };
-            return newProdotti;
-        });
-    };
+    const saveConfOrdine = async () => {
+        if (!validate()) return null;
 
-    const handleRowUpdate = (index, updates) => {
-        setProdotti(prev => {
-            const newProdotti = [...prev];
-            newProdotti[index] = { ...newProdotti[index], ...updates };
-            return newProdotti;
-        });
-    };
+        // Prepare payload
+        // Format date to DD/MM/YYYY for backend
+        const parts = formData.dataDocumento.split('-');
+        const dtFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-    // Async Select Loaders
-    const loadClienti = async (inputValue) => {
-        if (!inputValue) return [];
-        const res = await ClientiService.getSuggestion(inputValue);
-        return res.data.map(c => ({ value: c.id, label: c.denominazione, data: c }));
-    };
-
-    const loadAgenti = async (inputValue) => {
-        const res = await AgentiService.getSuggestion(inputValue || '');
-        return res.data.map(a => ({ value: a.id, label: a.descrizione }));
-    };
-
-    const loadProgetti = async (inputValue) => {
-        const res = await ProgettiService.getSuggestion(inputValue || '');
-        return res.data.map(p => ({ value: p.id, label: p.descrizione }));
-    };
-
-    const savePreventivo = async () => {
-        if (!formData.numDocumento || !formData.dataDocumento || !formData.idCliente) {
-            Swal.fire('Attenzione', 'Numero, Data e Cliente sono obbligatori', 'warning');
-            return null;
-        }
+        const payload = {
+            ...formData,
+            dataDocumento: dtFormatted,
+            prodotti: prodotti,
+            idDocAssociato: fromPreventiviId ? parseInt(fromPreventiviId.split(',')[0]) : null,
+            tipoDocAssociato: fromPreventiviId ? 'PREVENTIVO' : null
+        };
 
         try {
-            const payload = {
-                ...formData,
-                dataDocumento: formData.dataDocumento.split('-').reverse().join('/'),
-                prodotti: prodotti.map(p => {
-                    const cleaned = { ...p };
-                    if (p.tipo === 'A') {
-                        delete cleaned.fmDescrizione;
-                    } else if (p.tipo === 'F') {
-                        delete cleaned.idProdotto;
-                        cleaned.fuoriMagazzino = true;
-                    } else if (p.tipo === 'N') {
-                        cleaned.idProdotto = null;
-                        cleaned.fmDescrizione = null;
-                        cleaned.prezzo = 0;
-                        cleaned.quantita = 0;
-                    }
-                    return cleaned;
-                })
-            };
-
-            if (isNew) {
-                const response = await PreventiviService.insert(payload);
-                // Il backend restituisce il nuovo ID nel payload o direttamente
-                return response.data?.payload || response.data?.id || response.data;
-            } else {
-                await PreventiviService.update(id, payload);
-                return id;
-            }
+            setLoading(true);
+            const response = await ConfOrdineService.save(payload);
+            // If it's a new record, the ID is in response.data.payload
+            const savedId = response.data.payload || id;
+            return savedId;
         } catch (error) {
-            console.error("Error saving:", error);
+            console.error(error);
             Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
             return null;
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleSave = async (e) => {
-        e.preventDefault();
-        const savedId = await savePreventivo();
+        if (e) e.preventDefault();
+        const savedId = await saveConfOrdine();
         if (savedId) {
-            Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
+            Swal.fire({
+                title: 'Salvato!',
+                text: 'Conferma d\'ordine salvata con successo',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                navigate('/conf-ordine');
+            });
         }
     };
 
     const handlePrint = async () => {
-        const savedId = await savePreventivo();
-        if (!savedId) return; // Save failed or validation error
+        const savedId = await saveConfOrdine();
+        if (!savedId) return;
 
         try {
-            // Use the savedId because for new items 'id' variable might be 'new' or undefined
-            const response = await PreventiviService.print(savedId);
+            setLoading(true);
+            const response = await ConfOrdineService.print(savedId);
             const blob = new Blob([response.data], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
 
             printJS({
                 printable: url,
                 type: 'pdf',
-                documentTitle: `Preventivo_${savedId}`
+                documentTitle: `Conferma_Ordine_${savedId}`
             });
 
             // Cleanup URL after a delay
             setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-            setShowActionsMenu(false);
 
-            // If it was new, we should probably navigate to the detail of the new ID or reload
             if (isNew) {
-                navigate(`/preventivi/detail/${savedId}`);
+                navigate(`/conf-ordine/detail/${savedId}`, { replace: true });
             }
         } catch (error) {
-            console.error("Error printing:", error);
-            Swal.fire('Errore', 'Errore durante la stampa', 'error');
+            console.error(error);
+            Swal.fire('Errore', 'Errore durante la generazione della stampa', 'error');
+        } finally {
+            setLoading(false);
+            setShowActionsMenu(false);
         }
     };
 
-    const handleExportPdf = async () => {
-        const savedId = await savePreventivo();
-        if (!savedId) return;
-
-        try {
-            const response = await PreventiviService.print(savedId);
-            const blob = new Blob([response.data], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `Preventivo_${savedId}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-            setShowActionsMenu(false);
-
-            if (isNew) {
-                navigate(`/preventivi/detail/${savedId}`);
-            }
-        } catch (error) {
-            console.error("Error exporting PDF:", error);
-            Swal.fire('Errore', 'Errore durante l\'esportazione PDF', 'error');
-        }
-    };
-
-
+    const handleExportPdf = handlePrint;
 
     const formatCurrency = (val) => {
-        return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val || 0);
+        return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val);
     };
 
-    if (loading) return <div className="loading-container">Caricamento in corso...</div>;
+    const tableSelectStyles = {
+        control: (base) => ({
+            ...base,
+            minHeight: '34px',
+            height: '34px',
+            fontSize: '13px',
+            borderColor: '#dee2e6',
+            boxShadow: 'none',
+            '&:hover': { borderColor: '#ced4da' }
+        }),
+        valueContainer: (base) => ({
+            ...base,
+            height: '34px',
+            padding: '0 8px'
+        }),
+        input: (base) => ({
+            ...base,
+            margin: '0px'
+        }),
+        indicatorsContainer: (base) => ({
+            ...base,
+            height: '34px'
+        }),
+        menu: (base) => ({
+            ...base,
+            fontSize: '13px',
+            zIndex: 9999
+        })
+    };
 
     return (
-        <div className="preventivi-detail-container entity-form-shared">
-            <div id="preventivi-content-header">
+        <div className="conf-ordine-detail-container entity-form-shared">
+            <div id="confordine-content-header">
                 <div>
-                    <ol className="breadcrumb">
-                        <li><Link to="/"><FaHome /> HOME</Link></li>
-                        <li><Link to="/preventivi">Elenco preventivi</Link></li>
-                        <li className="active"><span>{isNew ? 'Nuovo preventivo' : 'Modifica'}</span></li>
-                    </ol>
-                    <h1>{isNew ? 'Nuovo preventivo' : `Preventivo ${formData.numDocumento || ''}${formData.particella && formData.particella !== 'null' ? `/${formData.particella}` : ''}`}</h1>
+                    <h1>{isNew ? 'Nuova' : 'Modifica'} Conferma d'Ordine</h1>
+                    <div className="breadcrumb">
+                        <span onClick={() => navigate('/conf-ordine')}>Elenco Conferme</span> / <span>{isNew ? 'Nuova' : formData.numDocumento}</span>
+                    </div>
                 </div>
-
                 <div className="header-totals">
                     <div className="total-box">
-                        <span className="label">Imponibile:</span>
-                        <span className="value">{formatCurrency(totals.imponibile)}</span>
-                    </div>
-                    <div className="total-box">
-                        <span className="label">IVA:</span>
-                        <span className="value">{formatCurrency(totals.iva)}</span>
+                        <span className="label">Imponibile</span>
+                        <span className="value">{formatCurrency(calculateTotalImponibile())}</span>
                     </div>
                     <div className="total-box highlight">
-                        <span className="label">TOTALE:</span>
-                        <span className="value">{formatCurrency(totals.totale)}</span>
+                        <span className="label">Totale Doc.</span>
+                        <span className="value">{formatCurrency(calculateTotalDocument())}</span>
                     </div>
                 </div>
             </div>
 
-            <div className="main-box detail-box">
-                <header className="main-box-header">
-                    <ul className="nav nav-tabs nav-tabs-custom">
-                        <li className={activeTab === 'generale' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('generale'); }}>Generale</a>
-                        </li>
-                        <li className={activeTab === 'articoli' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('articoli'); }}>Articoli ({prodotti.length})</a>
-                        </li>
-                        <li className={activeTab === 'pagamento' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('pagamento'); }}>Pagamento</a>
-                        </li>
-                        <li className={activeTab === 'note' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('note'); }}>Annotazioni</a>
-                        </li>
-                    </ul>
-                </header>
+            <div className="detail-box main-box">
+                <ul className="nav nav-tabs nav-tabs-custom">
+                    <li className={activeTab === 'generale' ? 'active' : ''}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('generale'); }}>Generale</a>
+                    </li>
+                    <li className={activeTab === 'articoli' ? 'active' : ''}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('articoli'); }}>Articoli ({prodotti.length})</a>
+                    </li>
+                    <li className={activeTab === 'pagamento' ? 'active' : ''}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('pagamento'); }}>Pagamento</a>
+                    </li>
+                    <li className={activeTab === 'note' ? 'active' : ''}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('note'); }}>Annotazioni</a>
+                    </li>
+                </ul>
 
                 <div className="main-box-body">
-                    <div className="tab-content">
+                    <form className="tab-content" onSubmit={handleSave}>
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="compact-row">
@@ -689,7 +710,7 @@ const PreventiviDetail = () => {
                                                 value={formData.numDocumento}
                                                 onChange={handleHeaderChange}
                                             />
-                                            <span className="input-group-addon">/</span>
+                                            <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
                                             <div style={{ flex: '0 0 100px' }}>
                                                 <CreatableSelect
                                                     isClearable
@@ -722,10 +743,8 @@ const PreventiviDetail = () => {
                                                 className="form-control premium-input"
                                                 name="dataDocumento"
                                                 value={formData.dataDocumento}
-                                                onChange={(e) => {
-                                                    handleHeaderChange(e);
-                                                    if (isNew) fetchNextNum(e.target.value);
-                                                }}
+                                                onChange={handleHeaderChange}
+                                                required
                                             />
                                         </div>
                                     </div>
@@ -733,27 +752,10 @@ const PreventiviDetail = () => {
                                 <div className="compact-col compact-col-xl">
                                     <EntitySelectGroup
                                         label="Cliente"
+                                        isAsync={true}
                                         loadOptions={loadClienti}
-                                        value={formData.idCliente ? { value: formData.idCliente, label: formData.denominazione } : null}
-                                        onChange={(opt) => {
-                                            const c = opt?.data || {};
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                idCliente: opt?.value || null,
-                                                denominazione: opt?.label || '',
-                                                indirizzoIntestazione: c.indirizzo || '',
-                                                cittaIntestazione: c.citta || '',
-                                                capIntestazione: c.cap || '',
-                                                provinciaIntestazione: c.provincia || '',
-                                                nazioneIntestazione: c.nazione || '',
-                                                partitaIva: c.partitaIva || '',
-                                                codiceFiscale: c.codiceFiscale || '',
-                                                idAgente: c.idAgente || prev.idAgente
-                                            }));
-                                            if (opt?.value) {
-                                                fetchClientIndirizzi(opt.value);
-                                            }
-                                        }}
+                                        value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente } : null}
+                                        onChange={handleSelectCliente}
                                         ModalComponent={ClientiManagementModal}
                                         title="Gestione Clienti"
                                         placeholder="Cerca cliente..."
@@ -795,21 +797,21 @@ const PreventiviDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indirizzo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Città</label>
-                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Prov.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione} onChange={handleHeaderChange} maxLength="2" />
+                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">CAP</label>
-                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -843,21 +845,21 @@ const PreventiviDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indirizzo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Città</label>
-                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Prov.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione} onChange={handleHeaderChange} maxLength="2" />
+                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">CAP</label>
-                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -892,7 +894,7 @@ const PreventiviDetail = () => {
 
                         {/* Tab Pagamento */}
                         <div className={`tab-pane ${activeTab === 'pagamento' ? 'active' : ''}`}>
-                            <div className="row">
+                            <div className="row mb-4">
                                 <div className="col-md-4">
                                     <EntitySelectGroup
                                         label="Tipo Pagamento"
@@ -901,7 +903,7 @@ const PreventiviDetail = () => {
                                         value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: combos.tipiPagamento.find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
                                         ModalComponent={TipiPagamentoManagementModal}
-                                        modalProps={{ isOpen: false }} // TipiPagamentoModal uses Swal internally but we pass isOpen for consistency
+                                        modalProps={{ isOpen: false }}
                                         title="Gestione Tipi Pagamento"
                                         placeholder="Seleziona..."
                                         onModalClose={fetchCombos}
@@ -936,6 +938,28 @@ const PreventiviDetail = () => {
                                 </div>
                             </div>
 
+                            <hr />
+                            <h5>Trasporto</h5>
+                            <div className="row">
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label>Colli</label>
+                                        <input type="number" className="form-control" name="colli" value={formData.colli || ''} onChange={handleHeaderChange} />
+                                    </div>
+                                </div>
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label>Peso Netto (kg)</label>
+                                        <input type="number" step="0.01" className="form-control" name="pesoNetto" value={formData.pesoNetto || ''} onChange={handleHeaderChange} />
+                                    </div>
+                                </div>
+                                <div className="col-md-3">
+                                    <div className="form-group">
+                                        <label>Peso Lordo (kg)</label>
+                                        <input type="number" step="0.01" className="form-control" name="pesoLordo" value={formData.pesoLordo || ''} onChange={handleHeaderChange} />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Tab Articoli */}
@@ -974,11 +998,11 @@ const PreventiviDetail = () => {
                                 <textarea className="form-control" rows="15" name="annotazioneEstesa" value={formData.annotazioneEstesa || ''} onChange={handleHeaderChange} placeholder="Inserisci qui eventuali termini, condizioni o descrizioni dettagliate..."></textarea>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 <footer className="main-box-footer detail-footer">
-                    <button className="btn btn-premium-cancel" onClick={() => navigate('/preventivi')}>
+                    <button className="btn btn-premium-cancel" onClick={() => navigate('/conf-ordine')}>
                         <FaArrowLeft /> Annulla
                     </button>
                     <div className="footer-right">
@@ -995,17 +1019,17 @@ const PreventiviDetail = () => {
                                         <FaSave /> Salva solo
                                     </button>
                                     <button type="button" className="split-btn-item" onClick={handlePrint}>
-                                        <FaPrint /> Stampa Diretto
+                                        <FaPrint /> Stampa Documento
                                     </button>
                                     <button type="button" className="split-btn-item" onClick={handleExportPdf}>
                                         <FaFilePdf /> Esporta PDF
                                     </button>
                                     <div className="action-dropdown-divider"></div>
                                     <button type="button" className="split-btn-item" onClick={async () => {
-                                        const savedId = await savePreventivo();
-                                        if (savedId) navigate(`/conf-ordine/new?fromPreventivi=${savedId}`);
+                                        const savedId = await saveConfOrdine();
+                                        if (savedId) navigate(`/ddt/new?fromConferme=${savedId}`);
                                     }}>
-                                        <FaArrowRight /> Genera conferma ordine
+                                        <FaArrowRight /> Genera DDT
                                     </button>
                                 </div>
                             )}
@@ -1054,4 +1078,4 @@ const PreventiviDetail = () => {
     );
 };
 
-export default PreventiviDetail;
+export default ConfOrdineDetail;
