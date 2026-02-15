@@ -1,33 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import TipiPortoService from '../../services/TipiPortoService';
+import CausaliTrasportoService from '../../services/CausaliTrasportoService';
 import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
 
-const TipiPortoManagementModal = ({ onClose }) => {
+const CausaliTrasportoManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [currentPage, pageSize, searchTerm]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const res = await TipiPortoService.getAll();
-            if (res.data && res.data.list && Array.isArray(res.data.list)) {
-                setList(res.data.list);
-            } else if (res.data && Array.isArray(res.data)) {
-                setList(res.data);
-            } else {
-                setList([]);
+            const params = {
+                search: searchTerm,
+                start: (currentPage - 1) * pageSize,
+                length: pageSize,
+                'order[0][column]': 1, // Sort by Descrizione
+                'order[0][dir]': 'asc'
+            };
+            const res = await CausaliTrasportoService.getList(params);
+            if (res.data) {
+                setList(res.data.list || []);
+                setTotalItems(res.data.totalCount || 0);
             }
         } catch (error) {
-            console.error("Error loading tipi porto:", error);
-            Swal.fire('Errore', 'Impossibile caricare i tipi porto', 'error');
+            console.error("Error loading causali trasporto:", error);
+            Swal.fire('Errore', 'Impossibile caricare le causali trasporto', 'error');
         } finally {
             setLoading(false);
         }
@@ -36,7 +41,7 @@ const TipiPortoManagementModal = ({ onClose }) => {
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "Il tipo porto verrà eliminato.",
+            text: "La causale verrà eliminata.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sì, elimina',
@@ -45,9 +50,9 @@ const TipiPortoManagementModal = ({ onClose }) => {
 
         if (result.isConfirmed) {
             try {
-                await TipiPortoService.delete(id);
+                await CausaliTrasportoService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Tipo porto eliminato.', 'success');
+                Swal.fire('Eliminata!', 'Causale eliminata.', 'success');
             } catch (error) {
                 Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
             }
@@ -55,22 +60,26 @@ const TipiPortoManagementModal = ({ onClose }) => {
     };
 
     const handleEdit = (item) => {
-        openDetailModal(item.id, item.descrizione);
+        openDetailModal(item);
     };
 
     const handleAdd = () => {
-        openDetailModal(null, '');
+        openDetailModal({ id: null, descrizione: '', predefinita: 0 });
     };
 
-    const openDetailModal = (id, existingDesc) => {
-        const isNew = !id;
+    const openDetailModal = (item) => {
+        const isNew = !item.id;
         Swal.fire({
-            title: isNew ? 'Nuovo Tipo Porto' : 'Modifica Tipo Porto',
+            title: isNew ? 'Nuova Causale Trasporto' : 'Modifica Causale Trasporto',
             html: `
                 <div style="text-align: left;">
                     <div class="form-group">
-                        <label>Descrizione Porto</label>
-                        <input id="swal-descrizione" class="form-control" value="${existingDesc || ''}" placeholder="Es. Porto Franco, Porto Assegnato...">
+                        <label>Descrizione</label>
+                        <input id="swal-descrizione" class="form-control" value="${item.descrizione || ''}" placeholder="Inserisci descrizione">
+                    </div>
+                    <div class="form-group" style="margin-top: 15px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="swal-predefinita" ${item.predefinita ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer;">
+                        <label for="swal-predefinita" style="margin: 0; cursor: pointer;">Imposta come predefinita</label>
                     </div>
                 </div>
             `,
@@ -78,39 +87,40 @@ const TipiPortoManagementModal = ({ onClose }) => {
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
             preConfirm: async () => {
-                const value = document.getElementById('swal-descrizione').value;
-                if (!value) {
+                const descrizione = document.getElementById('swal-descrizione').value;
+                const predefinita = document.getElementById('swal-predefinita').checked ? 1 : 0;
+
+                if (!descrizione) {
                     Swal.showValidationMessage('La descrizione è obbligatoria');
                     return false;
                 }
+
                 try {
-                    if (id) {
-                        await TipiPortoService.update(id, { description: value, descrizione: value });
+                    if (isNew) {
+                        await CausaliTrasportoService.create(descrizione, predefinita);
                     } else {
-                        await TipiPortoService.insert({ description: value, descrizione: value });
+                        await CausaliTrasportoService.update(item.id, descrizione, predefinita);
                     }
                     return true;
                 } catch (error) {
-                    Swal.showValidationMessage('Errore durante il salvataggio');
+                    let errorMsg = 'Errore durante il salvataggio';
+                    if (error.response && error.response.data && error.response.data.errorText) {
+                        errorMsg = error.response.data.errorText;
+                    }
+                    Swal.showValidationMessage(errorMsg);
                     return false;
                 }
             }
         }).then((result) => {
             if (result.isConfirmed) {
                 loadData();
-                Swal.fire('Salvato!', 'Operazione completata con successo.', 'success');
+                Swal.fire('Salvata!', 'Operazione completata con successo.', 'success');
             }
         });
     };
 
-    const filteredList = list.filter(item =>
-        item.descrizione && item.descrizione.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const totalItems = filteredList.length;
     const totalPages = Math.ceil(totalItems / pageSize);
     const startIdx = (currentPage - 1) * pageSize;
-    const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
@@ -120,7 +130,7 @@ const TipiPortoManagementModal = ({ onClose }) => {
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title">Gestione Tipi Porto</h4>
+                        <h4 className="modal-title">Gestione Causali Trasporto</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
                         <div className="modal-toolbar">
@@ -153,7 +163,7 @@ const TipiPortoManagementModal = ({ onClose }) => {
                                     <i className="fa fa-search"></i>
                                 </div>
                                 <button className="btn btn-primary" onClick={handleAdd}>
-                                    <FaPlus /> Nuovo
+                                    <FaPlus /> Nuova
                                 </button>
                             </div>
                         </div>
@@ -163,14 +173,18 @@ const TipiPortoManagementModal = ({ onClose }) => {
                                 <thead>
                                     <tr style={{ background: '#f8f9fa' }}>
                                         <th style={{ border: 'none', borderRadius: '10px 0 0 10px', padding: '12px 15px' }}>DESCRIZIONE</th>
+                                        <th style={{ border: 'none', padding: '12px 15px', textAlign: 'center' }}>PREDEFINITA</th>
                                         <th style={{ border: 'none', borderRadius: '0 10px 10px 0', padding: '12px 15px', width: '120px', textAlign: 'center' }}>AZIONI</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {currentItems.length > 0 ? (
-                                        currentItems.map(item => (
+                                    {list.length > 0 ? (
+                                        list.map(item => (
                                             <tr key={item.id} style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderRadius: '10px' }}>
                                                 <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px' }}>{item.descrizione}</td>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff', textAlign: 'center' }}>
+                                                    {item.predefinita === 1 ? <i className="fa fa-check-circle text-success" /> : ''}
+                                                </td>
                                                 <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
                                                     <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                                                         <button
@@ -195,7 +209,7 @@ const TipiPortoManagementModal = ({ onClose }) => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="2" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun elemento trovato</td>
+                                            <td colSpan="3" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun elemento trovato</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -236,4 +250,4 @@ const TipiPortoManagementModal = ({ onClose }) => {
     );
 };
 
-export default TipiPortoManagementModal;
+export default CausaliTrasportoManagementModal;

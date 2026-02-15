@@ -6,7 +6,7 @@ import FattureService from '../../services/FattureService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import NoteCreditoService from '../../services/NoteCreditoService';
@@ -23,8 +23,7 @@ const FattureList = () => {
     const [activeActionMenu, setActiveActionMenu] = useState(null);
 
     const [filters, setFilters] = useState(() => {
-        const saved = storageHelper.get('fatture_filters');
-        return saved || {
+        return storageHelper.loadState('fatture_filters', {
             numDocumento: '',
             dataDa: '',
             dataA: '',
@@ -32,8 +31,10 @@ const FattureList = () => {
             nomeCliente: '',
             idAgente: null,
             nomeAgente: '',
-            idStato: ''
-        };
+            idStato: '',
+            orderBy: 'data_fattura',
+            orderDir: 'DESC'
+        });
     });
 
     const [agenti, setAgenti] = useState([]);
@@ -59,16 +60,80 @@ const FattureList = () => {
     const handleSearch = async (e) => {
         if (e) e.preventDefault();
         setLoading(true);
-        storageHelper.set('fatture_filters', filters);
+        storageHelper.saveState('fatture_filters', filters);
         try {
-            const res = await FattureService.search(filters);
+            const params = {
+                dataInizio: filters.dataDa,
+                dataFine: filters.dataA,
+                idCliente: filters.idCliente,
+                idAgente: filters.idAgente,
+                stato: filters.idStato,
+                numDocumento: filters.numDocumento,
+                orderColumn: filters.orderBy || 'data_fattura',
+                orderDir: filters.orderDir || 'DESC',
+                start: 0,
+                length: 100
+            };
+            const res = await FattureService.getList(params);
             setFatture(res.data?.payload || []);
         } catch (error) {
             console.error(error);
-            // Swal.fire('Errore', 'Errore durante la ricerca', 'error');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSort = (column) => {
+        setFilters(prev => {
+            const newDir = prev.orderBy === column && prev.orderDir === 'ASC' ? 'DESC' : 'ASC';
+            const newFilters = { ...prev, orderBy: column, orderDir: newDir };
+            // Trigger search with new filters immediately is tricky because setFilters is async and handleSearch uses state.
+            // Better to just update state and let user click search, OR use a useEffect that triggers on sort change?
+            // Actually, standard pattern here is just update state and call search directly with new params.
+            // But handleSearch uses 'filters' state. So we must pass params to handleSearch or use a dedicated effect.
+            // For simplicity, let's update state and manually trigger search logic or use an effect.
+            // Given existing structure, let's update state and then call a modified search function or useEffect.
+            // Actually, let's just update state and modify handleSearch to accept overrides or use a separate effect for sort?
+            // A common pattern:
+            // update state -> useEffect([filters.orderBy, filters.orderDir]) -> handleSearch()
+            // But handleSearch is called on mount.
+            return newFilters;
+        });
+
+        // We need to trigger the search with the new values.
+        // Since setFilters is async, we can't rely on 'filters' immediately.
+        // But we computed newDir and column.
+
+        setLoading(true);
+        const newDir = filters.orderBy === column && filters.orderDir === 'ASC' ? 'DESC' : 'ASC';
+        const params = {
+            dataInizio: filters.dataDa,
+            dataFine: filters.dataA,
+            idCliente: filters.idCliente,
+            idAgente: filters.idAgente,
+            stato: filters.idStato,
+            numDocumento: filters.numDocumento,
+            orderColumn: column,
+            orderDir: newDir,
+            start: 0,
+            length: 100
+        };
+        // Also update storage
+        storageHelper.saveState('fatture_filters', { ...filters, orderBy: column, orderDir: newDir });
+
+        FattureService.getList(params).then(res => {
+            setFatture(res.data?.payload || []);
+            setLoading(false);
+        }).catch(err => {
+            console.error(err);
+            setLoading(false);
+        });
+    };
+
+    // Sort Icon Helper
+    const getSortIcon = (column) => {
+        if (filters.orderBy !== column) return <FaSort style={{ color: '#ccc' }} />;
+        return filters.orderDir === 'ASC' ? <FaSortUp /> : <FaSortDown />;
     };
 
     const handleReset = () => {
@@ -80,10 +145,12 @@ const FattureList = () => {
             nomeCliente: '',
             idAgente: null,
             nomeAgente: '',
-            idStato: ''
+            idStato: '',
+            orderBy: 'data_fattura',
+            orderDir: 'DESC'
         };
         setFilters(reset);
-        storageHelper.remove('fatture_filters');
+        storageHelper.clearState('fatture_filters');
     };
 
     const loadClienti = (inputValue, callback) => {
@@ -202,6 +269,10 @@ const FattureList = () => {
 
     const totalAmount = fatture.reduce((sum, item) => sum + (item.totale || 0), 0);
 
+    // Sort columns
+    // Data -> data_fattura
+    // Numero -> num_fattura
+    // Cliente -> d_e_clienti.denominazione
 
     return (
         <div className="fatture-list-container">
@@ -224,9 +295,37 @@ const FattureList = () => {
 
                 </div>
                 <div className="toolbar-right">
-                    <button className="btn-new-vibrant" onClick={() => navigate('/fatture/new')}>
-                        <FaPlus size={14} /> Nuova Fattura
-                    </button>
+                    <div className="action-menu-container" style={{ position: 'relative' }}>
+                        <button className="btn-new-vibrant" onClick={() => navigate('/fatture/new')}>
+                            <FaPlus size={14} /> Nuova Fattura
+                        </button>
+                        <button
+                            className="btn-new-vibrant"
+                            style={{ marginLeft: '1px', paddingLeft: '8px', paddingRight: '8px' }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveActionMenu(activeActionMenu === 'new-menu' ? null : 'new-menu');
+                            }}
+                        >
+                            <FaCaretDown />
+                        </button>
+                        {activeActionMenu === 'new-menu' && (
+                            <div className="action-dropdown-menu" style={{ right: 0, top: '40px', minWidth: '220px' }}>
+                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=FATTURA&elet=1')}>
+                                    <FaPlus /> Nuova Fattura Elettronica
+                                </button>
+                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_ACCOMPAGNATORIA&elet=1')}>
+                                    <FaPlus /> Nuova Accompagnatoria El.
+                                </button>
+                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_PROFORMA')}>
+                                    <FaPlus /> Nuova Pro Forma
+                                </button>
+                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=NOTA_DEBITO')}>
+                                    <FaPlus /> Nuova Nota di Debito
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -327,9 +426,15 @@ const FattureList = () => {
                                             checked={selectedIds.length === fatture.length && fatture.length > 0}
                                         />
                                     </th>
-                                    <th>Data</th>
-                                    <th>Numero</th>
-                                    <th>Cliente</th>
+                                    <th onClick={() => handleSort('data_fattura')} style={{ cursor: 'pointer' }}>
+                                        Data {getSortIcon('data_fattura')}
+                                    </th>
+                                    <th onClick={() => handleSort('num_fattura')} style={{ cursor: 'pointer' }}>
+                                        Numero {getSortIcon('num_fattura')}
+                                    </th>
+                                    <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>
+                                        Cliente {getSortIcon('d_e_clienti.denominazione')}
+                                    </th>
                                     <th>Agente</th>
                                     <th>Stato</th>
                                     <th className="text-right">Totale</th>
@@ -355,8 +460,8 @@ const FattureList = () => {
                                                 </td>
                                                 <td>{f.dataDocumento}</td>
                                                 <td><strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}</td>
-                                                <td>{f.nomeCliente}</td>
-                                                <td>{f.nomeAgente || '-'}</td>
+                                                <td>{f.denominazioneCliente}</td>
+                                                <td>{f.agente || '-'}</td>
                                                 <td style={{ whiteSpace: 'nowrap' }}>
                                                     {formatStato(f.stato).split('\n').map((line, i) => (
                                                         <React.Fragment key={i}>
@@ -391,9 +496,6 @@ const FattureList = () => {
                                                                 </button>
                                                                 <button className="action-dropdown-item" onClick={() => handleExportPdfItem(docId, f.numDocumento)}>
                                                                     <FaFilePdf /> Esporta PDF
-                                                                </button>
-                                                                <button className="action-dropdown-item" onClick={() => navigate(`/note-credito/new?fromFatture=${docId}`)}>
-                                                                    <FaArrowRight /> Genera Nota Credito
                                                                 </button>
                                                                 <div className="action-dropdown-divider"></div>
                                                                 <button className="action-dropdown-item text-danger" onClick={() => handleDelete(docId)}>

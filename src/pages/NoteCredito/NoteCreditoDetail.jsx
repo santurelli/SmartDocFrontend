@@ -68,6 +68,18 @@ const particellaSelectStyles = {
         boxShadow: 'none',
         backgroundColor: '#f8f9fa',
         '&:hover': { borderColor: '#ccc' }
+    }),
+    valueContainer: (base) => ({
+        ...base,
+        padding: '0 4px',
+    }),
+    dropdownIndicator: (base) => ({
+        ...base,
+        padding: '4px',
+    }),
+    clearIndicator: (base) => ({
+        ...base,
+        padding: '4px',
     })
 };
 
@@ -105,6 +117,11 @@ const NoteCreditoDetail = () => {
         indirizzoDestinazione: '',
         capDestinazione: '',
         provinciaDestinazione: '',
+        flFatturaElettronica: 0,
+        pec: '',
+        codiceUfficioDestinazione: '',
+        splitPayment: 0,
+        causale: '',
         noteConsegna: '',
         annotazioneEstesa: ''
     });
@@ -135,10 +152,19 @@ const NoteCreditoDetail = () => {
         fetchCombos();
         if (!isNew) {
             fetchData();
-        } else if (fromFattureId) {
-            fetchDataFromFatture(fromFattureId);
         } else {
-            fetchNextNum(formData.dataDocumento);
+            const eletParam = searchParams.get('elet');
+            if (eletParam) {
+                setFormData(prev => ({
+                    ...prev,
+                    flFatturaElettronica: eletParam === '1' ? 1 : 0
+                }));
+            }
+            if (fromFattureId) {
+                fetchDataFromFatture(fromFattureId);
+            } else {
+                fetchNextNum(formData.dataDocumento, eletParam === '1' ? 1 : 0);
+            }
         }
 
         const handleClickOutside = (event) => {
@@ -249,7 +275,11 @@ const NoteCreditoDetail = () => {
                     data.dataDocumento = `${parts[2]}-${parts[1]}-${parts[0]}`;
                 }
                 setFormData(prev => ({ ...prev, ...data }));
-                setProdotti(data.prodotti || []);
+                const mappedProdotti = (data.prodotti || []).map(p => ({
+                    ...p,
+                    tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N')
+                }));
+                setProdotti(mappedProdotti);
 
                 if (data.idCliente) {
                     loadClientAddresses(data.idCliente, false);
@@ -262,11 +292,11 @@ const NoteCreditoDetail = () => {
         }
     };
 
-    const fetchNextNum = async (dateStr) => {
+    const fetchNextNum = async (dateStr, flElettronica = 0) => {
         if (!dateStr) return;
         try {
             const formattedDate = dateStr.split('-').reverse().join('/');
-            const res = await NoteCreditoService.getNextNum(formattedDate);
+            const res = await NoteCreditoService.getNextNum(formattedDate, flElettronica);
             if (res.data && res.data.payload) {
                 setFormData(prev => ({ ...prev, numDocumento: res.data.payload }));
             }
@@ -329,11 +359,15 @@ const NoteCreditoDetail = () => {
     };
 
     const handleHeaderChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (name === 'dataDocumento' && isNew) {
-            fetchNextNum(value);
-        }
+        const { name, value, type, checked } = e.target;
+        const val = type === 'checkbox' ? (checked ? 1 : 0) : value;
+        setFormData(prev => {
+            const next = { ...prev, [name]: val };
+            if ((name === 'dataDocumento' || name === 'flFatturaElettronica') && isNew) {
+                fetchNextNum(next.dataDocumento, next.flFatturaElettronica);
+            }
+            return next;
+        });
     };
 
     const handleRecalculate = (newProdotti) => {
@@ -482,15 +516,17 @@ const NoteCreditoDetail = () => {
                     console.error("PDF error:", err);
                 }
             }
-            Swal.fire({
-                title: 'Salvato!',
-                text: 'Nota di credito salvata con successo',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                navigate('/note-credito');
-            });
+            if (!options.print && !options.pdf) {
+                Swal.fire({
+                    title: 'Salvato!',
+                    text: 'Nota di credito salvata con successo',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    navigate('/note-credito');
+                });
+            }
         }
     };
 
@@ -552,7 +588,7 @@ const NoteCreditoDetail = () => {
                                                 onChange={handleHeaderChange}
                                             />
                                             <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
-                                            <div style={{ flex: '0 0 100px' }}>
+                                            <div style={{ flex: '0 0 130px' }}>
                                                 <CreatableSelect
                                                     isClearable
                                                     options={combos.particelle.map(p => ({ value: p, label: p }))}
@@ -608,7 +644,62 @@ const NoteCreditoDetail = () => {
                                         widthClass="w-md"
                                     />
                                 </div>
+                                <div className="compact-col compact-col-md">
+                                    <div className="form-group">
+                                        <label className="checkbox-inline" style={{ marginTop: '25px', fontWeight: 'bold' }}>
+                                            <input
+                                                type="checkbox"
+                                                name="flFatturaElettronica"
+                                                checked={formData.flFatturaElettronica === 1}
+                                                onChange={handleHeaderChange}
+                                            /> Fattura Elettronica
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
+
+                            {formData.flFatturaElettronica === 1 && (
+                                <div className="row mt-3">
+                                    <div className="col-md-4">
+                                        <div className="form-group">
+                                            <label className="premium-label">Codice Univo. (SDI) / PEC</label>
+                                            <div className="flex-input-group">
+                                                <input
+                                                    type="text"
+                                                    className="form-control premium-input"
+                                                    name="codiceUfficioDestinazione"
+                                                    value={formData.codiceUfficioDestinazione || ''}
+                                                    onChange={handleHeaderChange}
+                                                    placeholder="Codice Univoco..."
+                                                    style={{ flex: '2' }}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    className="form-control premium-input"
+                                                    name="pec"
+                                                    value={formData.pec || ''}
+                                                    onChange={handleHeaderChange}
+                                                    placeholder="PEC..."
+                                                    style={{ flex: '3', marginLeft: '5px' }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-8">
+                                        <div className="form-group">
+                                            <label className="premium-label">Causale SDI</label>
+                                            <input
+                                                type="text"
+                                                className="form-control premium-input"
+                                                name="causale"
+                                                value={formData.causale || ''}
+                                                onChange={handleHeaderChange}
+                                                placeholder="Causale per fatturazione elettronica..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <hr />
 
@@ -712,26 +803,22 @@ const NoteCreditoDetail = () => {
 
                         {/* Tab Articoli */}
                         <div className={`tab-pane ${activeTab === 'articoli' ? 'active' : ''}`}>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <DocumentRows
-                                        rows={prodotti}
-                                        onRowChange={handleRecalculate}
-                                        onRowUpdate={(idx, update) => {
-                                            const newP = [...prodotti];
-                                            newP[idx] = { ...newP[idx], ...update };
-                                            setProdotti(newP);
-                                        }}
-                                        onDeleteRow={(idx) => {
-                                            const newP = [...prodotti];
-                                            newP.splice(idx, 1);
-                                            setProdotti(newP);
-                                        }}
-                                        combos={combos}
-                                        isCeramica={isCeramica}
-                                    />
-                                </div>
-                            </div>
+                            <DocumentRows
+                                rows={prodotti}
+                                onRowChange={handleRecalculate}
+                                onRowUpdate={(idx, update) => {
+                                    const newP = [...prodotti];
+                                    newP[idx] = { ...newP[idx], ...update };
+                                    setProdotti(newP);
+                                }}
+                                onDeleteRow={(idx) => {
+                                    const newP = [...prodotti];
+                                    newP.splice(idx, 1);
+                                    setProdotti(newP);
+                                }}
+                                combos={combos}
+                                isCeramica={isCeramica}
+                            />
                         </div>
 
                         {/* Tab Pagamento */}
@@ -780,6 +867,20 @@ const NoteCreditoDetail = () => {
                                     />
                                 </div>
                             </div>
+                            <div className="row">
+                                <div className="col-md-4">
+                                    <div className="form-group">
+                                        <label className="checkbox-inline" style={{ marginTop: '25px', fontWeight: 'bold' }}>
+                                            <input
+                                                type="checkbox"
+                                                name="splitPayment"
+                                                checked={formData.splitPayment === 1}
+                                                onChange={handleHeaderChange}
+                                            /> Scissione Pagamenti (Split Payment)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Tab Note */}
@@ -800,27 +901,32 @@ const NoteCreditoDetail = () => {
                             </div>
                         </div>
 
-                        <div className="form-actions-floating">
-                            <button type="button" className="btn btn-secondary" onClick={() => navigate('/note-credito')}>
+                        <footer className="main-box-footer detail-footer">
+                            <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/note-credito')}>
                                 <FaArrowLeft /> Indietro
                             </button>
-                            <div className="split-btn-container" ref={actionsMenuRef}>
-                                <button type="submit" className="split-btn-main btn btn-success">
-                                    <FaSave /> Salva
-                                </button>
-                                <button type="button" className="split-btn-toggle" onClick={() => setShowActionsMenu(!showActionsMenu)}>
-                                    <FaCaretDown />
-                                </button>
-                                <div className={`split-btn-menu ${showActionsMenu ? 'show' : ''}`}>
-                                    <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { print: true })}>
-                                        <FaPrint /> Salva e Stampa
+                            <div className="footer-right">
+                                <div className="split-btn-container" ref={actionsMenuRef}>
+                                    <button type="submit" className="split-btn-main btn-premium-save">
+                                        <FaSave /> Salva
                                     </button>
-                                    <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { pdf: true })}>
-                                        <FaFilePdf /> Salva e PDF
+                                    <button type="button" className="split-btn-toggle" onClick={() => setShowActionsMenu(!showActionsMenu)}>
+                                        <FaCaretDown />
                                     </button>
+                                    <div className={`split-btn-menu ${showActionsMenu ? 'show' : ''}`}>
+                                        <button type="button" className="split-btn-item" onClick={handleSave}>
+                                            <FaSave /> Salva solo
+                                        </button>
+                                        <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { print: true })}>
+                                            <FaPrint /> Stampa Diretto
+                                        </button>
+                                        <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { pdf: true })}>
+                                            <FaFilePdf /> Esporta PDF
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </footer>
                     </form>
                 </div>
             </div>

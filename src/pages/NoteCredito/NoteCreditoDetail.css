@@ -43,12 +43,12 @@
     background: #fff;
     padding: 10px 20px;
     border-radius: 8px;
-    border: 1px solid #e7ebee;
+    border: none;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     min-width: 150px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    box-shadow: none;
 }
 
 .total-box .label {
@@ -79,7 +79,7 @@
 
 /* Tabs */
 .nav-tabs-custom {
-    border-bottom: 2px solid #f1f2f7;
+    border-bottom: none;
     margin-bottom: 0;
     padding: 0 30px;
     background: #fdfdfd;
@@ -114,8 +114,8 @@
 .main-box {
     background: #fff;
     border-radius: 8px;
-    border: 1px solid #e7ebee;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
+    border: none;
+    box-shadow: none;
 }
 
 .main-box-body {
@@ -210,7 +210,7 @@
 
 /* Cards */
 .premium-card {
-    border: 1px solid #e7ebee;
+    border: none;
     border-radius: 10px;
     overflow: hidden;
     height: 100%;
@@ -221,7 +221,7 @@
 .card-header-vibrant {
     background: #f8f9fa;
     padding: 12px 18px;
-    border-bottom: 1px solid #e7ebee;
+    border-bottom: none;
     font-weight: 700;
     font-size: 13px;
     color: #555;
@@ -258,10 +258,10 @@
     background: rgba(255, 255, 255, 0.9);
     padding: 12px 20px;
     border-radius: 50px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
     backdrop-filter: blur(10px);
     z-index: 1000;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: none;
 }
 
 .form-actions-floating .btn {
@@ -273,7 +273,7 @@
     gap: 10px;
     font-weight: 600;
     font-size: 14px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: none;
 }
 
 .btn-success {
@@ -291,7 +291,7 @@
 }
 
 hr {
-    border-color: #f1f2f7;
+    border-color: transparent;
     margin: 20px 0;
 }
 

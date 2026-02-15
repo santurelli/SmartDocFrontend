@@ -100,12 +100,14 @@ const EntitySelectGroup = ({
                         menuPortalTarget={document.body}
                     />
                 </div>
-                <WrenchModalButton
-                    ModalComponent={ModalComponent}
-                    modalProps={modalProps}
-                    title={title}
-                    onClose={onModalClose}
-                />
+                {ModalComponent && (
+                    <WrenchModalButton
+                        ModalComponent={ModalComponent}
+                        modalProps={modalProps}
+                        title={title}
+                        onClose={onModalClose}
+                    />
+                )}
             </div>
         </div>
 

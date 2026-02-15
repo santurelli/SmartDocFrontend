@@ -2,7 +2,7 @@ import api from './api';
 
 const NoteCreditoService = {
     getList: (params) => {
-        return api.post('/note-credito/list', params);
+        return api.get('/note-credito', { params });
     },
 
     getById: (id) => {
@@ -10,22 +10,23 @@ const NoteCreditoService = {
     },
 
     getCombosMap: () => {
-        return api.get('/note-credito/combos-map');
+        return api.get('/note-credito/combos');
     },
 
-    getNextNum: (data) => {
-        return api.get('/note-credito/nextNum', { params: { data } });
+    getNextNum: (data, flElettronica) => {
+        return api.get('/note-credito/nextNum', { params: { data, flElettronica } });
     },
 
     save: (data) => {
-        if (data.id) {
-            return api.put(`/note-credito/${data.id}`, data);
-        }
         return api.post('/note-credito', data);
     },
 
-    delete: (id) => {
-        return api.delete(`/note-credito/${id}`);
+    delete: (id, user) => {
+        return api.delete(`/note-credito/${id}`, { params: { user } });
+    },
+
+    print: (id) => {
+        return api.get(`/note-credito/print/${id}`, { responseType: 'blob' });
     }
 };
 

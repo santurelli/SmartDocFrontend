@@ -53,11 +53,10 @@
 .detail-box {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
 }
 
 .nav-tabs {
-    border-bottom: 1px solid #eee;
+    border-bottom: none;
     padding: 0 30px;
     background: #fdfdfd;
 }
@@ -229,17 +228,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #eee;
+    border-top: none;
 }
 
 .btn-premium-save {
-    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    background: #2ecc71;
     color: white;
     border: none;
     padding: 10px 25px;
     border-radius: 30px;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    box-shadow: none;
     transition: all 0.3s;
     display: flex;
     align-items: center;
@@ -248,7 +247,7 @@
 
 .btn-premium-save:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    box-shadow: none;
     color: white;
 }
 

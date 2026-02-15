@@ -6,9 +6,10 @@ import NoteCreditoService from '../../services/NoteCreditoService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
+import authService from '../../services/authService';
 
 import { formatStato } from '../../utils/documentUtils';
 
@@ -22,8 +23,7 @@ const NoteCreditoList = () => {
     const [activeActionMenu, setActiveActionMenu] = useState(null);
 
     const [filters, setFilters] = useState(() => {
-        const saved = storageHelper.get('note_credito_filters');
-        return saved || {
+        return storageHelper.loadState('note_credito_filters', {
             numDocumento: '',
             dataDa: '',
             dataA: '',
@@ -31,8 +31,10 @@ const NoteCreditoList = () => {
             nomeCliente: '',
             idAgente: null,
             nomeAgente: '',
-            idStato: ''
-        };
+            idStato: '',
+            orderBy: 'data_notacredito',
+            orderDir: 'DESC'
+        });
     });
 
     const [agenti, setAgenti] = useState([]);
@@ -58,9 +60,21 @@ const NoteCreditoList = () => {
     const handleSearch = async (e) => {
         if (e) e.preventDefault();
         setLoading(true);
-        storageHelper.set('note_credito_filters', filters);
+        storageHelper.saveState('note_credito_filters', filters);
         try {
-            const res = await NoteCreditoService.search(filters);
+            const params = {
+                dataInizio: filters.dataDa,
+                dataFine: filters.dataA,
+                idCliente: filters.idCliente,
+                idAgente: filters.idAgente,
+                numDocumento: filters.numDocumento,
+                stato: filters.idStato,
+                orderColumn: filters.orderBy || 'data_notacredito',
+                orderDir: filters.orderDir || 'DESC',
+                start: 0,
+                length: 100
+            };
+            const res = await NoteCreditoService.getList(params);
             setNote(res.data?.payload || []);
         } catch (error) {
             console.error(error);
@@ -78,10 +92,50 @@ const NoteCreditoList = () => {
             nomeCliente: '',
             idAgente: null,
             nomeAgente: '',
-            idStato: ''
+            idStato: '',
+            orderBy: 'data_notacredito',
+            orderDir: 'DESC'
         };
         setFilters(reset);
-        storageHelper.remove('note_credito_filters');
+        storageHelper.clearState('note_credito_filters');
+    };
+
+    const handleSort = (column) => {
+        setFilters(prev => {
+            const newDir = prev.orderBy === column && prev.orderDir === 'ASC' ? 'DESC' : 'ASC';
+            const newFilters = { ...prev, orderBy: column, orderDir: newDir };
+            return newFilters;
+        });
+
+        setLoading(true);
+        const newDir = filters.orderBy === column && filters.orderDir === 'ASC' ? 'DESC' : 'ASC';
+        const params = {
+            dataInizio: filters.dataDa,
+            dataFine: filters.dataA,
+            idCliente: filters.idCliente,
+            idAgente: filters.idAgente,
+            stato: filters.idStato,
+            numDocumento: filters.numDocumento,
+            orderColumn: column,
+            orderDir: newDir,
+            start: 0,
+            length: 100
+        };
+        storageHelper.saveState('note_credito_filters', { ...filters, orderBy: column, orderDir: newDir });
+
+        NoteCreditoService.getList(params).then(res => {
+            setNote(res.data?.payload || []);
+            setLoading(false);
+        }).catch(err => {
+            console.error(err);
+            setLoading(false);
+        });
+    };
+
+    // Sort Icon Helper
+    const getSortIcon = (column) => {
+        if (filters.orderBy !== column) return <FaSort style={{ color: '#ccc' }} />;
+        return filters.orderDir === 'ASC' ? <FaSortUp /> : <FaSortDown />;
     };
 
     const loadClienti = (inputValue, callback) => {
@@ -105,7 +159,7 @@ const NoteCreditoList = () => {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await NoteCreditoService.delete(id);
+                    await NoteCreditoService.delete(id, authService.getCurrentUser()?.id);
                     Swal.fire('Eliminata!', 'La nota di credito è stata eliminata.', 'success');
                     handleSearch();
                 } catch (error) {
@@ -224,16 +278,6 @@ const NoteCreditoList = () => {
                             </button>
                         </div>
                     )}
-
-                    {selectedIds.length > 0 && (
-                        <div className="vibrant-bulk-toolbar">
-                            <div className="toolbar-divider"></div>
-                            <span className="selected-count-vibrant">{selectedIds.length} selezionat{selectedIds.length === 1 ? 'o' : 'i'}</span>
-                            <button className="btn-bulk-vibrant btn-bulk-delete" onClick={handleBulkDelete}>
-                                <FaTrash /> Elimina ({selectedIds.length})
-                            </button>
-                        </div>
-                    )}
                 </div>
                 <div className="toolbar-right">
                     <button className="btn-new-vibrant" onClick={() => navigate('/note-credito/new')}>
@@ -327,9 +371,15 @@ const NoteCreditoList = () => {
                                             checked={selectedIds.length === note.length && note.length > 0}
                                         />
                                     </th>
-                                    <th>Data</th>
-                                    <th>Numero</th>
-                                    <th>Cliente</th>
+                                    <th onClick={() => handleSort('data_notacredito')} style={{ cursor: 'pointer' }}>
+                                        Data {getSortIcon('data_notacredito')}
+                                    </th>
+                                    <th onClick={() => handleSort('num_notacredito')} style={{ cursor: 'pointer' }}>
+                                        Numero {getSortIcon('num_notacredito')}
+                                    </th>
+                                    <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>
+                                        Cliente {getSortIcon('d_e_clienti.denominazione')}
+                                    </th>
                                     <th>Agente</th>
                                     <th>Stato</th>
                                     <th className="text-right">Totale</th>
@@ -355,17 +405,17 @@ const NoteCreditoList = () => {
                                                 </td>
                                                 <td>{f.dataDocumento}</td>
                                                 <td><strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}</td>
-                                                <td>{f.nomeCliente}</td>
-                                                <td>{f.nomeAgente || '-'}</td>
+                                                <td>{f.denominazioneCliente}</td>
+                                                <td>{f.agente || '-'}</td>
                                                 <td style={{ whiteSpace: 'nowrap' }}>
-                                                    {formatStato(f.stato).split('\n').map((line, i) => (
+                                                    {formatStato(f.statoFatturaElettronica).split('\n').map((line, i) => (
                                                         <React.Fragment key={i}>
                                                             {line}
-                                                            {i < formatStato(f.stato).split('\n').length - 1 && <br />}
+                                                            {i < formatStato(f.statoFatturaElettronica).split('\n').length - 1 && <br />}
                                                         </React.Fragment>
                                                     ))}
                                                 </td>
-                                                <td className="text-right">{formatMoney(f.totaleDocumento || f.totale)}</td>
+                                                <td className="text-right">{formatMoney(f.totale)}</td>
                                                 <td className="text-right">
                                                     <div className="action-menu-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
                                                         <button

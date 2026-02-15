@@ -61,7 +61,7 @@ export const getRowValues = (row, aliquoteIva = []) => {
     }
 
     const rowImponibile = qty * netPrice;
-    const aliquota = aliquoteIva.find(a => a.id === parseInt(row.idAliquotaIva));
+    const aliquota = (aliquoteIva || []).find(a => a.id === parseInt(row.idAliquotaIva));
     const impostaPerc = aliquota ? (aliquota.imposta || 0) : 0;
     const rowTotal = rowImponibile * (1 + impostaPerc / 100);
 

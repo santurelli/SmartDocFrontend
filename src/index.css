@@ -104,14 +104,14 @@ button {
 }
 
 .premium-modal .modal-header {
-  padding: 25px 30px;
+  padding: 15px 25px;
   border-bottom: 1px solid #eee;
   background-color: #f8f9fa;
-  border-radius: 15px 15px 0 0;
+  border-radius: 12px 12px 0 0;
 }
 
 .premium-modal .modal-title {
-  font-size: 22px;
+  font-size: 20px;
   color: #333;
 }
 
@@ -149,7 +149,7 @@ button.close,
 
 
 .premium-modal .modal-body {
-  padding: 30px;
+  padding: 20px 25px;
 }
 
 .premium-modal form {
@@ -160,7 +160,7 @@ button.close,
 }
 
 .premium-modal .modal-footer {
-  padding: 20px 30px;
+  padding: 12px 25px;
   border-top: 1px solid #eee;
   display: flex !important;
   justify-content: flex-end !important;
@@ -257,6 +257,7 @@ button.close,
   margin: 0;
   display: flex;
   gap: 5px;
+  align-items: center;
 }
 
 .pagination>li>a,

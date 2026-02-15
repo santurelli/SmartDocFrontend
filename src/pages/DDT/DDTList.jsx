@@ -6,13 +6,10 @@ import DDTService from '../../services/DDTService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
-import FattureService from '../../services/FattureService';
-
 import { formatStato } from '../../utils/documentUtils';
-
 import './DDTList.css';
 
 const MODULE_NAME = 'ddt';
@@ -32,7 +29,7 @@ const DDTList = () => {
         idStato: '',
         currentPage: 0,
         pageSize: 50,
-        sortCol: 0,
+        sortCol: 'd_e_ddt.data_ddt',
         sortDir: 'desc'
     });
 
@@ -55,8 +52,8 @@ const DDTList = () => {
 
     const [pageSize, setPageSize] = useState(initialState.pageSize);
     const [currentPage, setCurrentPage] = useState(initialState.currentPage);
-    const [sortCol, setSortCol] = useState(initialState.sortCol);
-    const [sortDir, setSortDir] = useState(initialState.sortDir);
+    const [sortCol, setSortCol] = useState(initialState.sortCol || 'd_e_ddt.data_ddt');
+    const [sortDir, setSortDir] = useState(initialState.sortDir || 'desc');
 
     const [agenti, setAgenti] = useState([]);
 
@@ -100,7 +97,7 @@ const DDTList = () => {
                 orderColumn: sortCol,
                 orderDir: sortDir
             };
-            const res = await DDTService.search(params);
+            const res = await DDTService.getList(params);
             setDdts(res.data?.list || []);
             setTotal(res.data?.totalCount || 0);
         } catch (error) {
@@ -206,32 +203,55 @@ const DDTList = () => {
 
     const handlePrintItem = async (id) => {
         try {
-            const response = await DDTService.print(id);
-            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const printRes = await DDTService.print(id);
+            if (printRes.data.type === 'application/json') {
+                const text = await printRes.data.text();
+                const err = JSON.parse(text);
+                throw new Error(err.message || 'Errore generazione PDF');
+            }
+            if (printRes.data.size < 100) {
+                throw new Error("Il file generato è vuoto o non valido");
+            }
+            const blob = new Blob([printRes.data], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
-            printJS({ printable: url, type: 'pdf' });
-            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+            printJS({
+                printable: url,
+                type: 'pdf',
+                onPrintDialogClose: () => {
+                    window.URL.revokeObjectURL(url);
+                },
+                onError: (err) => {
+                    console.error("printJS error:", err);
+                    window.open(url);
+                }
+            });
             setActiveActionMenu(null);
         } catch (error) {
             console.error("Error printing:", error);
-            Swal.fire('Errore', 'Errore durante la stampa', 'error');
+            Swal.fire('Errore Stampa', error.message || 'Errore durante la stampa', 'error');
         }
     };
 
     const handleExportPdfItem = async (id, num) => {
         try {
-            const response = await DDTService.print(id);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const printRes = await DDTService.print(id);
+            if (printRes.data.type === 'application/json') {
+                const text = await printRes.data.text();
+                const err = JSON.parse(text);
+                throw new Error(err.message || 'Errore generazione PDF');
+            }
+            const url = window.URL.createObjectURL(new Blob([printRes.data], { type: 'application/pdf' }));
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `DDT_${num}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();
+            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
             setActiveActionMenu(null);
         } catch (error) {
             console.error("Error exporting PDF:", error);
-            Swal.fire('Errore', 'Errore durante l\'esportazione PDF', 'error');
+            Swal.fire('Errore PDF', error.message || 'Errore durante l\'esportazione PDF', 'error');
         }
     };
 
@@ -240,6 +260,20 @@ const DDTList = () => {
     };
 
     const totalAmount = ddts.reduce((sum, item) => sum + (item.totale || 0), 0);
+
+    const handleSort = (col) => {
+        if (sortCol === col) {
+            setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortCol(col);
+            setSortDir('asc');
+        }
+    };
+
+    const renderSortIcon = (col) => {
+        if (sortCol !== col) return <span style={{ opacity: 0.3 }}>▼</span>;
+        return <span>{sortDir === 'asc' ? '▲' : '▼'}</span>;
+    };
 
 
     return (
@@ -369,14 +403,14 @@ const DDTList = () => {
                                             checked={selectedIds.length === ddts.length && ddts.length > 0}
                                         />
                                     </th>
-                                    <th onClick={() => { setSortCol(0); setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); }} style={{ cursor: 'pointer' }}>
-                                        Data {sortCol === 0 && (sortDir === 'asc' ? '▲' : '▼')}
+                                    <th onClick={() => handleSort('d_e_ddt.data_ddt')} style={{ cursor: 'pointer' }}>
+                                        Data {renderSortIcon('d_e_ddt.data_ddt')}
                                     </th>
-                                    <th onClick={() => { setSortCol(1); setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); }} style={{ cursor: 'pointer' }}>
-                                        Numero {sortCol === 1 && (sortDir === 'asc' ? '▲' : '▼')}
+                                    <th onClick={() => handleSort('d_e_ddt.num_ddt')} style={{ cursor: 'pointer' }}>
+                                        Numero {renderSortIcon('d_e_ddt.num_ddt')}
                                     </th>
-                                    <th onClick={() => { setSortCol(2); setSortDir(sortDir === 'asc' ? 'desc' : 'asc'); }} style={{ cursor: 'pointer' }}>
-                                        Cliente {sortCol === 2 && (sortDir === 'asc' ? '▲' : '▼')}
+                                    <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>
+                                        Cliente {renderSortIcon('d_e_clienti.denominazione')}
                                     </th>
                                     <th>Agente</th>
                                     <th>Stato</th>

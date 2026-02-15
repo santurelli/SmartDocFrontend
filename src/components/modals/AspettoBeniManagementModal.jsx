@@ -1,33 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import TipiPortoService from '../../services/TipiPortoService';
+import AspettoBeniService from '../../services/AspettoBeniService';
 import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
 
-const TipiPortoManagementModal = ({ onClose }) => {
+const AspettoBeniManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [currentPage, pageSize, searchTerm]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const res = await TipiPortoService.getAll();
-            if (res.data && res.data.list && Array.isArray(res.data.list)) {
-                setList(res.data.list);
-            } else if (res.data && Array.isArray(res.data)) {
-                setList(res.data);
-            } else {
-                setList([]);
+            const params = {
+                search: searchTerm,
+                start: (currentPage - 1) * pageSize,
+                length: pageSize,
+                'order[0][column]': 1, // Sort by Descrizione
+                'order[0][dir]': 'asc'
+            };
+            const res = await AspettoBeniService.getList(params);
+            if (res.data) {
+                setList(res.data.list || []);
+                setTotalItems(res.data.totalCount || 0);
             }
         } catch (error) {
-            console.error("Error loading tipi porto:", error);
-            Swal.fire('Errore', 'Impossibile caricare i tipi porto', 'error');
+            console.error("Error loading aspetto beni:", error);
+            Swal.fire('Errore', 'Impossibile caricare aspetto beni', 'error');
         } finally {
             setLoading(false);
         }
@@ -36,7 +41,7 @@ const TipiPortoManagementModal = ({ onClose }) => {
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "Il tipo porto verrà eliminato.",
+            text: "L'aspetto beni verrà eliminato.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sì, elimina',
@@ -45,9 +50,9 @@ const TipiPortoManagementModal = ({ onClose }) => {
 
         if (result.isConfirmed) {
             try {
-                await TipiPortoService.delete(id);
+                await AspettoBeniService.delete(id);
                 loadData();
-                Swal.fire('Eliminato!', 'Tipo porto eliminato.', 'success');
+                Swal.fire('Eliminato!', 'Aspetto beni eliminato.', 'success');
             } catch (error) {
                 Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
             }
@@ -55,22 +60,22 @@ const TipiPortoManagementModal = ({ onClose }) => {
     };
 
     const handleEdit = (item) => {
-        openDetailModal(item.id, item.descrizione);
+        openDetailModal(item);
     };
 
     const handleAdd = () => {
-        openDetailModal(null, '');
+        openDetailModal({ id: null, descrizione: '' });
     };
 
-    const openDetailModal = (id, existingDesc) => {
-        const isNew = !id;
+    const openDetailModal = (item) => {
+        const isNew = !item.id;
         Swal.fire({
-            title: isNew ? 'Nuovo Tipo Porto' : 'Modifica Tipo Porto',
+            title: isNew ? 'Nuovo Aspetto Beni' : 'Modifica Aspetto Beni',
             html: `
                 <div style="text-align: left;">
                     <div class="form-group">
-                        <label>Descrizione Porto</label>
-                        <input id="swal-descrizione" class="form-control" value="${existingDesc || ''}" placeholder="Es. Porto Franco, Porto Assegnato...">
+                        <label>Descrizione</label>
+                        <input id="swal-descrizione" class="form-control" value="${item.descrizione || ''}" placeholder="Inserisci descrizione">
                     </div>
                 </div>
             `,
@@ -78,20 +83,26 @@ const TipiPortoManagementModal = ({ onClose }) => {
             confirmButtonText: 'Salva',
             cancelButtonText: 'Annulla',
             preConfirm: async () => {
-                const value = document.getElementById('swal-descrizione').value;
-                if (!value) {
+                const descrizione = document.getElementById('swal-descrizione').value;
+
+                if (!descrizione) {
                     Swal.showValidationMessage('La descrizione è obbligatoria');
                     return false;
                 }
+
                 try {
-                    if (id) {
-                        await TipiPortoService.update(id, { description: value, descrizione: value });
+                    if (isNew) {
+                        await AspettoBeniService.create(descrizione);
                     } else {
-                        await TipiPortoService.insert({ description: value, descrizione: value });
+                        await AspettoBeniService.update(item.id, descrizione);
                     }
                     return true;
                 } catch (error) {
-                    Swal.showValidationMessage('Errore durante il salvataggio');
+                    let errorMsg = 'Errore durante il salvataggio';
+                    if (error.response && error.response.data && error.response.data.errorText) {
+                        errorMsg = error.response.data.errorText;
+                    }
+                    Swal.showValidationMessage(errorMsg);
                     return false;
                 }
             }
@@ -103,14 +114,8 @@ const TipiPortoManagementModal = ({ onClose }) => {
         });
     };
 
-    const filteredList = list.filter(item =>
-        item.descrizione && item.descrizione.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const totalItems = filteredList.length;
     const totalPages = Math.ceil(totalItems / pageSize);
     const startIdx = (currentPage - 1) * pageSize;
-    const currentItems = filteredList.slice(startIdx, startIdx + pageSize);
 
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
@@ -120,7 +125,7 @@ const TipiPortoManagementModal = ({ onClose }) => {
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title">Gestione Tipi Porto</h4>
+                        <h4 className="modal-title">Gestione Aspetto Beni</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
                         <div className="modal-toolbar">
@@ -167,8 +172,8 @@ const TipiPortoManagementModal = ({ onClose }) => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {currentItems.length > 0 ? (
-                                        currentItems.map(item => (
+                                    {list.length > 0 ? (
+                                        list.map(item => (
                                             <tr key={item.id} style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderRadius: '10px' }}>
                                                 <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px' }}>{item.descrizione}</td>
                                                 <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
@@ -236,4 +241,4 @@ const TipiPortoManagementModal = ({ onClose }) => {
     );
 };
 
-export default TipiPortoManagementModal;
+export default AspettoBeniManagementModal;

@@ -114,13 +114,8 @@
 .main-box {
     background: #fff;
     border-radius: 8px;
-    border: 1px solid #e7ebee;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
 }
 
-.main-box-body {
-    padding: 25px 30px;
-}
 
 /* Compact Forms */
 .compact-row {
@@ -210,18 +205,19 @@
 
 /* Cards */
 .premium-card {
-    border: 1px solid #e7ebee;
+    border: none;
     border-radius: 10px;
     overflow: hidden;
     height: 100%;
     background: #fff;
     transition: transform 0.2s;
+    box-shadow: none;
 }
 
 .card-header-vibrant {
     background: #f8f9fa;
     padding: 12px 18px;
-    border-bottom: 1px solid #e7ebee;
+    border-bottom: none;
     font-weight: 700;
     font-size: 13px;
     color: #555;

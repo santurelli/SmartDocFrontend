@@ -6,7 +6,7 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -43,13 +43,21 @@ const particellaSelectStyles = {
     valueContainer: (base) => ({
         ...base,
         height: '38px',
-        padding: '0 8px',
+        padding: '0 4px',
         display: 'flex',
         alignItems: 'center'
     }),
     indicatorsContainer: (base) => ({
         ...base,
         height: '36px'
+    }),
+    dropdownIndicator: (base) => ({
+        ...base,
+        padding: '4px',
+    }),
+    clearIndicator: (base) => ({
+        ...base,
+        padding: '4px',
     }),
     menu: (base) => ({ ...base, zIndex: 9999 })
 };
@@ -89,7 +97,11 @@ const FattureDetail = () => {
         capDestinazione: '',
         provinciaDestinazione: '',
         noteConsegna: '',
-        annotazioneEstesa: ''
+        annotazioneEstesa: '',
+        tipoFattura: 'FATTURA',
+        flFatturaElettronica: 0,
+        pec: '',
+        codiceUfficioDestinazione: ''
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -118,10 +130,23 @@ const FattureDetail = () => {
         fetchCombos();
         if (!isNew) {
             fetchData();
-        } else if (fromDDTId) {
-            fetchDataFromDDT(fromDDTId);
         } else {
-            fetchNextNum(formData.dataDocumento);
+            const tipoParam = searchParams.get('tipo');
+            const eletParam = searchParams.get('elet');
+
+            if (tipoParam || eletParam) {
+                setFormData(prev => ({
+                    ...prev,
+                    tipoFattura: tipoParam || prev.tipoFattura,
+                    flFatturaElettronica: eletParam === '1' ? 1 : 0
+                }));
+            }
+
+            if (fromDDTId) {
+                fetchDataFromDDT(fromDDTId);
+            } else {
+                fetchNextNum(formData.dataDocumento, eletParam === '1' ? 1 : 0, tipoParam || 'FATTURA');
+            }
         }
 
         const handleClickOutside = (event) => {
@@ -232,7 +257,11 @@ const FattureDetail = () => {
                     data.dataDocumento = `${parts[2]}-${parts[1]}-${parts[0]}`;
                 }
                 setFormData(prev => ({ ...prev, ...data }));
-                setProdotti(data.prodotti || []);
+                const mappedProdotti = (data.prodotti || []).map(p => ({
+                    ...p,
+                    tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N')
+                }));
+                setProdotti(mappedProdotti);
 
                 if (data.idCliente) {
                     loadClientAddresses(data.idCliente, false);
@@ -245,11 +274,11 @@ const FattureDetail = () => {
         }
     };
 
-    const fetchNextNum = async (dateStr) => {
+    const fetchNextNum = async (dateStr, flElettronica = 0, tipo = 'FATTURA') => {
         if (!dateStr) return;
         try {
             const formattedDate = dateStr.split('-').reverse().join('/');
-            const res = await FattureService.getNextNum(formattedDate);
+            const res = await FattureService.getNextNum(formattedDate, flElettronica, tipo);
             if (res.data && res.data.payload) {
                 setFormData(prev => ({ ...prev, numDocumento: res.data.payload }));
             }
@@ -312,11 +341,15 @@ const FattureDetail = () => {
     };
 
     const handleHeaderChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (name === 'dataDocumento' && isNew) {
-            fetchNextNum(value);
-        }
+        const { name, value, type, checked } = e.target;
+        const val = type === 'checkbox' ? (checked ? 1 : 0) : value;
+        setFormData(prev => {
+            const next = { ...prev, [name]: val };
+            if ((name === 'dataDocumento' || name === 'tipoFattura' || name === 'flFatturaElettronica') && isNew) {
+                fetchNextNum(next.dataDocumento, next.flFatturaElettronica, next.tipoFattura);
+            }
+            return next;
+        });
     };
 
     const handleRecalculate = (newProdotti) => {
@@ -465,15 +498,17 @@ const FattureDetail = () => {
                     console.error("PDF error:", err);
                 }
             }
-            Swal.fire({
-                title: 'Salvato!',
-                text: 'Fattura salvata con successo',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                navigate('/fatture');
-            });
+            if (!options.print && !options.pdf) {
+                Swal.fire({
+                    title: 'Salvato!',
+                    text: 'Fattura salvata con successo',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    navigate('/fatture');
+                });
+            }
         }
     };
 
@@ -522,75 +557,143 @@ const FattureDetail = () => {
                     <form className="tab-content" onSubmit={handleSave}>
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
-                            <div className="compact-row">
-                                <div className="compact-col compact-col-md">
-                                    <div className="form-group">
-                                        <label>Numero</label>
-                                        <div className="flex-input-group w-md">
-                                            <input
-                                                type="text"
-                                                className="form-control premium-input"
-                                                name="numDocumento"
-                                                value={formData.numDocumento}
-                                                onChange={handleHeaderChange}
-                                            />
-                                            <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
-                                            <div style={{ flex: '0 0 100px' }}>
-                                                <CreatableSelect
-                                                    isClearable
-                                                    options={combos.particelle.map(p => ({ value: p, label: p }))}
-                                                    value={formData.particella ? { value: formData.particella, label: formData.particella } : null}
-                                                    onChange={(opt) => setFormData(prev => ({ ...prev, particella: opt?.value || '' }))}
-                                                    styles={particellaSelectStyles}
-                                                    placeholder="-"
-                                                    noOptionsMessage={() => "Nuovo..."}
-                                                    formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
+                            <div className="tab-padding-wrapper">
+                                <div className="compact-row">
+                                    <div className="compact-col compact-col-md">
+                                        <div className="form-group">
+                                            <label>Numero</label>
+                                            <div className="flex-input-group w-md">
+                                                <input
+                                                    type="text"
+                                                    className="form-control premium-input"
+                                                    name="numDocumento"
+                                                    value={formData.numDocumento}
+                                                    onChange={handleHeaderChange}
+                                                />
+                                                <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
+                                                <div style={{ flex: '0 0 130px' }}>
+                                                    <CreatableSelect
+                                                        isClearable
+                                                        options={(combos.particelle || []).map(p => ({ value: p, label: p }))}
+                                                        value={formData.particella ? { value: formData.particella, label: formData.particella } : null}
+                                                        onChange={(opt) => setFormData(prev => ({ ...prev, particella: opt?.value || '' }))}
+                                                        styles={particellaSelectStyles}
+                                                        placeholder="-"
+                                                        noOptionsMessage={() => "Nuovo..."}
+                                                        formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="compact-col compact-col-sm">
+                                        <div className="form-group">
+                                            <label>Data</label>
+                                            <div className="flex-input-group">
+                                                <input
+                                                    type="date"
+                                                    className="form-control premium-input"
+                                                    name="dataDocumento"
+                                                    value={formData.dataDocumento}
+                                                    onChange={handleHeaderChange}
+                                                    required
                                                 />
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="compact-col compact-col-sm">
-                                    <div className="form-group">
-                                        <label>Data</label>
-                                        <div className="flex-input-group">
-                                            <input
-                                                type="date"
+                                    <div className="compact-col compact-col-md">
+                                        <div className="form-group">
+                                            <label>Tipo Documento</label>
+                                            <select
                                                 className="form-control premium-input"
-                                                name="dataDocumento"
-                                                value={formData.dataDocumento}
+                                                name="tipoFattura"
+                                                value={formData.tipoFattura}
                                                 onChange={handleHeaderChange}
-                                                required
-                                            />
+                                            >
+                                                <option value="FATTURA">Fattura</option>
+                                                <option value="FATTURA_ACCOMPAGNATORIA">Accompagnatoria</option>
+                                                <option value="FATTURA_ACCONTO">Acconto</option>
+                                                <option value="FATTURA_PROFORMA">Pro Forma</option>
+                                                <option value="NOTA_DEBITO">Nota Debito</option>
+                                            </select>
                                         </div>
                                     </div>
+                                    <div className="compact-col compact-col-sm" style={{ alignSelf: 'center', marginTop: '10px' }}>
+                                        <div className="form-group mb-0">
+                                            <div className="premium-checkbox-group">
+                                                <input
+                                                    type="checkbox"
+                                                    id="flFatturaElettronica"
+                                                    name="flFatturaElettronica"
+                                                    checked={formData.flFatturaElettronica === 1}
+                                                    onChange={handleHeaderChange}
+                                                />
+                                                <label htmlFor="flFatturaElettronica" style={{ marginLeft: '8px' }}>Elettronica</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="compact-col compact-col-xl">
+                                        <EntitySelectGroup
+                                            label="Cliente"
+                                            isAsync={true}
+                                            loadOptions={loadClienti}
+                                            value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente } : null}
+                                            onChange={handleSelectCliente}
+                                            ModalComponent={ClientiManagementModal}
+                                            title="Gestione Clienti"
+                                            placeholder="Cerca cliente..."
+                                            widthClass="w-lg"
+                                        />
+                                    </div>
+                                    <div className="compact-col compact-col-md">
+                                        <EntitySelectGroup
+                                            label="Agente"
+                                            isAsync={false}
+                                            options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
+                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
+                                            ModalComponent={AgentiManagementModal}
+                                            title="Gestione Agenti"
+                                            placeholder="Seleziona agente..."
+                                            widthClass="w-md"
+                                        />
+                                    </div>
                                 </div>
-                                <div className="compact-col compact-col-xl">
-                                    <EntitySelectGroup
-                                        label="Cliente"
-                                        isAsync={true}
-                                        loadOptions={loadClienti}
-                                        value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente } : null}
-                                        onChange={handleSelectCliente}
-                                        ModalComponent={ClientiManagementModal}
-                                        title="Gestione Clienti"
-                                        placeholder="Cerca cliente..."
-                                        widthClass="w-lg"
-                                    />
-                                </div>
-                                <div className="compact-col compact-col-md">
-                                    <EntitySelectGroup
-                                        label="Agente"
-                                        isAsync={false}
-                                        options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                        value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente } : null}
-                                        onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
-                                        ModalComponent={AgentiManagementModal}
-                                        title="Gestione Agenti"
-                                        placeholder="Seleziona agente..."
-                                        widthClass="w-md"
-                                    />
-                                </div>
+
+                                {formData.flFatturaElettronica === 1 && (
+                                    <div className="compact-row" style={{ marginTop: '10px', background: '#e3f2fd', padding: '10px', borderRadius: '4px', border: '1px solid #90caf9' }}>
+                                        <div className="compact-col compact-col-md">
+                                            <div className="form-group mb-0">
+                                                <label>Codice Univoco (SDI)</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control premium-input"
+                                                    name="codiceUfficioDestinazione"
+                                                    value={formData.codiceUfficioDestinazione || ''}
+                                                    onChange={handleHeaderChange}
+                                                    placeholder="XXXXXXX"
+                                                    maxLength={7}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="compact-col compact-col-lg">
+                                            <div className="form-group mb-0">
+                                                <label>PEC</label>
+                                                <input
+                                                    type="email"
+                                                    className="form-control premium-input"
+                                                    name="pec"
+                                                    value={formData.pec || ''}
+                                                    onChange={handleHeaderChange}
+                                                    placeholder="indirizzo@pec.it"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="compact-col compact-col-md" style={{ alignSelf: 'center', color: '#1976d2', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                                            <FaWrench style={{ marginRight: '5px' }} /> Dati per Fatturazione Elettronica
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <hr />
@@ -695,122 +798,152 @@ const FattureDetail = () => {
 
                         {/* Tab Articoli */}
                         <div className={`tab-pane ${activeTab === 'articoli' ? 'active' : ''}`}>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <DocumentRows
-                                        rows={prodotti}
-                                        onRowChange={handleRecalculate}
-                                        onRowUpdate={(idx, update) => {
-                                            const newP = [...prodotti];
-                                            newP[idx] = { ...newP[idx], ...update };
-                                            setProdotti(newP);
-                                        }}
-                                        onDeleteRow={(idx) => {
-                                            const newP = [...prodotti];
-                                            newP.splice(idx, 1);
-                                            setProdotti(newP);
-                                        }}
-                                        combos={combos}
-                                        isCeramica={isCeramica}
-                                    />
-                                </div>
-                            </div>
+                            <DocumentRows
+                                rows={prodotti}
+                                onRowChange={handleRecalculate}
+                                onRowUpdate={(idx, update) => {
+                                    const newP = [...prodotti];
+                                    newP[idx] = { ...newP[idx], ...update };
+                                    setProdotti(newP);
+                                }}
+                                onDeleteRow={(idx) => {
+                                    const newP = [...prodotti];
+                                    newP.splice(idx, 1);
+                                    setProdotti(newP);
+                                }}
+                                combos={combos}
+                                isCeramica={isCeramica}
+                            />
                         </div>
 
                         {/* Tab Pagamento */}
                         <div className={`tab-pane ${activeTab === 'pagamento' ? 'active' : ''}`}>
-                            <div className="row mb-4">
-                                <div className="col-md-4">
-                                    <EntitySelectGroup
-                                        label="Tipo Pagamento"
-                                        isAsync={false}
-                                        options={(combos.tipiPagamento || []).map(tp => ({ value: tp.id, label: tp.descrizione }))}
-                                        value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: combos.tipiPagamento.find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
-                                        onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
-                                        ModalComponent={TipiPagamentoManagementModal}
-                                        modalProps={{ isOpen: false }}
-                                        title="Gestione Tipi Pagamento"
-                                        placeholder="Seleziona..."
-                                        onModalClose={fetchCombos}
-                                    />
-                                </div>
-                                <div className="col-md-4">
-                                    <div className="form-group">
-                                        <label>Listino</label>
-                                        <div className="input-group input-group-premium">
-                                            <select className="form-control" name="idListino" value={formData.idListino || ''} onChange={handleHeaderChange} style={{ height: '38px', borderTopRightRadius: 0, borderBottomRightRadius: 0, borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' }}>
-                                                <option value="">Predefinito</option>
-                                                {combos.listini.map(l => <option key={l.id} value={l.id}>{l.descrizione}</option>)}
-                                            </select>
-                                            <button type="button" className="premium-wrench-btn" onClick={() => navigate('/configurazione/listini')} title="Gestione Listini">
-                                                <FaWrench />
-                                            </button>
+                            <div className="tab-padding-wrapper">
+                                <div className="row mb-4">
+                                    <div className="col-md-4">
+                                        <EntitySelectGroup
+                                            label="Tipo Pagamento"
+                                            isAsync={false}
+                                            options={(combos.tipiPagamento || []).map(tp => ({ value: tp.id, label: tp.descrizione }))}
+                                            value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: (combos.tipiPagamento || []).find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
+                                            ModalComponent={TipiPagamentoManagementModal}
+                                            modalProps={{ isOpen: false }}
+                                            title="Gestione Tipi Pagamento"
+                                            placeholder="Seleziona..."
+                                            onModalClose={fetchCombos}
+                                        />
+                                    </div>
+                                    <div className="col-md-4">
+                                        <div className="form-group">
+                                            <label>Listino</label>
+                                            <div className="input-group input-group-premium">
+                                                <select className="form-control" name="idListino" value={formData.idListino || ''} onChange={handleHeaderChange} style={{ height: '38px', borderTopRightRadius: 0, borderBottomRightRadius: 0, borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' }}>
+                                                    <option value="">Predefinito</option>
+                                                    {(combos.listini || []).map(l => <option key={l.id} value={l.id}>{l.descrizione}</option>)}
+                                                </select>
+                                                <button type="button" className="premium-wrench-btn" onClick={() => navigate('/configurazione/listini')} title="Gestione Listini">
+                                                    <FaWrench />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="col-md-4">
+                                        <EntitySelectGroup
+                                            label="Nostra Banca"
+                                            isAsync={false}
+                                            options={(combos.risorse || []).map(r => ({ value: r.id, label: r.descrizione }))}
+                                            value={formData.idNsBanca ? { value: formData.idNsBanca, label: (combos.risorse || []).find(r => r.id === formData.idNsBanca)?.descrizione } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idNsBanca: opt?.value }))}
+                                            ModalComponent={RisorseManagementModal}
+                                            modalProps={{ initialTipologia: 'BA', isOpen: false }}
+                                            title="Gestione Banche"
+                                            placeholder="Seleziona..."
+                                            onModalClose={fetchCombos}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="col-md-4">
-                                    <EntitySelectGroup
-                                        label="Nostra Banca"
-                                        isAsync={false}
-                                        options={(combos.risorse || []).map(r => ({ value: r.id, label: r.descrizione }))}
-                                        value={formData.idNsBanca ? { value: formData.idNsBanca, label: combos.risorse.find(r => r.id === formData.idNsBanca)?.descrizione } : null}
-                                        onChange={(opt) => setFormData(prev => ({ ...prev, idNsBanca: opt?.value }))}
-                                        ModalComponent={RisorseManagementModal}
-                                        modalProps={{ initialTipologia: 'BA', isOpen: false }}
-                                        title="Gestione Banche"
-                                        placeholder="Seleziona..."
-                                        onModalClose={fetchCombos}
-                                    />
+                                <div className="row">
+                                    <div className="col-md-4">
+                                        <div className="form-group mb-0" style={{ marginTop: '25px' }}>
+                                            <div className="premium-checkbox-group">
+                                                <input
+                                                    type="checkbox"
+                                                    id="splitPayment"
+                                                    name="splitPayment"
+                                                    checked={formData.splitPayment === 1}
+                                                    onChange={handleHeaderChange}
+                                                />
+                                                <label htmlFor="splitPayment" style={{ marginLeft: '8px' }}>Split Payment</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-8">
+                                        <div className="form-group">
+                                            <label>Causale</label>
+                                            <input
+                                                type="text"
+                                                className="form-control premium-input"
+                                                name="causale"
+                                                value={formData.causale || ''}
+                                                onChange={handleHeaderChange}
+                                                placeholder="Causale del documento..."
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Tab Note */}
                         <div className={`tab-pane ${activeTab === 'note' ? 'active' : ''}`}>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="form-group">
-                                        <label>Annotazioni estese</label>
-                                        <textarea
-                                            className="form-control"
-                                            rows="10"
-                                            name="annotazioneEstesa"
-                                            value={formData.annotazioneEstesa || ''}
-                                            onChange={handleHeaderChange}
-                                        ></textarea>
-                                    </div>
+                            <div className="tab-padding-wrapper">
+                                <div className="form-group">
+                                    <label>Annotazioni estese</label>
+                                    <textarea
+                                        className="form-control"
+                                        rows="10"
+                                        name="annotazioneEstesa"
+                                        value={formData.annotazioneEstesa || ''}
+                                        onChange={handleHeaderChange}
+                                    ></textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="form-actions-floating">
-                            <button type="button" className="btn btn-secondary" onClick={() => navigate('/fatture')}>
+                        <footer className="main-box-footer detail-footer">
+                            <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/fatture')}>
                                 <FaArrowLeft /> Indietro
                             </button>
-                            <div className="split-btn-container" ref={saveMenuRef}>
-                                <button type="submit" className="split-btn-main btn btn-success">
-                                    <FaSave /> Salva
-                                </button>
-                                <button type="button" className="split-btn-toggle" onClick={() => setShowSaveMenu(!showSaveMenu)}>
-                                    <FaCaretDown />
-                                </button>
-                                <div className={`split-btn-menu ${showSaveMenu ? 'show' : ''}`}>
-                                    <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { print: true })}>
-                                        <FaPrint /> Salva e Stampa
+                            <div className="footer-right">
+                                <div className="split-btn-container" ref={saveMenuRef}>
+                                    <button type="submit" className="split-btn-main btn-premium-save">
+                                        <FaSave /> Salva
                                     </button>
-                                    <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { pdf: true })}>
-                                        <FaFilePdf /> Salva e PDF
+                                    <button type="button" className="split-btn-toggle" onClick={() => setShowSaveMenu(!showSaveMenu)}>
+                                        <FaCaretDown />
                                     </button>
-                                    <div className="divider"></div>
-                                    <button type="button" className="split-btn-item" onClick={async () => {
-                                        const savedId = await saveFattura();
-                                        if (savedId) navigate(`/note-credito/new?fromFatture=${savedId}`);
-                                    }}>
-                                        <FaArrowRight /> Genera nota credito
-                                    </button>
+                                    <div className={`split-btn-menu ${showSaveMenu ? 'show' : ''}`}>
+                                        <button type="button" className="split-btn-item" onClick={handleSave}>
+                                            <FaSave /> Salva solo
+                                        </button>
+                                        <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { print: true })}>
+                                            <FaPrint /> Stampa Diretto
+                                        </button>
+                                        <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { pdf: true })}>
+                                            <FaFilePdf /> Esporta PDF
+                                        </button>
+                                        <div className="action-dropdown-divider"></div>
+                                        <button type="button" className="split-btn-item" onClick={async () => {
+                                            const savedId = await saveFattura();
+                                            if (savedId) navigate(`/note-credito/new?fromFatture=${savedId}`);
+                                        }}>
+                                            <FaArrowRight /> Genera nota credito
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </footer>
                     </form>
                 </div>
             </div>

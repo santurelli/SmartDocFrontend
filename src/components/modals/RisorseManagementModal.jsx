@@ -280,16 +280,16 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Elenco risorse</h4>
+                        <h4 className="modal-title">Elenco risorse</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
+                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
                         {/* Toolbar */}
-                        <div className="row" style={{ marginBottom: '15px' }}>
-                            <div className="col-md-4 form-inline">
-                                <label style={{ fontWeight: 'normal' }}>Mostra
+                        <div className="modal-toolbar">
+                            <div className="toolbar-left">
+                                <div className="toolbar-item">
+                                    <span>Mostra</span>
                                     <select
                                         className="form-control input-sm"
-                                        style={{ margin: '0 5px', width: 'auto', display: 'inline-block' }}
                                         value={pageSize}
                                         onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
                                     >
@@ -298,12 +298,15 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                                         <option value="50">50</option>
                                         <option value="100">100</option>
                                     </select>
-                                    righe per pagina</label>
+                                    <span>righe</span>
+                                </div>
                             </div>
-                            <div className="col-md-8 text-right form-inline">
-                                <div className="form-group" style={{ display: 'inline-block', marginRight: '10px' }}>
+
+                            <div className="toolbar-right">
+                                <div className="toolbar-item">
                                     <select
                                         className="form-control input-sm"
+                                        style={{ minWidth: '150px' }}
                                         value={searchTipologia}
                                         onChange={(e) => { setSearchTipologia(e.target.value); setCurrentPage(1); }}
                                     >
@@ -314,14 +317,15 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                                         <option value="TI">Titoli</option>
                                     </select>
                                 </div>
-                                <div className="form-group" style={{ display: 'inline-block', marginRight: '10px' }}>
+                                <div className="toolbar-search-wrapper">
                                     <input
                                         type="text"
-                                        className="form-control input-sm"
+                                        className="form-control"
                                         placeholder="Cerca..."
                                         value={searchTerm}
                                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                                     />
+                                    <i className="fa fa-search"></i>
                                 </div>
                                 <button type="button" className="btn btn-primary" onClick={handleAdd}>
                                     <FaPlus /> Aggiungi

@@ -266,24 +266,30 @@ const AliquoteIvaManagementModal = ({ isOpen, onClose, onSave }) => {
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content premium-modal-content">
                     <div className="modal-header">
-                        <button type="button" className="close" onClick={onClose} aria-label="Close">
+                        <button type="button" className="close" onClick={onClose} aria-label="Close" style={{ opacity: 1, color: '#333' }}>
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Aliquote IVA</h4>
+                        <h4 className="modal-title">Gestione Aliquote IVA</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
-                        <div className="row" style={{ marginBottom: '15px' }}>
-                            <div className="col-md-6">
+                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+                        {/* Toolbar */}
+                        <div className="modal-toolbar">
+                            <div className="toolbar-left">
+                                <div className="toolbar-item">
+                                    <span>Mostra 10 righe</span>
+                                </div>
                             </div>
-                            <div className="col-md-6 text-right form-inline">
-                                <div className="form-group" style={{ display: 'inline-block', marginRight: '10px' }}>
+
+                            <div className="toolbar-right">
+                                <div className="toolbar-search-wrapper">
                                     <input
                                         type="text"
-                                        className="form-control input-sm"
+                                        className="form-control"
                                         placeholder="Cerca..."
                                         value={search}
                                         onChange={handleSearch}
                                     />
+                                    <i className="fa fa-search"></i>
                                 </div>
                                 <button className="btn btn-primary" onClick={handleAdd}>
                                     <FaPlus /> Aggiungi

@@ -80,28 +80,46 @@ const ClientiManagementModal = ({ onClose }) => {
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">
-                    <div className="modal-header bg-primary" style={{ color: 'white', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
-                        <button type="button" className="close" onClick={onClose} style={{ color: 'white', opacity: 0.8 }}>
+                    <div className="modal-header">
+                        <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Clienti</h4>
+                        <h4 className="modal-title">Gestione Clienti</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', padding: '25px' }}>
+                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
                         {/* Toolbar */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-                            <button className="btn btn-success" onClick={handleAdd}>
-                                <FaPlus style={{ marginRight: '8px' }} /> Nuovo Cliente
-                            </button>
-                            <div style={{ position: 'relative', flex: '0 0 300px' }}>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    style={{ borderRadius: '10px', paddingRight: '35px', height: '40px' }}
-                                    placeholder="Cerca cliente..."
-                                    value={searchTerm}
-                                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                />
-                                <i className="fa fa-search" style={{ position: 'absolute', right: '12px', top: '12px', color: '#ccc' }}></i>
+                        <div className="modal-toolbar">
+                            <div className="toolbar-left">
+                                <div className="toolbar-item">
+                                    <span>Mostra</span>
+                                    <select
+                                        className="form-control input-sm"
+                                        value={pageSize}
+                                        onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                    >
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span>righe</span>
+                                </div>
+                            </div>
+
+                            <div className="toolbar-right">
+                                <div className="toolbar-search-wrapper">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Cerca cliente..."
+                                        value={searchTerm}
+                                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                    />
+                                    <i className="fa fa-search"></i>
+                                </div>
+                                <button className="btn btn-primary" onClick={handleAdd}>
+                                    <FaPlus /> Nuovo Cliente
+                                </button>
                             </div>
                         </div>
 
@@ -180,15 +198,15 @@ const ClientiManagementModal = ({ onClose }) => {
                     <div className="modal-footer" style={{ borderTop: '1px solid #f0f0f0', padding: '15px 25px' }}>
                         <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
             <ClienteEditModal
                 isOpen={showEditModal}
                 onClose={() => setShowEditModal(false)}
                 clienteId={selectedId}
                 onSave={loadData}
             />
-        </div>
+        </div >
     );
 };
 

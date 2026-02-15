@@ -18,7 +18,7 @@
     background: #fff;
     padding: 10px 15px;
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
     display: flex;
     flex-direction: column;
     min-width: 120px;
@@ -53,11 +53,11 @@
 .detail-box {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+    box-shadow: none;
 }
 
 .nav-tabs {
-    border-bottom: 1px solid #eee;
+    border-bottom: none;
     padding: 0 30px;
     background: #fdfdfd;
 }
@@ -128,13 +128,13 @@
     align-items: center;
     gap: 8px;
     transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(3, 169, 244, 0.2);
+    box-shadow: none;
 }
 
 .btn-vibrant-add:hover {
     background: #039be5;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(3, 169, 244, 0.3);
+    box-shadow: none;
     color: white;
 }
 
@@ -229,17 +229,17 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid #eee;
+    border-top: none;
 }
 
 .btn-premium-save {
-    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    background: #2ecc71;
     color: white;
     border: none;
     padding: 10px 25px;
     border-radius: 30px;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    box-shadow: none;
     transition: all 0.3s;
     display: flex;
     align-items: center;
@@ -248,7 +248,7 @@
 
 .btn-premium-save:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    box-shadow: none;
     color: white;
 }
 
@@ -425,7 +425,7 @@
     padding: 10px 25px;
     border-radius: 30px;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    box-shadow: none;
     transition: all 0.3s;
     display: flex;
     align-items: center;
@@ -434,7 +434,7 @@
 
 .btn-premium-print:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    box-shadow: none;
     color: white;
 }
 
@@ -451,13 +451,13 @@
     align-items: stretch;
     vertical-align: middle;
     border-radius: 30px;
-    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+    box-shadow: none;
     transition: all 0.3s;
-    background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    background: #2ecc71;
 }
 
 .split-btn-container:hover {
-    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+    box-shadow: none;
     transform: translateY(-2px);
 }
 
@@ -516,11 +516,11 @@
     margin-bottom: 8px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    box-shadow: none;
     padding: 8px 0;
     min-width: 200px;
     z-index: 1000;
-    border: 1px solid #f0f0f0;
+    border: none;
     display: none;
     transform-origin: bottom right;
 }

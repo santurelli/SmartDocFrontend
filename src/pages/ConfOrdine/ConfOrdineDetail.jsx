@@ -70,6 +70,18 @@ const particellaSelectStyles = {
         boxShadow: 'none',
         backgroundColor: '#f8f9fa',
         '&:hover': { borderColor: '#ccc' }
+    }),
+    valueContainer: (base) => ({
+        ...base,
+        padding: '0 4px',
+    }),
+    dropdownIndicator: (base) => ({
+        ...base,
+        padding: '4px',
+    }),
+    clearIndicator: (base) => ({
+        ...base,
+        padding: '4px',
     })
 };
 
@@ -711,7 +723,7 @@ const ConfOrdineDetail = () => {
                                                 onChange={handleHeaderChange}
                                             />
                                             <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
-                                            <div style={{ flex: '0 0 100px' }}>
+                                            <div style={{ flex: '0 0 130px' }}>
                                                 <CreatableSelect
                                                     isClearable
                                                     options={combos.particelle.map(p => ({ value: p, label: p }))}
@@ -964,31 +976,27 @@ const ConfOrdineDetail = () => {
 
                         {/* Tab Articoli */}
                         <div className={`tab-pane ${activeTab === 'articoli' ? 'active' : ''}`}>
-                            <div className="premium-card mb-3">
-                                <div className="card-body">
-                                    <DocumentRows
-                                        rows={prodotti}
-                                        onRowChange={handleRowChange}
-                                        onRowUpdate={handleRowUpdate}
-                                        onDeleteRow={handleDeleteRow}
-                                        combos={combos}
-                                        isCeramica={isCeramica}
-                                        showDownloadColumn={false}
-                                    >
-                                        <div className="table-row-add-toolbar">
-                                            <button type="button" className="btn-add-inline" onClick={handleAddArticolo}>
-                                                <FaPlus /> ARTICOLO
-                                            </button>
-                                            <button type="button" className="btn-add-inline fm" onClick={handleAddFM}>
-                                                <FaPlus /> FUORI MAGAZZINO
-                                            </button>
-                                            <button type="button" className="btn-add-inline note" onClick={handleAddNota}>
-                                                <FaPlus /> NOTA
-                                            </button>
-                                        </div>
-                                    </DocumentRows>
+                            <DocumentRows
+                                rows={prodotti}
+                                onRowChange={handleRowChange}
+                                onRowUpdate={handleRowUpdate}
+                                onDeleteRow={handleDeleteRow}
+                                combos={combos}
+                                isCeramica={isCeramica}
+                                showDownloadColumn={false}
+                            >
+                                <div className="table-row-add-toolbar">
+                                    <button type="button" className="btn-add-inline" onClick={handleAddArticolo}>
+                                        <FaPlus /> ARTICOLO
+                                    </button>
+                                    <button type="button" className="btn-add-inline fm" onClick={handleAddFM}>
+                                        <FaPlus /> FUORI MAGAZZINO
+                                    </button>
+                                    <button type="button" className="btn-add-inline note" onClick={handleAddNota}>
+                                        <FaPlus /> NOTA
+                                    </button>
                                 </div>
-                            </div>
+                            </DocumentRows>
                         </div>
 
                         {/* Tab Note */}

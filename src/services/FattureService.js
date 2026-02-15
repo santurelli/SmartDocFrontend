@@ -1,8 +1,9 @@
 import api from './api';
+import authService from './authService';
 
 const FattureService = {
     getList: (params) => {
-        return api.post('/fatture/list', params);
+        return api.get('/fatture', { params });
     },
 
     getById: (id) => {
@@ -10,22 +11,24 @@ const FattureService = {
     },
 
     getCombosMap: () => {
-        return api.get('/fatture/combos-map');
+        return api.get('/fatture/combos');
     },
 
-    getNextNum: (data) => {
-        return api.get('/fatture/nextNum', { params: { data } });
+    getNextNum: (data, flElettronica, tipo) => {
+        return api.get('/fatture/nextNum', { params: { data, flElettronica, tipo } });
     },
 
     save: (data) => {
-        if (data.id) {
-            return api.put(`/fatture/${data.id}`, data);
-        }
         return api.post('/fatture', data);
     },
 
     delete: (id) => {
-        return api.delete(`/fatture/${id}`);
+        const user = authService.getCurrentUser()?.id;
+        return api.delete(`/fatture/${id}`, { params: { user } });
+    },
+
+    print: (id) => {
+        return api.get(`/fatture/print/${id}`, { responseType: 'blob' });
     }
 };
 

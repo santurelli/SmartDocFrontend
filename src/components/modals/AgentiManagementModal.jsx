@@ -80,41 +80,42 @@ const AgentiManagementModal = ({ onClose }) => {
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">
-                    <div className="modal-header bg-primary" style={{ color: 'white', borderTopLeftRadius: '6px', borderTopRightRadius: '6px' }}>
-                        <button type="button" className="close" onClick={onClose} style={{ color: 'white', opacity: 0.8 }}>&times;</button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Agenti</h4>
+                    <div className="modal-header">
+                        <button type="button" className="close" onClick={onClose} aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 className="modal-title">Gestione Agenti</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto', padding: '30px' }}>
-
+                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
                         {/* Toolbar */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '15px' }}>
-                            <div className="form-inline items-per-page" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <span>Visualizza</span>
-                                <select
-                                    className="form-control input-sm"
-                                    style={{ width: 'auto', display: 'inline-block' }}
-                                    value={pageSize}
-                                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                                >
-                                    <option value="10">10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                                <span>elementi per pagina</span>
+                        <div className="modal-toolbar">
+                            <div className="toolbar-left">
+                                <div className="toolbar-item">
+                                    <span>Mostra</span>
+                                    <select
+                                        className="form-control input-sm"
+                                        value={pageSize}
+                                        onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                    >
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span>righe</span>
+                                </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <div style={{ position: 'relative' }}>
+                            <div className="toolbar-right">
+                                <div className="toolbar-search-wrapper">
                                     <input
                                         type="text"
                                         className="form-control"
-                                        style={{ paddingRight: '35px' }}
                                         placeholder="Cerca agente..."
                                         value={searchTerm}
                                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                                     />
-                                    <i className="fa fa-search" style={{ position: 'absolute', right: '10px', top: '10px', color: '#ccc' }}></i>
+                                    <i className="fa fa-search"></i>
                                 </div>
                                 <button className="btn btn-primary" onClick={handleAdd}>
                                     <FaPlus /> Nuovo Agente
@@ -197,15 +198,15 @@ const AgentiManagementModal = ({ onClose }) => {
                     <div className="modal-footer">
                         <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
             <AgenteEditModal
                 isOpen={showEditModal}
                 onClose={() => setShowEditModal(false)}
                 agenteId={selectedId}
                 onSave={loadData}
             />
-        </div>
+        </div >
     );
 };
 

@@ -25,8 +25,8 @@ const ConfOrdineList = () => {
         dtTo: '',
         currentPage: 0,
         pageSize: 50,
-        sortCol: 0,
-        sortDir: 'asc',
+        sortCol: 'data_confordine',
+        sortDir: 'desc',
         selectedCliente: null,
         selectedAgente: null,
         showFilters: true
@@ -45,8 +45,8 @@ const ConfOrdineList = () => {
     // Pagination
     const [currentPage, setCurrentPage] = useState(initialState.currentPage);
     const [pageSize, setPageSize] = useState(initialState.pageSize);
-    const [sortCol, setSortCol] = useState(initialState.sortCol);
-    const [sortDir, setSortDir] = useState(initialState.sortDir);
+    const [sortCol, setSortCol] = useState(initialState.sortCol || 'data_confordine');
+    const [sortDir, setSortDir] = useState(initialState.sortDir || 'desc');
 
     // Dropdowns data
     const [agentiOptions, setAgentiOptions] = useState([]);
@@ -193,13 +193,17 @@ const ConfOrdineList = () => {
         }
     };
 
-    const handleSort = (colIndex) => {
-        setSortCol(colIndex);
-        setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    const handleSort = (column) => {
+        if (sortCol === column) {
+            setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortCol(column);
+            setSortDir('asc');
+        }
     };
 
-    const renderSortIcon = (colIndex) => {
-        if (sortCol !== colIndex) return <span className="sort-icon">▼</span>;
+    const renderSortIcon = (column) => {
+        if (sortCol !== column) return <span className="sort-icon" style={{ opacity: 0.3 }}>▼</span>;
         return <span className="sort-icon">{sortDir === 'asc' ? '▲' : '▼'}</span>;
     };
 
@@ -367,10 +371,10 @@ const ConfOrdineList = () => {
                                             checked={selectedIds.length === conferme.length && conferme.length > 0}
                                         />
                                     </th>
-                                    <th onClick={() => handleSort(0)} style={{ cursor: 'pointer' }}>Data {renderSortIcon(0)}</th>
-                                    <th onClick={() => handleSort(1)} style={{ cursor: 'pointer' }}>Numero {renderSortIcon(1)}</th>
-                                    <th onClick={() => handleSort(2)} style={{ cursor: 'pointer' }}>Cliente {renderSortIcon(2)}</th>
-                                    <th onClick={() => handleSort(3)} style={{ cursor: 'pointer' }}>Agente {renderSortIcon(3)}</th>
+                                    <th onClick={() => handleSort('data_confordine')} style={{ cursor: 'pointer' }}>Data {renderSortIcon('data_confordine')}</th>
+                                    <th onClick={() => handleSort('num_confordine')} style={{ cursor: 'pointer' }}>Numero {renderSortIcon('num_confordine')}</th>
+                                    <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>Cliente {renderSortIcon('d_e_clienti.denominazione')}</th>
+                                    <th onClick={() => handleSort('d_e_agenti.denominazione')} style={{ cursor: 'pointer' }}>Agente {renderSortIcon('d_e_agenti.denominazione')}</th>
                                     <th>Stato</th>
                                     <th style={{ width: '1%' }}></th>
                                 </tr>
@@ -455,7 +459,7 @@ const ConfOrdineList = () => {
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

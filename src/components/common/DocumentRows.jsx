@@ -230,7 +230,7 @@ const DocumentRows = ({
                                             <div className="cell-select-group">
                                                 <select className="form-control input-sm" value={row.idUnitaMisura || ''} onChange={(e) => onRowChange(idx, 'idUnitaMisura', e.target.value)} disabled={readOnly}>
                                                     <option value="">-</option>
-                                                    {combos.unitaMisura.map(u => <option key={u.id} value={u.id}>{u.codice}</option>)}
+                                                    {(combos.unitaMisura || []).map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
                                                 </select>
                                             </div>
                                         </td>
@@ -240,7 +240,7 @@ const DocumentRows = ({
                                             <div className="cell-select-group">
                                                 <select className="form-control input-sm" value={row.idAliquotaIva || ''} onChange={(e) => onRowChange(idx, 'idAliquotaIva', e.target.value)} disabled={readOnly}>
                                                     <option value="">-</option>
-                                                    {combos.aliquoteIva.map(a => <option key={a.id} value={a.id}>{a.codice}</option>)}
+                                                    {(combos.aliquoteIva || []).map(a => <option key={a.id} value={a.id}>{a.codice}</option>)}
                                                 </select>
                                             </div>
                                         </td>

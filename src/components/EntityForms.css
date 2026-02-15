@@ -1,8 +1,37 @@
-/* Shared styles for Fornitore and Cliente forms - Responsive Refined */
 .entity-form-shared {
     padding: 20px;
     overflow-x: hidden;
-    background-color: #fff;
+    background-color: #f8f9fa;
+    /* Lighter background for the container */
+}
+
+.main-box,
+.detail-box,
+.premium-card,
+.address-card,
+.nav-tabs,
+.nav-tabs-custom {
+    background: #fff;
+    border-radius: 8px;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.main-box-body {
+    padding: 25px 0px !important;
+    /* Forces zero horizontal padding to avoid double spacing */
+}
+
+.tab-content,
+.tab-pane {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.tab-padding-wrapper {
+    padding: 0 15px;
 }
 
 .entity-form-shared .row {
@@ -77,7 +106,7 @@
 }
 
 .entity-form-shared .nav-tabs-custom {
-    border-bottom: 2px solid #f0f0f0;
+    border-bottom: none;
     margin-bottom: 30px;
     display: flex;
     padding-left: 0 !important;
@@ -295,13 +324,23 @@
 .smart-tab {
     background: #f0f0f0;
     padding: 8px 16px;
+    border: 1px solid transparent;
     border-radius: 20px;
     cursor: pointer;
     font-size: 13px;
     position: relative;
     padding-right: 32px;
     transition: all 0.2s;
-    border: 1px solid transparent;
+}
+
+.premium-card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    height: 100%;
+    background: #fff;
+    transition: transform 0.2s;
+    box-shadow: none;
 }
 
 .smart-tab.active {
@@ -319,6 +358,18 @@
     font-weight: bold;
     cursor: pointer;
     opacity: 0.6;
+}
+
+.card-header-vibrant {
+    background: #f8f9fa;
+    padding: 12px 18px;
+    border-bottom: none;
+    font-weight: 700;
+    font-size: 13px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-add-tab {
@@ -457,7 +508,7 @@
 .entity-form-shared .form-actions {
     margin-top: 40px;
     padding-top: 25px;
-    border-top: 1px solid #dfe4e7;
+    border-top: none;
     display: flex !important;
     justify-content: flex-end !important;
     gap: 12px !important;
@@ -511,4 +562,58 @@
         width: 95%;
         max-width: 1400px;
     }
+}
+
+/* MODAL TOOLBAR UTILITIES */
+.modal-toolbar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 20px !important;
+    gap: 15px !important;
+    width: 100% !important;
+}
+
+.toolbar-left,
+.toolbar-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.toolbar-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    color: #555;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.toolbar-item .form-control {
+    margin: 0 !important;
+}
+
+.toolbar-item select.input-sm {
+    width: auto !important;
+    min-width: 70px;
+}
+
+.toolbar-search-wrapper {
+    position: relative;
+    width: 250px;
+}
+
+.toolbar-search-wrapper .form-control {
+    padding-right: 35px !important;
+    border-radius: 20px !important;
+}
+
+.toolbar-search-wrapper .fa-search {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ccc;
+    pointer-events: none;
 }
