@@ -19,8 +19,15 @@ const NoteCreditoList = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [note, setNote] = useState([]);
+    const [total, setTotal] = useState(0);
     const [selectedIds, setSelectedIds] = useState([]);
     const [activeActionMenu, setActiveActionMenu] = useState(null);
+
+    const [pageSize, setPageSize] = useState((() => {
+        const saved = storageHelper.loadState('note_credito_filters', {});
+        return saved.pageSize || 50;
+    })());
+    const [currentPage, setCurrentPage] = useState(0);
 
     const [filters, setFilters] = useState(() => {
         return storageHelper.loadState('note_credito_filters', {
@@ -46,7 +53,7 @@ const NoteCreditoList = () => {
         const handleClickOutside = () => setActiveActionMenu(null);
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
-    }, []);
+    }, [currentPage, pageSize]);
 
     const fetchAgenti = async () => {
         try {
@@ -60,7 +67,7 @@ const NoteCreditoList = () => {
     const handleSearch = async (e) => {
         if (e) e.preventDefault();
         setLoading(true);
-        storageHelper.saveState('note_credito_filters', filters);
+        storageHelper.saveState('note_credito_filters', { ...filters, pageSize });
         try {
             const params = {
                 dataInizio: filters.dataDa,
@@ -71,11 +78,12 @@ const NoteCreditoList = () => {
                 stato: filters.idStato,
                 orderColumn: filters.orderBy || 'data_notacredito',
                 orderDir: filters.orderDir || 'DESC',
-                start: 0,
-                length: 100
+                start: currentPage * pageSize,
+                length: pageSize
             };
             const res = await NoteCreditoService.getList(params);
             setNote(res.data?.payload || []);
+            setTotal(res.data?.totalCount || 0);
         } catch (error) {
             console.error(error);
         } finally {
@@ -118,10 +126,10 @@ const NoteCreditoList = () => {
             numDocumento: filters.numDocumento,
             orderColumn: column,
             orderDir: newDir,
-            start: 0,
-            length: 100
+            start: currentPage * pageSize,
+            length: pageSize
         };
-        storageHelper.saveState('note_credito_filters', { ...filters, orderBy: column, orderDir: newDir });
+        storageHelper.saveState('note_credito_filters', { ...filters, orderBy: column, orderDir: newDir, pageSize });
 
         NoteCreditoService.getList(params).then(res => {
             setNote(res.data?.payload || []);
@@ -263,10 +271,13 @@ const NoteCreditoList = () => {
                 <div className="toolbar-left">
                     <div className="rows-per-page">
                         <span>Mostra</span>
-                        <select value={50} disabled>
+                        <select value={pageSize} onChange={e => { setPageSize(parseInt(e.target.value)); setCurrentPage(0); }}>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
                             <option value={50}>50</option>
+                            <option value={100}>100</option>
                         </select>
-                        <span>righe</span>
+                        <span>righe per pagina</span>
                     </div>
 
                     {selectedIds.length > 0 && (
@@ -456,7 +467,11 @@ const NoteCreditoList = () => {
                     </div>
 
                     <div className="pagination-container">
-                        <span className="pagination-info">Visualizzati {note.length} risultati</span>
+                        <span className="pagination-info">Visualizzati {note.length} di {total} risultati</span>
+                        <div className="btn-group">
+                            <button className="btn btn-paginate" disabled={currentPage === 0} onClick={() => setCurrentPage(c => c - 1)}><FaChevronLeft /></button>
+                            <button className="btn btn-paginate" disabled={(currentPage + 1) * pageSize >= total} onClick={() => setCurrentPage(c => c + 1)}><FaChevronRight /></button>
+                        </div>
                     </div>
                 </div>
             </div>

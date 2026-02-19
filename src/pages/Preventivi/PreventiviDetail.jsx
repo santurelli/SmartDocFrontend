@@ -167,10 +167,13 @@ const PreventiviDetail = () => {
         particella: '',
         idCliente: null,
         denominazione: '',
+        denominazioneCliente: '',
         idAgente: null,
         nomeAgente: '',
+        agente: '',
         idProgetto: null,
         nomeProgetto: '',
+        progetto: '',
         idTipoPagamento: null,
         idListino: null,
         idNsBanca: null,
@@ -556,7 +559,7 @@ const PreventiviDetail = () => {
     };
 
     const handleSave = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
         const savedId = await savePreventivo();
         if (savedId) {
             Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
@@ -735,7 +738,7 @@ const PreventiviDetail = () => {
                                         <EntitySelectGroup
                                             label="Cliente"
                                             loadOptions={loadClienti}
-                                            value={formData.idCliente ? { value: formData.idCliente, label: formData.denominazione } : null}
+                                            value={formData.idCliente ? { value: formData.idCliente, label: formData.denominazione || formData.denominazioneCliente } : null}
                                             onChange={(opt) => {
                                                 const c = opt?.data || {};
                                                 setFormData(prev => ({
@@ -766,7 +769,7 @@ const PreventiviDetail = () => {
                                             label="Agente"
                                             isAsync={false}
                                             options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente } : null}
+                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
                                             ModalComponent={AgentiManagementModal}
                                             title="Gestione Agenti"
@@ -795,22 +798,22 @@ const PreventiviDetail = () => {
                                             <div className="card-body">
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
-                                                        <label className="premium-label">Indirizzo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione} onChange={handleHeaderChange} />
+                                                        <label className="premium-label">Indi<span>riz</span>zo</label>
+                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
-                                                        <label className="premium-label">Città</label>
-                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione} onChange={handleHeaderChange} />
+                                                        <label className="premium-label">Cit<span>tà</span></label>
+                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                     <div className="col-md-2">
-                                                        <label className="premium-label">Prov.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione} onChange={handleHeaderChange} maxLength="2" />
+                                                        <label className="premium-label">Pr<span>ov</span>.</label>
+                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
                                                     </div>
                                                     <div className="col-md-3">
-                                                        <label className="premium-label">CAP</label>
-                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} />
+                                                        <label className="premium-label">C<span>AP</span></label>
+                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                 </div>
                                                 <div className="row">
@@ -843,22 +846,22 @@ const PreventiviDetail = () => {
                                             <div className="card-body">
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
-                                                        <label className="premium-label">Indirizzo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione} onChange={handleHeaderChange} />
+                                                        <label className="premium-label">Indi<span>riz</span>zo</label>
+                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
-                                                        <label className="premium-label">Città</label>
-                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione} onChange={handleHeaderChange} />
+                                                        <label className="premium-label">Cit<span>tà</span></label>
+                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                     <div className="col-md-2">
-                                                        <label className="premium-label">Prov.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione} onChange={handleHeaderChange} maxLength="2" />
+                                                        <label className="premium-label">Pr<span>ov</span>.</label>
+                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
                                                     </div>
                                                     <div className="col-md-3">
-                                                        <label className="premium-label">CAP</label>
-                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} />
+                                                        <label className="premium-label">C<span>AP</span></label>
+                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                 </div>
                                                 <div className="row">
@@ -879,7 +882,7 @@ const PreventiviDetail = () => {
                                                 label="Progetto"
                                                 isAsync={false}
                                                 options={(combos.progetti || []).map(p => ({ value: p.id, label: p.descrizione }))}
-                                                value={formData.idProgetto ? { value: formData.idProgetto, label: formData.nomeProgetto } : null}
+                                                value={formData.idProgetto ? { value: formData.idProgetto, label: formData.nomeProgetto || formData.progetto } : null}
                                                 onChange={(opt) => setFormData(prev => ({ ...prev, idProgetto: opt?.value, nomeProgetto: opt?.label }))}
                                                 ModalComponent={ProgettoQuickModal}
                                                 modalProps={{ isOpen: showProgettoModal }}

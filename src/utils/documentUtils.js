@@ -96,3 +96,20 @@ export const formatStato = (statusStr) => {
 
     return formattedElements.join('\n');
 };
+
+/**
+ * Formats TipoFattura enum values for display
+ * @param {string} tipo - The TipoFattura enum value
+ * @returns {string} - Formatted label
+ */
+export const formatTipoFattura = (tipo) => {
+    if (!tipo) return '';
+    const map = {
+        'FATTURA': 'Fattura',
+        'FATTURA_ACCOMPAGNATORIA': 'Accompagnatoria',
+        'FATTURA_ACCONTO': 'Acconto',
+        'FATTURA_PROFORMA': 'Pro Forma',
+        'NOTA_DEBITO': 'Nota di Debito'
+    };
+    return map[tipo] || tipo.replace(/_/g, ' ');
+};

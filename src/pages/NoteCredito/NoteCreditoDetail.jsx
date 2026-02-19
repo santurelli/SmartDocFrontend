@@ -21,6 +21,8 @@ import IndirizziSelectionModal from '../../components/modals/IndirizziSelectionM
 import TipiPagamentoManagementModal from '../../components/modals/TipiPagamentoManagementModal';
 import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
 import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
+import CausaliEsigibilitaDifferitaManagementModal from '../../components/modals/CausaliEsigibilitaDifferitaManagementModal';
+import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -98,10 +100,13 @@ const NoteCreditoDetail = () => {
         dataDocumento: new Date().toISOString().split('T')[0],
         idCliente: null,
         nomeCliente: '',
+        denominazioneCliente: '',
         idAgente: null,
         nomeAgente: '',
+        agente: '',
         idProgetto: null,
         nomeProgetto: '',
+        progetto: '',
         idListino: '',
         idTipoPagamento: null,
         idNsBanca: null,
@@ -123,7 +128,9 @@ const NoteCreditoDetail = () => {
         splitPayment: 0,
         causale: '',
         noteConsegna: '',
-        annotazioneEstesa: ''
+        annotazioneEstesa: '',
+        esigibilitaDifferita: 0,
+        idCausaleEsigibilitaDifferita: null
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -137,13 +144,15 @@ const NoteCreditoDetail = () => {
         aliquoteIva: [],
         unitaMisura: [],
         agenti: [],
-        progetti: []
+        progetti: [],
+        causaliEsigibilitaDifferita: []
     });
 
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [addressTarget, setAddressTarget] = useState('intestazione');
     const [showProgettoModal, setShowProgettoModal] = useState(false);
+    const [showCausaleEsigibilitaModal, setShowCausaleEsigibilitaModal] = useState(false);
     const [showActionsMenu, setShowActionsMenu] = useState(false);
     const actionsMenuRef = useRef(null);
 
@@ -572,7 +581,7 @@ const NoteCreditoDetail = () => {
                 </ul>
 
                 <div className="main-box-body">
-                    <form className="tab-content" onSubmit={handleSave}>
+                    <form className="tab-content" onSubmit={handleSave} autoComplete="off">
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="compact-row">
@@ -623,7 +632,7 @@ const NoteCreditoDetail = () => {
                                         label="Cliente"
                                         isAsync={true}
                                         loadOptions={loadClienti}
-                                        value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente } : null}
+                                        value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente || formData.denominazioneCliente } : null}
                                         onChange={handleSelectCliente}
                                         ModalComponent={ClientiManagementModal}
                                         title="Gestione Clienti"
@@ -636,7 +645,7 @@ const NoteCreditoDetail = () => {
                                         label="Agente"
                                         isAsync={false}
                                         options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                        value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente } : null}
+                                        value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
                                         ModalComponent={AgentiManagementModal}
                                         title="Gestione Agenti"
@@ -713,22 +722,22 @@ const NoteCreditoDetail = () => {
                                         <div className="card-body">
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
-                                                    <label className="premium-label">Indirizzo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Indi<span>riz</span>zo</label>
+                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
-                                                    <label className="premium-label">Città</label>
-                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Cit<span>tà</span></label>
+                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-2">
-                                                    <label className="premium-label">Prov.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" />
+                                                    <label className="premium-label">Pr<span>ov</span>.</label>
+                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <label className="premium-label">CAP</label>
-                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">C<span>AP</span></label>
+                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -753,22 +762,22 @@ const NoteCreditoDetail = () => {
                                         <div className="card-body">
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
-                                                    <label className="premium-label">Indirizzo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Indi<span>riz</span>zo</label>
+                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
-                                                    <label className="premium-label">Città</label>
-                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Cit<span>tà</span></label>
+                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-2">
-                                                    <label className="premium-label">Prov.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" />
+                                                    <label className="premium-label">Pr<span>ov</span>.</label>
+                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <label className="premium-label">CAP</label>
-                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">C<span>AP</span></label>
+                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -789,7 +798,7 @@ const NoteCreditoDetail = () => {
                                             label="Progetto"
                                             isAsync={false}
                                             options={(combos.progetti || []).map(p => ({ value: p.id, label: p.descrizione }))}
-                                            value={formData.idProgetto ? { value: formData.idProgetto, label: formData.nomeProgetto } : null}
+                                            value={formData.idProgetto ? { value: formData.idProgetto, label: formData.nomeProgetto || formData.progetto } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idProgetto: opt?.value, nomeProgetto: opt?.label }))}
                                             ModalComponent={ProgettoQuickModal}
                                             modalProps={{ isOpen: showProgettoModal }}
@@ -798,6 +807,21 @@ const NoteCreditoDetail = () => {
                                         />
                                     </div>
                                 )}
+                            </div>
+                            <div className="row">
+                                <div className="col-md-12">
+                                    <div className="form-group">
+                                        <label className="premium-label">Causale Documento</label>
+                                        <input
+                                            type="text"
+                                            className="form-control premium-input"
+                                            name="causale"
+                                            value={formData.causale || ''}
+                                            onChange={handleHeaderChange}
+                                            placeholder="Inserisci la causale generica del documento..."
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -867,18 +891,43 @@ const NoteCreditoDetail = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="row">
-                                <div className="col-md-4">
-                                    <div className="form-group">
-                                        <label className="checkbox-inline" style={{ marginTop: '25px', fontWeight: 'bold' }}>
-                                            <input
-                                                type="checkbox"
-                                                name="splitPayment"
-                                                checked={formData.splitPayment === 1}
-                                                onChange={handleHeaderChange}
-                                            /> Scissione Pagamenti (Split Payment)
-                                        </label>
+                            <div className="row mt-3" style={{ alignItems: 'flex-end' }}>
+                                <div className="col-md-2">
+                                    <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
+                                        <input
+                                            type="checkbox"
+                                            id="splitPayment"
+                                            name="splitPayment"
+                                            checked={formData.splitPayment === 1}
+                                            onChange={handleHeaderChange}
+                                        />
+                                        <label htmlFor="splitPayment">Split Payment</label>
                                     </div>
+                                </div>
+                                <div className="col-md-2">
+                                    <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
+                                        <input
+                                            type="checkbox"
+                                            id="esigibilitaDifferita"
+                                            name="esigibilitaDifferita"
+                                            checked={formData.esigibilitaDifferita === 1}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, esigibilitaDifferita: e.target.checked ? 1 : 0 }))}
+                                        />
+                                        <label htmlFor="esigibilitaDifferita" title="Iva ad esigibilità differita">Esigibilità Differita</label>
+                                    </div>
+                                </div>
+                                <div className="col-md-8">
+                                    <EntitySelectGroup
+                                        label="Causale Esigibilità"
+                                        isAsync={true}
+                                        loadOptions={loadCausaliEsigibilitaDifferita}
+                                        value={combos.causaliEsigibilitaDifferita.find(c => c.value === formData.idCausaleEsigibilitaDifferita)}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, idCausaleEsigibilitaDifferita: val ? val.value : null }))}
+                                        ModalComponent={CausaliEsigibilitaDifferitaManagementModal}
+                                        onModalClose={fetchCausaliEsigibilitaDifferita}
+                                        placeholder="Seleziona causale..."
+                                        isDisabled={formData.esigibilitaDifferita !== 1}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -938,6 +987,12 @@ const NoteCreditoDetail = () => {
                     indirizzi={clientIndirizzi}
                     onSelect={handleSelectIndirizzo}
                     target={addressTarget}
+                />
+            )}
+
+            {showCausaleEsigibilitaModal && (
+                <CausaliEsigibilitaDifferitaManagementModal
+                    onClose={() => { setShowCausaleEsigibilitaModal(false); fetchCombos(); }}
                 />
             )}
         </div>

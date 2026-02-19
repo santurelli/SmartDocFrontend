@@ -20,6 +20,8 @@ import IndirizziSelectionModal from '../../components/modals/IndirizziSelectionM
 import TipiPagamentoManagementModal from '../../components/modals/TipiPagamentoManagementModal';
 import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
 import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
+import CausaliEsigibilitaDifferitaManagementModal from '../../components/modals/CausaliEsigibilitaDifferitaManagementModal';
+import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -77,10 +79,13 @@ const FattureDetail = () => {
         dataDocumento: new Date().toISOString().split('T')[0],
         idCliente: null,
         nomeCliente: '',
+        denominazioneCliente: '',
         idAgente: null,
         nomeAgente: '',
+        agente: '',
         idProgetto: null,
         nomeProgetto: '',
+        progetto: '',
         idListino: '',
         idTipoPagamento: null,
         idNsBanca: null,
@@ -99,9 +104,15 @@ const FattureDetail = () => {
         noteConsegna: '',
         annotazioneEstesa: '',
         tipoFattura: 'FATTURA',
-        flFatturaElettronica: 0,
+        flFatturaElettronica: 1, // Default to Electronic
         pec: '',
-        codiceUfficioDestinazione: ''
+        codiceUfficioDestinazione: '',
+        causale: '',
+        esigibilitaDifferita: 0,
+        idCausaleEsigibilitaDifferita: null,
+        flRitenutaAcconto: 0,
+        percRitenutaAcconto: 20,
+        importoRitenutaAcconto: 0
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -115,15 +126,26 @@ const FattureDetail = () => {
         aliquoteIva: [],
         unitaMisura: [],
         agenti: [],
-        progetti: []
+        progetti: [],
+        causaliEsigibilitaDifferita: []
     });
 
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [addressTarget, setAddressTarget] = useState('intestazione');
     const [showProgettoModal, setShowProgettoModal] = useState(false);
+    const [showCausaleEsigibilitaModal, setShowCausaleEsigibilitaModal] = useState(false);
     const [showSaveMenu, setShowSaveMenu] = useState(false);
     const saveMenuRef = useRef(null);
+
+    const getDocTitle = () => {
+        let prefix = isNew ? 'Nuova ' : 'Modifica ';
+        let type = 'Fattura';
+        if (formData.tipoFattura === 'FATTURA_ACCOMPAGNATORIA') type = 'Fattura Accompagnatoria';
+        if (formData.tipoFattura === 'FATTURA_PROFORMA') type = 'Fattura Pro Forma';
+        if (formData.tipoFattura === 'NOTA_DEBITO') type = 'Nota di Debito';
+        return prefix + type;
+    };
 
     useEffect(() => {
         checkCeramica();
@@ -145,7 +167,7 @@ const FattureDetail = () => {
             if (fromDDTId) {
                 fetchDataFromDDT(fromDDTId);
             } else {
-                fetchNextNum(formData.dataDocumento, eletParam === '1' ? 1 : 0, tipoParam || 'FATTURA');
+                fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
             }
         }
 
@@ -344,17 +366,58 @@ const FattureDetail = () => {
         const { name, value, type, checked } = e.target;
         const val = type === 'checkbox' ? (checked ? 1 : 0) : value;
         setFormData(prev => {
-            const next = { ...prev, [name]: val };
-            if ((name === 'dataDocumento' || name === 'tipoFattura' || name === 'flFatturaElettronica') && isNew) {
+            let next = { ...prev, [name]: val };
+
+            // Auto-set flFatturaElettronica based on tipoFattura
+            if (name === 'tipoFattura') {
+                next.flFatturaElettronica = (val === 'FATTURA_PROFORMA') ? 0 : 1;
+            }
+
+            if ((name === 'dataDocumento' || name === 'tipoFattura') && isNew) {
                 fetchNextNum(next.dataDocumento, next.flFatturaElettronica, next.tipoFattura);
             }
             return next;
         });
     };
 
-    const handleRecalculate = (newProdotti) => {
-        setProdotti(newProdotti);
+    const handleRowChange = (index, field, value) => {
+        setProdotti(prev => {
+            const newProdotti = [...prev];
+            newProdotti[index] = { ...newProdotti[index], [field]: value };
+            return newProdotti;
+        });
     };
+
+    const addRow = (type) => {
+        const defaultAliquota = (combos.aliquoteIva || []).find(a => a.predefinita === 1) || (combos.aliquoteIva || [])[0] || null;
+        const defaultUM = (combos.unitaMisura || [])[0] || null;
+
+        let newRow = { tipo: type };
+        if (type === 'N') {
+            newRow.nota = '';
+        } else {
+            newRow = {
+                ...newRow,
+                idProdotto: null,
+                codiceProdotto: '',
+                descProdotto: '',
+                quantita: 1,
+                idUnitaMisura: defaultUM?.id || null,
+                prezzo: 0,
+                sconto: '',
+                idAliquotaIva: defaultAliquota?.id || null,
+                nota: ''
+            };
+            if (type === 'F') {
+                newRow.fmDescrizione = '';
+            }
+        }
+        setProdotti(prev => [...prev, newRow]);
+    };
+
+    const handleAddArticolo = () => addRow('A');
+    const handleAddFM = () => addRow('F');
+    const handleAddNota = () => addRow('N');
 
     const calculateTotalDocument = () => {
         return prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
@@ -362,6 +425,16 @@ const FattureDetail = () => {
 
     const calculateTotalImponibile = () => {
         return prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
+    };
+
+    const calculateRitenutaAcconto = () => {
+        if (formData.flRitenutaAcconto !== 1) return 0;
+        const base = calculateTotalImponibile();
+        return (base * (formData.percRitenutaAcconto || 0)) / 100;
+    };
+
+    const calculateNettoAPagare = () => {
+        return calculateTotalDocument() - calculateRitenutaAcconto();
     };
 
     const loadClienti = (inputValue, callback) => {
@@ -456,7 +529,8 @@ const FattureDetail = () => {
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
-            prodotti: prodotti
+            prodotti: prodotti,
+            importoRitenutaAcconto: calculateRitenutaAcconto()
         };
 
         try {
@@ -516,11 +590,12 @@ const FattureDetail = () => {
         return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val);
     };
 
+
     return (
         <div className="fatture-detail-container entity-form-shared">
             <div id="fatture-content-header">
-                <div>
-                    <h1>{isNew ? 'Nuova' : 'Modifica'} Fattura</h1>
+                <div className="header-left">
+                    <h1>{getDocTitle()}</h1>
                     <div className="breadcrumb">
                         <span onClick={() => navigate('/fatture')}>Elenco Fatture</span> / <span>{isNew ? 'Nuova' : formData.numDocumento}</span>
                     </div>
@@ -534,6 +609,18 @@ const FattureDetail = () => {
                         <span className="label">Totale Doc.</span>
                         <span className="value">{formatCurrency(calculateTotalDocument())}</span>
                     </div>
+                    {formData.flRitenutaAcconto === 1 && (
+                        <>
+                            <div className="total-box danger">
+                                <span className="label">Ritenuta</span>
+                                <span className="value">-{formatCurrency(calculateRitenutaAcconto())}</span>
+                            </div>
+                            <div className="total-box net">
+                                <span className="label">Netto a Pagare</span>
+                                <span className="value">{formatCurrency(calculateNettoAPagare())}</span>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -554,7 +641,7 @@ const FattureDetail = () => {
                 </ul>
 
                 <div className="main-box-body">
-                    <form className="tab-content" onSubmit={handleSave}>
+                    <form className="tab-content" onSubmit={handleSave} autoComplete="off">
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
@@ -601,43 +688,12 @@ const FattureDetail = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="compact-col compact-col-md">
-                                        <div className="form-group">
-                                            <label>Tipo Documento</label>
-                                            <select
-                                                className="form-control premium-input"
-                                                name="tipoFattura"
-                                                value={formData.tipoFattura}
-                                                onChange={handleHeaderChange}
-                                            >
-                                                <option value="FATTURA">Fattura</option>
-                                                <option value="FATTURA_ACCOMPAGNATORIA">Accompagnatoria</option>
-                                                <option value="FATTURA_ACCONTO">Acconto</option>
-                                                <option value="FATTURA_PROFORMA">Pro Forma</option>
-                                                <option value="NOTA_DEBITO">Nota Debito</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="compact-col compact-col-sm" style={{ alignSelf: 'center', marginTop: '10px' }}>
-                                        <div className="form-group mb-0">
-                                            <div className="premium-checkbox-group">
-                                                <input
-                                                    type="checkbox"
-                                                    id="flFatturaElettronica"
-                                                    name="flFatturaElettronica"
-                                                    checked={formData.flFatturaElettronica === 1}
-                                                    onChange={handleHeaderChange}
-                                                />
-                                                <label htmlFor="flFatturaElettronica" style={{ marginLeft: '8px' }}>Elettronica</label>
-                                            </div>
-                                        </div>
-                                    </div>
                                     <div className="compact-col compact-col-xl">
                                         <EntitySelectGroup
                                             label="Cliente"
                                             isAsync={true}
                                             loadOptions={loadClienti}
-                                            value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente } : null}
+                                            value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente || formData.denominazioneCliente } : null}
                                             onChange={handleSelectCliente}
                                             ModalComponent={ClientiManagementModal}
                                             title="Gestione Clienti"
@@ -650,7 +706,7 @@ const FattureDetail = () => {
                                             label="Agente"
                                             isAsync={false}
                                             options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente } : null}
+                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
                                             ModalComponent={AgentiManagementModal}
                                             title="Gestione Agenti"
@@ -659,8 +715,30 @@ const FattureDetail = () => {
                                         />
                                     </div>
                                 </div>
+                                <div className="compact-row">
+                                    <div className="compact-col compact-col-sm">
+                                        <div className="form-group">
+                                            <label>Tipo Documento</label>
+                                            <select
+                                                className="form-control premium-input"
+                                                name="tipoFattura"
+                                                value={formData.tipoFattura}
+                                                onChange={handleHeaderChange}
+                                            >
+                                                <option value="FATTURA">Fattura</option>
+                                                <option value="FATTURA_ACCOMPAGNATORIA">Fattura Accompagnatoria</option>
+                                                <option value="FATTURA_PROFORMA">Fattura Pro Forma</option>
+                                                <option value="NOTA_DEBITO">Nota di Debito</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                {formData.flFatturaElettronica === 1 && (
+                            <hr />
+
+                            <div className="tab-padding-wrapper">
+                                {formData.tipoFattura !== 'FATTURA_PROFORMA' && (
                                     <div className="compact-row" style={{ marginTop: '10px', background: '#e3f2fd', padding: '10px', borderRadius: '4px', border: '1px solid #90caf9' }}>
                                         <div className="compact-col compact-col-md">
                                             <div className="form-group mb-0">
@@ -708,22 +786,22 @@ const FattureDetail = () => {
                                         <div className="card-body">
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
-                                                    <label className="premium-label">Indirizzo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Indi<span>riz</span>zo</label>
+                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
-                                                    <label className="premium-label">Città</label>
-                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Cit<span>tà</span></label>
+                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-2">
-                                                    <label className="premium-label">Prov.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" />
+                                                    <label className="premium-label">Pr<span>ov</span>.</label>
+                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <label className="premium-label">CAP</label>
-                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">C<span>AP</span></label>
+                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -748,22 +826,22 @@ const FattureDetail = () => {
                                         <div className="card-body">
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
-                                                    <label className="premium-label">Indirizzo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Indi<span>riz</span>zo</label>
+                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
-                                                    <label className="premium-label">Città</label>
-                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">Cit<span>tà</span></label>
+                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-2">
-                                                    <label className="premium-label">Prov.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" />
+                                                    <label className="premium-label">Pr<span>ov</span>.</label>
+                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
                                                 </div>
                                                 <div className="col-md-3">
-                                                    <label className="premium-label">CAP</label>
-                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} />
+                                                    <label className="premium-label">C<span>AP</span></label>
+                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -777,14 +855,14 @@ const FattureDetail = () => {
                                 </div>
                             </div>
 
-                            <div className="row mb-3 mt-3">
+                            <div className="row mb-3 mt-3 px-3">
                                 {authService.getConfig()?.PROGETTI === '1' && (
                                     <div className="col-md-4">
                                         <EntitySelectGroup
                                             label="Progetto"
                                             isAsync={false}
                                             options={(combos.progetti || []).map(p => ({ value: p.id, label: p.descrizione }))}
-                                            value={formData.idProgetto ? { value: formData.idProgetto, label: formData.nomeProgetto } : null}
+                                            value={formData.idProgetto ? { value: formData.idProgetto, label: formData.nomeProgetto || formData.progetto } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idProgetto: opt?.value, nomeProgetto: opt?.label }))}
                                             ModalComponent={ProgettoQuickModal}
                                             modalProps={{ isOpen: showProgettoModal }}
@@ -794,13 +872,63 @@ const FattureDetail = () => {
                                     </div>
                                 )}
                             </div>
+
+                            <div className="row mb-3 px-3">
+                                <div className="col-md-12">
+                                    <div className="form-group">
+                                        <label className="premium-label">Causale Documento</label>
+                                        <input
+                                            type="text"
+                                            className="form-control premium-input"
+                                            name="causale"
+                                            value={formData.causale || ''}
+                                            onChange={handleHeaderChange}
+                                            placeholder="Inserisci la causale generica del documento..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="row mb-3 px-3">
+                                <div className="col-md-4">
+                                    <div className="form-group mb-0" style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '10px 0' }}>
+                                        <label className="premium-label" style={{ marginBottom: 0, marginRight: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                            <input
+                                                type="checkbox"
+                                                name="flRitenutaAcconto"
+                                                checked={formData.flRitenutaAcconto === 1}
+                                                onChange={handleHeaderChange}
+                                                style={{ marginRight: '10px', width: '18px', height: '18px' }}
+                                            />
+                                            <span style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50' }}>Gestione Ritenuta d'Acconto</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                {formData.flRitenutaAcconto === 1 && (
+                                    <div className="col-md-2">
+                                        <div className="form-group mb-0">
+                                            <label className="premium-label">Perc. Ritenuta (%)</label>
+                                            <input
+                                                type="number"
+                                                className="form-control premium-input text-right"
+                                                name="percRitenutaAcconto"
+                                                value={formData.percRitenutaAcconto}
+                                                onChange={handleHeaderChange}
+                                                min="0"
+                                                max="100"
+                                                step="0.01"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Tab Articoli */}
                         <div className={`tab-pane ${activeTab === 'articoli' ? 'active' : ''}`}>
                             <DocumentRows
                                 rows={prodotti}
-                                onRowChange={handleRecalculate}
+                                onRowChange={handleRowChange}
                                 onRowUpdate={(idx, update) => {
                                     const newP = [...prodotti];
                                     newP[idx] = { ...newP[idx], ...update };
@@ -813,7 +941,19 @@ const FattureDetail = () => {
                                 }}
                                 combos={combos}
                                 isCeramica={isCeramica}
-                            />
+                            >
+                                <div className="table-row-add-toolbar">
+                                    <button type="button" className="btn-add-inline" onClick={handleAddArticolo}>
+                                        <FaPlus /> ARTICOLO
+                                    </button>
+                                    <button type="button" className="btn-add-inline fm" onClick={handleAddFM}>
+                                        <FaPlus /> FUORI MAGAZZINO
+                                    </button>
+                                    <button type="button" className="btn-add-inline note" onClick={handleAddNota}>
+                                        <FaPlus /> NOTA
+                                    </button>
+                                </div>
+                            </DocumentRows>
                         </div>
 
                         {/* Tab Pagamento */}
@@ -863,33 +1003,45 @@ const FattureDetail = () => {
                                         />
                                     </div>
                                 </div>
-                                <div className="row">
-                                    <div className="col-md-4">
-                                        <div className="form-group mb-0" style={{ marginTop: '25px' }}>
-                                            <div className="premium-checkbox-group">
-                                                <input
-                                                    type="checkbox"
-                                                    id="splitPayment"
-                                                    name="splitPayment"
-                                                    checked={formData.splitPayment === 1}
-                                                    onChange={handleHeaderChange}
-                                                />
-                                                <label htmlFor="splitPayment" style={{ marginLeft: '8px' }}>Split Payment</label>
-                                            </div>
+                                <div className="row mt-3" style={{ alignItems: 'flex-end' }}>
+                                    <div className="col-md-2">
+                                        <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
+                                            <input
+                                                type="checkbox"
+                                                id="splitPayment"
+                                                name="splitPayment"
+                                                checked={formData.splitPayment === 1}
+                                                onChange={handleHeaderChange}
+                                            />
+                                            <label htmlFor="splitPayment">Split Payment</label>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-2">
+                                        <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
+                                            <input
+                                                type="checkbox"
+                                                id="esigibilitaDifferita"
+                                                name="esigibilitaDifferita"
+                                                checked={formData.esigibilitaDifferita === 1}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, esigibilitaDifferita: e.target.checked ? 1 : 0 }))}
+                                            />
+                                            <label htmlFor="esigibilitaDifferita" title="Iva ad esigibilità differita">Esigibilità Differita</label>
                                         </div>
                                     </div>
                                     <div className="col-md-8">
-                                        <div className="form-group">
-                                            <label>Causale</label>
-                                            <input
-                                                type="text"
-                                                className="form-control premium-input"
-                                                name="causale"
-                                                value={formData.causale || ''}
-                                                onChange={handleHeaderChange}
-                                                placeholder="Causale del documento..."
-                                            />
-                                        </div>
+                                        <EntitySelectGroup
+                                            label="Causale Esigibilità"
+                                            isAsync={false}
+                                            options={(combos.causaliEsigibilitaDifferita || []).map(c => ({ value: c.id, label: c.descrizione }))}
+                                            value={formData.idCausaleEsigibilitaDifferita ? { value: formData.idCausaleEsigibilitaDifferita, label: (combos.causaliEsigibilitaDifferita || []).find(c => c.id === formData.idCausaleEsigibilitaDifferita)?.descrizione } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idCausaleEsigibilitaDifferita: opt?.value }))}
+                                            ModalComponent={CausaliEsigibilitaDifferitaManagementModal}
+                                            modalProps={{ isOpen: false }}
+                                            title="Gestione Causali Esigibilità"
+                                            placeholder="Seleziona causale..."
+                                            onModalClose={fetchCombos}
+                                            disabled={formData.esigibilitaDifferita !== 1}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -944,9 +1096,9 @@ const FattureDetail = () => {
                                 </div>
                             </div>
                         </footer>
-                    </form>
-                </div>
-            </div>
+                    </form >
+                </div >
+            </div >
 
             {showAddressModal && (
                 <IndirizziSelectionModal
@@ -957,7 +1109,15 @@ const FattureDetail = () => {
                     target={addressTarget}
                 />
             )}
-        </div>
+
+            {
+                showCausaleEsigibilitaModal && (
+                    <CausaliEsigibilitaDifferitaManagementModal
+                        onClose={() => { setShowCausaleEsigibilitaModal(false); fetchCombos(); }}
+                    />
+                )
+            }
+        </div >
     );
 };
 

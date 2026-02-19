@@ -1,0 +1,245 @@
+import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
+import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
+import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
+
+const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
+    const [list, setList] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [pageSize, setPageSize] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+
+    useEffect(() => {
+        loadData();
+    }, [currentPage, pageSize, searchTerm]);
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const params = {
+                search: searchTerm,
+                start: (currentPage - 1) * pageSize,
+                length: pageSize,
+                'order[0][column]': 1, // Sort by Descrizione
+                'order[0][dir]': 'asc'
+            };
+            const res = await CausaliEsigibilitaDifferitaService.getList(params);
+            if (res.data) {
+                setList(res.data.list || []);
+                setTotalItems(res.data.totalCount || 0);
+            }
+        } catch (error) {
+            console.error("Error loading causali esigibilità differita:", error);
+            Swal.fire('Errore', 'Impossibile caricare le causali', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const result = await Swal.fire({
+            title: 'Sei sicuro?',
+            text: "La causale verrà eliminata.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sì, elimina',
+            cancelButtonText: 'Annulla'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await CausaliEsigibilitaDifferitaService.delete(id);
+                loadData();
+                Swal.fire('Eliminata!', 'Causale eliminata.', 'success');
+            } catch (error) {
+                Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
+            }
+        }
+    };
+
+    const handleEdit = (item) => {
+        openDetailModal(item);
+    };
+
+    const handleAdd = () => {
+        openDetailModal({ id: null, descrizione: '' });
+    };
+
+    const openDetailModal = (item) => {
+        const isNew = !item.id;
+        Swal.fire({
+            title: isNew ? 'Nuova Causale' : 'Modifica Causale',
+            html: `
+                <div style="text-align: left;">
+                    <div class="form-group">
+                        <label style="font-weight: 700; color: #444; font-size: 11px; text-transform: uppercase;">Descrizione</label>
+                        <input id="swal-descrizione" class="form-control" value="${item.descrizione || ''}" placeholder="Inserisci descrizione">
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Salva',
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                confirmButton: 'btn-premium-save',
+                cancelButton: 'btn-premium-cancel',
+                popup: 'premium-swal-popup'
+            },
+            preConfirm: async () => {
+                const descrizione = document.getElementById('swal-descrizione').value;
+
+                if (!descrizione) {
+                    Swal.showValidationMessage('La descrizione è obbligatoria');
+                    return false;
+                }
+
+                try {
+                    if (isNew) {
+                        await CausaliEsigibilitaDifferitaService.create(descrizione);
+                    } else {
+                        await CausaliEsigibilitaDifferitaService.update(item.id, descrizione);
+                    }
+                    return true;
+                } catch (error) {
+                    let errorMsg = 'Errore durante il salvataggio';
+                    if (error.response && error.response.data && error.response.data.errorText) {
+                        errorMsg = error.response.data.errorText;
+                    }
+                    Swal.showValidationMessage(errorMsg);
+                    return false;
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                loadData();
+                Swal.fire('Salvata!', 'Operazione completata con successo.', 'success');
+            }
+        });
+    };
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const startIdx = (currentPage - 1) * pageSize;
+
+    return (
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
+            <div className="modal-dialog modal-md">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <button type="button" className="close" onClick={onClose} aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 className="modal-title">Gestione Causali Esigibilità Differita</h4>
+                    </div>
+                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+                        <div className="modal-toolbar">
+                            <div className="toolbar-left">
+                                <div className="toolbar-item">
+                                    <span>Mostra</span>
+                                    <select
+                                        className="form-control input-sm"
+                                        value={pageSize}
+                                        onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                    >
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span>righe</span>
+                                </div>
+                            </div>
+
+                            <div className="toolbar-right">
+                                <div className="toolbar-search-wrapper">
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Cerca..."
+                                        value={searchTerm}
+                                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                    />
+                                    <i className="fa fa-search"></i>
+                                </div>
+                                <button className="btn btn-primary" onClick={handleAdd}>
+                                    <FaPlus /> Nuova
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="table-responsive" style={{ border: 'none' }}>
+                            <table className="table" style={{ borderCollapse: 'separate', borderSpacing: '0 10px' }}>
+                                <thead>
+                                    <tr style={{ background: '#f8f9fa' }}>
+                                        <th style={{ border: 'none', borderRadius: '10px 0 0 10px', padding: '12px 15px' }}>DESCRIZIONE</th>
+                                        <th style={{ border: 'none', borderRadius: '0 10px 10px 0', padding: '12px 15px', width: '120px', textAlign: 'center' }}>AZIONI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {list.length > 0 ? (
+                                        list.map(item => (
+                                            <tr key={item.id} style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderRadius: '10px' }}>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px' }}>{item.descrizione}</td>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
+                                                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
+                                                        <button
+                                                            className="btn-premium-save"
+                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, boxShadow: 'none', backgroundColor: '#5bc0de' }}
+                                                            onClick={() => handleEdit(item)}
+                                                            title="Modifica"
+                                                        >
+                                                            <FaPencilAlt />
+                                                        </button>
+                                                        <button
+                                                            className="btn-premium-cancel"
+                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, backgroundColor: '#e74c3c' }}
+                                                            onClick={() => handleDelete(item.id)}
+                                                            title="Elimina"
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="2" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun elemento trovato</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {totalItems > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '0 10px' }}>
+                                <nav>
+                                    <ul className="pagination pagination-sm" style={{ margin: 0 }}>
+                                        <li className={currentPage === 1 ? 'disabled' : ''}>
+                                            <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>&laquo;</a>
+                                        </li>
+                                        {[...Array(totalPages)].map((_, i) => (
+                                            <li key={i} className={currentPage === i + 1 ? 'active' : ''}>
+                                                <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
+                                            </li>
+                                        ))}
+                                        <li className={currentPage === totalPages ? 'disabled' : ''}>
+                                            <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>&raquo;</a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        )}
+                    </div>
+                    <div className="modal-footer" style={{ borderTop: '1px solid #f0f0f0', padding: '15px 25px' }}>
+                        <button type="button" className="btn-premium-cancel" style={{ padding: '10px 25px' }} onClick={onClose}>Chiudi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default CausaliEsigibilitaDifferitaManagementModal;

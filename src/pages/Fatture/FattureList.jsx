@@ -11,7 +11,7 @@ import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import NoteCreditoService from '../../services/NoteCreditoService';
 
-import { formatStato } from '../../utils/documentUtils';
+import { formatStato, formatTipoFattura } from '../../utils/documentUtils';
 
 import './FattureList.css';
 
@@ -19,8 +19,15 @@ const FattureList = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [fatture, setFatture] = useState([]);
+    const [total, setTotal] = useState(0);
     const [selectedIds, setSelectedIds] = useState([]);
     const [activeActionMenu, setActiveActionMenu] = useState(null);
+
+    const [pageSize, setPageSize] = useState((() => {
+        const saved = storageHelper.loadState('fatture_filters', {});
+        return saved.pageSize || 50;
+    })());
+    const [currentPage, setCurrentPage] = useState(0);
 
     const [filters, setFilters] = useState(() => {
         return storageHelper.loadState('fatture_filters', {
@@ -46,7 +53,7 @@ const FattureList = () => {
         const handleClickOutside = () => setActiveActionMenu(null);
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
-    }, []);
+    }, [currentPage, pageSize]);
 
     const fetchAgenti = async () => {
         try {
@@ -60,7 +67,7 @@ const FattureList = () => {
     const handleSearch = async (e) => {
         if (e) e.preventDefault();
         setLoading(true);
-        storageHelper.saveState('fatture_filters', filters);
+        storageHelper.saveState('fatture_filters', { ...filters, pageSize });
         try {
             const params = {
                 dataInizio: filters.dataDa,
@@ -71,11 +78,12 @@ const FattureList = () => {
                 numDocumento: filters.numDocumento,
                 orderColumn: filters.orderBy || 'data_fattura',
                 orderDir: filters.orderDir || 'DESC',
-                start: 0,
-                length: 100
+                start: currentPage * pageSize,
+                length: pageSize
             };
             const res = await FattureService.getList(params);
             setFatture(res.data?.payload || []);
+            setTotal(res.data?.totalCount || 0);
         } catch (error) {
             console.error(error);
         } finally {
@@ -115,11 +123,11 @@ const FattureList = () => {
             numDocumento: filters.numDocumento,
             orderColumn: column,
             orderDir: newDir,
-            start: 0,
-            length: 100
+            start: currentPage * pageSize,
+            length: pageSize
         };
         // Also update storage
-        storageHelper.saveState('fatture_filters', { ...filters, orderBy: column, orderDir: newDir });
+        storageHelper.saveState('fatture_filters', { ...filters, orderBy: column, orderDir: newDir, pageSize });
 
         FattureService.getList(params).then(res => {
             setFatture(res.data?.payload || []);
@@ -287,21 +295,24 @@ const FattureList = () => {
                 <div className="toolbar-left">
                     <div className="rows-per-page">
                         <span>Mostra</span>
-                        <select value={50} disabled>
+                        <select value={pageSize} onChange={e => { setPageSize(parseInt(e.target.value)); setCurrentPage(0); }}>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
                             <option value={50}>50</option>
+                            <option value={100}>100</option>
                         </select>
-                        <span>righe</span>
+                        <span>righe per pagina</span>
                     </div>
 
                 </div>
                 <div className="toolbar-right">
-                    <div className="action-menu-container" style={{ position: 'relative' }}>
-                        <button className="btn-new-vibrant" onClick={() => navigate('/fatture/new')}>
-                            <FaPlus size={14} /> Nuova Fattura
+                    <div className="split-btn-container blue-theme" ref={activeActionMenu === 'new-menu' ? null : null /* Ref not needed here as we use state */}>
+                        <button className="split-btn-main btn-premium-blue" onClick={() => navigate('/fatture/new')}>
+                            <FaPlus /> Nuova Fattura
                         </button>
                         <button
-                            className="btn-new-vibrant"
-                            style={{ marginLeft: '1px', paddingLeft: '8px', paddingRight: '8px' }}
+                            type="button"
+                            className="split-btn-toggle"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveActionMenu(activeActionMenu === 'new-menu' ? null : 'new-menu');
@@ -310,17 +321,17 @@ const FattureList = () => {
                             <FaCaretDown />
                         </button>
                         {activeActionMenu === 'new-menu' && (
-                            <div className="action-dropdown-menu" style={{ right: 0, top: '40px', minWidth: '220px' }}>
-                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=FATTURA&elet=1')}>
+                            <div className="split-btn-menu show" style={{ bottom: 'auto', top: '100%', marginTop: '8px' }}>
+                                <button className="split-btn-item" onClick={() => navigate('/fatture/new?tipo=FATTURA&elet=1')}>
                                     <FaPlus /> Nuova Fattura Elettronica
                                 </button>
-                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_ACCOMPAGNATORIA&elet=1')}>
+                                <button className="split-btn-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_ACCOMPAGNATORIA&elet=1')}>
                                     <FaPlus /> Nuova Accompagnatoria El.
                                 </button>
-                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_PROFORMA')}>
+                                <button className="split-btn-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_PROFORMA')}>
                                     <FaPlus /> Nuova Pro Forma
                                 </button>
-                                <button className="action-dropdown-item" onClick={() => navigate('/fatture/new?tipo=NOTA_DEBITO')}>
+                                <button className="split-btn-item" onClick={() => navigate('/fatture/new?tipo=NOTA_DEBITO')}>
                                     <FaPlus /> Nuova Nota di Debito
                                 </button>
                             </div>
@@ -429,6 +440,9 @@ const FattureList = () => {
                                     <th onClick={() => handleSort('data_fattura')} style={{ cursor: 'pointer' }}>
                                         Data {getSortIcon('data_fattura')}
                                     </th>
+                                    <th onClick={() => handleSort('tipo_fattura')} style={{ cursor: 'pointer' }}>
+                                        Tipo {getSortIcon('tipo_fattura')}
+                                    </th>
                                     <th onClick={() => handleSort('num_fattura')} style={{ cursor: 'pointer' }}>
                                         Numero {getSortIcon('num_fattura')}
                                     </th>
@@ -459,6 +473,7 @@ const FattureList = () => {
                                                     />
                                                 </td>
                                                 <td>{f.dataDocumento}</td>
+                                                <td style={{ fontSize: '0.85rem', color: '#666' }}>{formatTipoFattura(f.tipoFattura)}</td>
                                                 <td><strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}</td>
                                                 <td>{f.denominazioneCliente}</td>
                                                 <td>{f.agente || '-'}</td>
@@ -514,7 +529,11 @@ const FattureList = () => {
                     </div>
 
                     <div className="pagination-container">
-                        <span className="pagination-info">Visualizzati {fatture.length} risultati</span>
+                        <span className="pagination-info">Visualizzati {fatture.length} di {total} risultati</span>
+                        <div className="btn-group">
+                            <button className="btn btn-paginate" disabled={currentPage === 0} onClick={() => setCurrentPage(c => c - 1)}><FaChevronLeft /></button>
+                            <button className="btn btn-paginate" disabled={(currentPage + 1) * pageSize >= total} onClick={() => setCurrentPage(c => c + 1)}><FaChevronRight /></button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FaWrench } from 'react-icons/fa';
 
 /**
@@ -10,10 +11,12 @@ import { FaWrench } from 'react-icons/fa';
  * @param {string} props.title - Tooltip title for the button.
  * @param {Function} props.onClose - Callback when the modal is closed.
  */
-const WrenchModalButton = ({ ModalComponent, modalProps = {}, title = "Gestione", onClose }) => {
+const WrenchModalButton = ({ ModalComponent, modalProps = {}, title = "Gestione", onClose, disabled = false }) => {
     const [showModal, setShowModal] = useState(false);
 
-    const handleOpen = () => setShowModal(true);
+    const handleOpen = () => {
+        if (!disabled) setShowModal(true);
+    };
     const handleClose = () => {
         setShowModal(false);
         if (onClose) onClose();
@@ -23,18 +26,20 @@ const WrenchModalButton = ({ ModalComponent, modalProps = {}, title = "Gestione"
         <>
             <button
                 type="button"
-                className="premium-wrench-btn"
+                className={`premium-wrench-btn ${disabled ? 'disabled' : ''}`}
                 onClick={handleOpen}
-                title={title}
+                title={disabled ? "" : title}
+                disabled={disabled}
             >
                 <FaWrench />
             </button>
-            {showModal && (
+            {showModal && createPortal(
                 <ModalComponent
                     isOpen={true}
                     onClose={handleClose}
                     {...modalProps}
-                />
+                />,
+                document.body
             )}
         </>
     );

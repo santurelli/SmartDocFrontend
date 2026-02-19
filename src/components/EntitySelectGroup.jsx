@@ -26,7 +26,8 @@ const EntitySelectGroup = ({
     noOptionsMessage,
     loadingMessage,
     isClearable = true,
-    widthClass = ''
+    widthClass = '',
+    isDisabled = false
 }) => {
 
     let SelectComponent;
@@ -90,6 +91,7 @@ const EntitySelectGroup = ({
                         placeholder={placeholder}
                         styles={commonStyles}
                         isClearable={isClearable}
+                        isDisabled={isDisabled}
                         formatCreateLabel={isCreatable ? (inputValue) => `Crea "${inputValue}"` : undefined}
                         noOptionsMessage={noOptionsMessage || (({ inputValue }) =>
                             !inputValue
@@ -106,6 +108,7 @@ const EntitySelectGroup = ({
                         modalProps={modalProps}
                         title={title}
                         onClose={onModalClose}
+                        disabled={isDisabled}
                     />
                 )}
             </div>

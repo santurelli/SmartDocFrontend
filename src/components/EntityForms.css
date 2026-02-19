@@ -405,6 +405,13 @@
     overflow: visible !important;
     height: 38px !important;
     align-items: stretch !important;
+    position: relative !important;
+}
+
+/* Ensure React-Select container doesn't collapse and stays on the left */
+.flex-input-group>div:first-child {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
 }
 
 .flex-input-group.w-xs {
@@ -454,6 +461,15 @@
     border-bottom-left-radius: 0 !important;
     height: 38px !important;
     margin: 0 !important;
+    border-left: none !important;
+    /* Ensure flush connection */
+}
+
+/* Specific styling for the Generate button in ClienteForm */
+.flex-input-group .btn-default {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: none !important;
 }
 
 .entity-form-shared .btn-default {
@@ -616,4 +632,84 @@
     transform: translateY(-50%);
     color: #ccc;
     pointer-events: none;
+}
+
+/* MODAL Z-INDEX HIERARCHY */
+/* Ensure SweetAlert2 is always on top of management/edit modals */
+.swal2-container {
+    z-index: 2000 !important;
+}
+
+/* Ensure standard modals have a predictable base */
+.premium-modal {
+    z-index: 1100 !important;
+}
+
+/* SWEETALERT2 PREMIUM STYLING */
+.swal2-popup {
+    border-radius: 12px !important;
+    padding: 2.5em 1.5em !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+.swal2-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: #444 !important;
+    margin-bottom: 1rem !important;
+}
+
+.swal2-html-container {
+    font-size: 14px !important;
+    color: #666 !important;
+}
+
+.swal2-styled.swal2-confirm {
+    background-color: #2ecc71 !important;
+    border-radius: 20px !important;
+    padding: 10px 30px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 4px rgba(46, 204, 113, 0.2) !important;
+    transition: all 0.2s !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+    background-color: #27ae60 !important;
+    box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3) !important;
+    transform: translateY(-1px) !important;
+}
+
+.swal2-styled.swal2-cancel {
+    background-color: #fff !important;
+    color: #6c757d !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 20px !important;
+    padding: 10px 25px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+    background-color: #f8f9fa !important;
+    border-color: #adb5bd !important;
+    color: #495057 !important;
+}
+
+.swal2-input,
+.swal2-textarea,
+.swal2-select {
+    border: 1px solid #dfe4e7 !important;
+    border-radius: 4px !important;
+    height: 38px !important;
+    font-size: 14px !important;
+    color: #333 !important;
+    box-shadow: none !important;
+    transition: border-color 0.2s !important;
+}
+
+.swal2-input:focus,
+.swal2-textarea:focus,
+.swal2-select:focus {
+    border-color: #03a9f4 !important;
+    box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.15) !important;
 }

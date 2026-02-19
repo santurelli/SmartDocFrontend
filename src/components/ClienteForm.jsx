@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import ClientiService from '../services/ClientiService';
 import CittaService from '../services/CittaService';
 import AsyncCreatableSelect from 'react-select/async-creatable';
@@ -202,15 +203,13 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                             <div className="compact-col compact-col-md">
                                 <div className="form-group">
                                     <label className="required">Codice</label>
-                                    <div className="input-group">
+                                    <div className="flex-input-group">
                                         <input type="text" className="form-control" name="codice" value={data.codice} onChange={handleFormChange} required />
-                                        <div className="input-group-btn">
-                                            <button className="btn btn-default" type="button" onClick={generateCodice} title="Genera codice automatico">Genera</button>
-                                        </div>
+                                        <button className="btn btn-default" type="button" onClick={generateCodice} title="Genera codice automatico">Genera</button>
                                     </div>
                                 </div>
                             </div>
-                            <div className="compact-col compact-col-md">
+                            <div className="compact-col compact-col-sm">
                                 <div className="form-group">
                                     <label className="required">Tipologia</label>
                                     <select className="form-control" name="tipologia" value={data.tipologia} onChange={handleFormChange} required>
@@ -374,28 +373,24 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                             <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Avviso</label>
-                                    <div className="input-group">
+                                    <div className="flex-input-group">
                                         <select className="form-control" name="idAvviso" value={data.idAvviso || ''} onChange={handleFormChange}>
                                             <option value="">Nessuno</option>
                                             {avvisiList.map(a => <option key={a.id} value={a.id}>{a.descrizione}</option>)}
                                         </select>
-                                        <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowAvvisiModal(true)} title="Gestione avvisi"><FaWrench /></button>
-                                        </span>
+                                        <button type="button" className="btn btn-default" onClick={() => setShowAvvisiModal(true)} title="Gestione avvisi"><FaWrench /></button>
                                     </div>
                                 </div>
                             </div>
                             <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Nota Documento</label>
-                                    <div className="input-group">
+                                    <div className="flex-input-group">
                                         <select className="form-control" name="idNota" value={data.idNota || ''} onChange={handleFormChange}>
                                             <option value="">Nessuna</option>
                                             {noteDocumentiList.map(n => <option key={n.id} value={n.id}>{n.descrizione}</option>)}
                                         </select>
-                                        <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowNoteModal(true)} title="Gestione note documenti"><FaWrench /></button>
-                                        </span>
+                                        <button type="button" className="btn btn-default" onClick={() => setShowNoteModal(true)} title="Gestione note documenti"><FaWrench /></button>
                                     </div>
                                 </div>
                             </div>
@@ -405,28 +400,24 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                             <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Nostra Banca</label>
-                                    <div className="input-group">
+                                    <div className="flex-input-group">
                                         <select className="form-control" name="idRisorsa" value={data.idRisorsa || ''} onChange={handleFormChange}>
                                             <option value="">Seleziona...</option>
                                             {bancheList.map(b => <option key={b.id} value={b.id}>{b.descrizione}</option>)}
                                         </select>
-                                        <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)} title="Gestione risorse/banche"><FaWrench /></button>
-                                        </span>
+                                        <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)} title="Gestione risorse/banche"><FaWrench /></button>
                                     </div>
                                 </div>
                             </div>
                             <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Tipo Porto</label>
-                                    <div className="input-group">
+                                    <div className="flex-input-group">
                                         <select className="form-control" name="idTipoPorto" value={data.idTipoPorto || ''} onChange={handleFormChange}>
                                             <option value="">Seleziona...</option>
                                             {tipiPortoList.map(tp => <option key={tp.id} value={tp.id}>{tp.descrizione}</option>)}
                                         </select>
-                                        <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowPortoModal(true)} title="Gestione tipi porto"><FaWrench /></button>
-                                        </span>
+                                        <button type="button" className="btn btn-default" onClick={() => setShowPortoModal(true)} title="Gestione tipi porto"><FaWrench /></button>
                                     </div>
                                 </div>
                             </div>
@@ -437,14 +428,12 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                 <div className="compact-col compact-col-lg">
                                     <div className="form-group">
                                         <label>Vettore</label>
-                                        <div className="input-group">
+                                        <div className="flex-input-group">
                                             <select className="form-control" name="idVettore" value={data.idVettore || ''} onChange={handleFormChange}>
                                                 <option value="">Seleziona...</option>
                                                 {vettoriList.map(v => <option key={v.id} value={v.id}>{v.denominazione}</option>)}
                                             </select>
-                                            <span className="input-group-btn">
-                                                <button type="button" className="btn btn-default" onClick={() => setShowVettoriModal(true)} title="Gestione vettori"><FaWrench /></button>
-                                            </span>
+                                            <button type="button" className="btn btn-default" onClick={() => setShowVettoriModal(true)} title="Gestione vettori"><FaWrench /></button>
                                         </div>
                                     </div>
                                 </div>
@@ -462,12 +451,12 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                 )}
             </div>
 
-            {/* Sub-modals */}
-            {showAvvisiModal && <AvvisiManagementModal onClose={() => { setShowAvvisiModal(false); refreshAvvisi(); }} style={{ zIndex: 1500 }} />}
-            {showNoteModal && <NoteDocumentiManagementModal onClose={() => { setShowNoteModal(false); refreshNote(); }} style={{ zIndex: 1500 }} />}
-            {showPortoModal && <TipiPortoManagementModal onClose={() => { setShowPortoModal(false); refreshPorto(); }} style={{ zIndex: 1500 }} />}
-            {showVettoriModal && <VettoriManagementModal onClose={() => { setShowVettoriModal(false); refreshVettori(); }} style={{ zIndex: 1500 }} />}
-            {showRisorseModal && <RisorseManagementModal onClose={() => { setShowRisorseModal(false); refreshBanche(); }} style={{ zIndex: 1500 }} />}
+            {/* Sub-modals rendered via Portal */}
+            {showAvvisiModal && createPortal(<AvvisiManagementModal onClose={() => { setShowAvvisiModal(false); refreshAvvisi(); }} style={{ zIndex: 1300 }} />, document.body)}
+            {showNoteModal && createPortal(<NoteDocumentiManagementModal onClose={() => { setShowNoteModal(false); refreshNote(); }} style={{ zIndex: 1300 }} />, document.body)}
+            {showPortoModal && createPortal(<TipiPortoManagementModal onClose={() => { setShowPortoModal(false); refreshPorto(); }} style={{ zIndex: 1300 }} />, document.body)}
+            {showVettoriModal && createPortal(<VettoriManagementModal onClose={() => { setShowVettoriModal(false); refreshVettori(); }} style={{ zIndex: 1300 }} />, document.body)}
+            {showRisorseModal && createPortal(<RisorseManagementModal onClose={() => { setShowRisorseModal(false); refreshBanche(); }} style={{ zIndex: 1300 }} />, document.body)}
         </div>
     );
 };

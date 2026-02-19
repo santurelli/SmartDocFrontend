@@ -562,3 +562,62 @@
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(244, 67, 54, 0.4);
 }
+
+/* Split Button Styles - Blue Theme */
+.split-btn-container.blue-theme {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(3, 169, 244, 0.2);
+    transition: all 0.3s;
+    background: #03a9f4;
+}
+
+.split-btn-container.blue-theme:hover {
+    box-shadow: 0 4px 8px rgba(3, 169, 244, 0.3);
+    transform: translateY(-1px);
+    background: #039be5;
+}
+
+.split-btn-container.blue-theme .split-btn-main.btn-premium-blue {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 4px !important;
+    border-bottom-left-radius: 4px !important;
+    padding: 0 20px !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none;
+    color: white !important;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px !important;
+}
+
+.split-btn-container.blue-theme .split-btn-toggle {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-top-right-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+    padding: 0 12px !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    color: white !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    height: 38px !important;
+}
+
+.split-btn-container.blue-theme .split-btn-main:hover,
+.split-btn-container.blue-theme .split-btn-toggle:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
