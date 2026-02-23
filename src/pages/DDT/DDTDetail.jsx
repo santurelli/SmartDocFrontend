@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import DDTService from '../../services/DDTService';
 import ConfOrdineService from '../../services/ConfOrdineService';
+import PreventiviService from '../../services/PreventiviService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
@@ -25,6 +26,7 @@ import VettoriManagementModal from '../../components/modals/VettoriManagementMod
 import TipiPortoManagementModal from '../../components/modals/TipiPortoManagementModal';
 import AspettoBeniManagementModal from '../../components/modals/AspettoBeniManagementModal';
 import CausaliTrasportoManagementModal from '../../components/modals/CausaliTrasportoManagementModal';
+import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -92,6 +94,7 @@ const DDTDetail = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const fromConfermeId = searchParams.get('fromConferme');
+    const fromPreventiviId = searchParams.get('fromPreventivi');
     const isNew = !id || id === 'new';
     const [activeTab, setActiveTab] = useState('generale'); // generale, articoli, note, pagamento
     const [isCeramica, setIsCeramica] = useState(false);
@@ -153,6 +156,7 @@ const DDTDetail = () => {
     const [addressTarget, setAddressTarget] = useState('intestazione');
     const [showProgettoModal, setShowProgettoModal] = useState(false);
     const [showActionsMenu, setShowActionsMenu] = useState(false);
+    const [showParticelleModal, setShowParticelleModal] = useState(false);
     const actionsMenuRef = useRef(null);
 
     useEffect(() => {
@@ -162,6 +166,8 @@ const DDTDetail = () => {
             fetchData();
         } else if (fromConfermeId) {
             fetchDataFromConfOrdine(fromConfermeId);
+        } else if (fromPreventiviId) {
+            fetchDataFromPreventivo(fromPreventiviId);
         } else {
             fetchNextNum(formData.dataDocumento);
         }
@@ -186,7 +192,10 @@ const DDTDetail = () => {
         try {
             const res = await DDTService.getCombosMap();
             if (res.data && res.data.payload) {
-                setCombos(res.data.payload);
+                setCombos(prev => ({
+                    ...prev,
+                    ...res.data.payload
+                }));
             }
         } catch (error) {
             console.error(error);
@@ -221,6 +230,7 @@ const DDTDetail = () => {
     };
 
     const fetchDataFromConfOrdine = async (confIdsStr) => {
+        setLoading(true);
         try {
             const ids = confIdsStr.split(',');
             let allProdotti = [];
@@ -232,38 +242,44 @@ const DDTDetail = () => {
                     const confData = res.data.payload;
                     if (!firstConfData) firstConfData = confData;
 
-                    // Add a reference note row
+                    // Aggiunge riga di riferimento
+                    const refText = `Rif. conferma d'ordine num. ${confData.numDocumento} del ${confData.dataDocumento}`;
                     allProdotti.push({
                         id: 0,
                         idDocumento: 0,
                         tipo: 'N',
-                        fmDescrizione: `Rif. conf. ordine num. ${confData.numeroDocumento} del ${confData.dataDocumento}`,
+                        fmDescrizione: refText,
                         quantita: 0,
                         prezzo: 0,
                         sconto: 0,
                         iva: 0
                     });
 
-                    // Add products
+                    // Aggiunge prodotti della conferma
                     if (confData.prodotti) {
                         const mappedProdotti = confData.prodotti.map(p => ({
                             ...p,
                             id: 0,
                             idDocumento: 0,
-                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N')
+                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
+                            scarica: 1
                         }));
                         allProdotti = [...allProdotti, ...mappedProdotti];
                     }
                 }
             }
 
+            setProdotti(allProdotti);
+
             if (firstConfData) {
                 setFormData(prev => ({
                     ...prev,
                     idCliente: firstConfData.idCliente,
-                    nomeCliente: firstConfData.denominazioneCliente,
+                    soggetto: firstConfData.soggetto, // Se presente
+                    nomeCliente: firstConfData.nomeCliente,
                     idAgente: firstConfData.idAgente,
                     idProgetto: firstConfData.idProgetto,
+                    nomeProgetto: firstConfData.nomeProgetto,
                     idListino: firstConfData.idListino || '',
                     idTipoPagamento: firstConfData.idTipoPagamento,
                     idNsBanca: firstConfData.idNsBanca,
@@ -278,20 +294,94 @@ const DDTDetail = () => {
                     cittaDestinazione: firstConfData.cittaDestinazione,
                     indirizzoDestinazione: firstConfData.indirizzoDestinazione,
                     capDestinazione: firstConfData.capDestinazione,
-                    provinciaDestinazione: firstConfData.provinciaDestinazione,
-                    annotazioneEstesa: firstConfData.annotazioneEstesa
+                    provinciaDestinazione: firstConfData.provinciaDestinazione
                 }));
-
-                setProdotti(allProdotti);
-                fetchNextNum(formData.dataDocumento);
-
-                if (firstConfData.idCliente) {
-                    loadClientAddresses(firstConfData.idCliente, false);
-                }
+                loadClientAddresses(firstConfData.idCliente);
             }
         } catch (error) {
-            console.error("Error loading conf ordine data:", error);
-            Swal.fire('Errore', 'Impossibile caricare i dati della conferma ordine', 'error');
+            console.error(error);
+            Swal.fire('Errore', 'Errore nel caricamento dati dalla conferma d\'ordine', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchDataFromPreventivo = async (prevIdsStr) => {
+        setLoading(true);
+        try {
+            const ids = prevIdsStr.split(',');
+            let allProdotti = [];
+            let firstPrevData = null;
+
+            for (const prevId of ids) {
+                const res = await PreventiviService.getById(prevId);
+                if (res.data && res.data.payload) {
+                    const prevData = res.data.payload;
+                    if (!firstPrevData) firstPrevData = prevData;
+
+                    // Add a reference note row
+                    const refNum = prevData.numDocumento || prevData.numeroDocumento || prevId || '';
+                    const refDate = prevData.dataDocumento || prevData.dataDoc || '';
+                    const refText = `Rif. preventivo num. ${refNum} del ${refDate}`;
+
+                    allProdotti.push({
+                        id: 0,
+                        idDocumento: 0,
+                        tipo: 'N',
+                        fmDescrizione: refText,
+                        quantita: 0,
+                        prezzo: 0,
+                        sconto: 0,
+                        iva: 0
+                    });
+
+                    // Add products of this preventivo
+                    if (prevData.prodotti) {
+                        const mappedProdotti = prevData.prodotti.map(p => ({
+                            ...p,
+                            id: 0,
+                            idDocumento: 0,
+                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
+                            scarica: 1
+                        }));
+                        allProdotti = [...allProdotti, ...mappedProdotti];
+                    }
+                }
+            }
+
+            setProdotti(allProdotti);
+
+            if (firstPrevData) {
+                setFormData(prev => ({
+                    ...prev,
+                    idCliente: firstPrevData.idCliente,
+                    nomeCliente: firstPrevData.nomeCliente,
+                    idAgente: firstPrevData.idAgente,
+                    idProgetto: firstPrevData.idProgetto,
+                    nomeProgetto: firstPrevData.nomeProgetto,
+                    idListino: firstPrevData.idListino || '',
+                    idTipoPagamento: firstPrevData.idTipoPagamento,
+                    idNsBanca: firstPrevData.idNsBanca,
+                    descrizioneBanca: firstPrevData.descrizioneBanca,
+                    iban: firstPrevData.iban,
+                    cittaIntestazione: firstPrevData.cittaIntestazione,
+                    indirizzoIntestazione: firstPrevData.indirizzoIntestazione,
+                    capIntestazione: firstPrevData.capIntestazione,
+                    provinciaIntestazione: firstPrevData.provinciaIntestazione,
+                    codiceFiscale: firstPrevData.codiceFiscale,
+                    partitaIva: firstPrevData.partitaIva,
+                    cittaDestinazione: firstPrevData.cittaDestinazione,
+                    indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
+                    capDestinazione: firstPrevData.capDestinazione,
+                    provinciaDestinazione: firstPrevData.provinciaDestinazione
+                }));
+                loadClientAddresses(firstPrevData.idCliente);
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Errore', 'Errore nel caricamento dati dal preventivo', 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -370,12 +460,12 @@ const DDTDetail = () => {
     };
 
     const handleAddArticolo = () => {
-        setProdotti([...prodotti, { tipo: 'A', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null }]);
+        setProdotti([...prodotti, { tipo: 'A', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null, scarica: 1 }]);
         setActiveTab('articoli');
     };
 
     const handleAddFM = () => {
-        setProdotti([...prodotti, { tipo: 'F', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null, fmDescrizione: '' }]);
+        setProdotti([...prodotti, { tipo: 'F', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null, fmDescrizione: '', scarica: 1 }]);
         setActiveTab('articoli');
     };
 
@@ -659,6 +749,14 @@ const DDTDetail = () => {
                                                         formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
                                                     />
                                                 </div>
+                                                <button
+                                                    type="button"
+                                                    className="premium-wrench-btn"
+                                                    onClick={() => setShowParticelleModal(true)}
+                                                    title="Configura suffissi"
+                                                >
+                                                    <FaWrench />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -1034,6 +1132,17 @@ const DDTDetail = () => {
                     />
                 )
             }
+
+            {showParticelleModal && (
+                <ParticelleManagementModal
+                    isOpen={showParticelleModal}
+                    currentParticelle={combos.particelle}
+                    onClose={() => {
+                        setShowParticelleModal(false);
+                        fetchCombos();
+                    }}
+                />
+            )}
         </div>
     );
 };

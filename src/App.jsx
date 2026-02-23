@@ -16,6 +16,8 @@ import PreventiviList from './pages/Preventivi/PreventiviList';
 import PreventiviDetail from './pages/Preventivi/PreventiviDetail';
 import DatiAziendaPage from './pages/Configurazione/DatiAziendaPage';
 import ParametriPage from './pages/Configurazione/ParametriPage';
+import ImpostazioniFatturazionePage from './pages/Configurazione/ImpostazioniFatturazionePage';
+import ImpostazioniDocumentiPage from './pages/Configurazione/ImpostazioniDocumentiPage';
 import FornitoriList from './pages/Fornitori/FornitoriList';
 import FornitoriDetail from './pages/Fornitori/FornitoriDetail';
 import ConfOrdineList from './pages/ConfOrdine/ConfOrdineList';
@@ -114,7 +116,8 @@ function App() {
                 <Route path="/conf-ordine/new" element={<ConfOrdineDetail />} />
                 <Route path="/conf-ordine/:id" element={<ConfOrdineDetail />} />
                 <Route path="/configurazione/dati-azienda" element={<DatiAziendaPage />} />
-                <Route path="/configurazione/dati-sistema" element={<ParametriPage />} />
+                <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
+                <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
                 <Route path="/fornitori" element={<FornitoriList />} />
                 <Route path="/fornitori/:id" element={<FornitoriDetail />} />
                 <Route path="/ddt" element={<DDTList />} />

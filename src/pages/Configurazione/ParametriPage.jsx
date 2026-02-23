@@ -30,8 +30,10 @@ const ParametriPage = () => {
         }
     };
 
-    // Extract unique domains
-    const domains = [...new Set(configs.map(c => c.dominio))].sort();
+    // Extract unique domains and filter out 'DOCUMENTI'
+    const domains = [...new Set(configs.map(c => c.dominio))]
+        .filter(d => d !== 'DOCUMENTI')
+        .sort();
 
     // Filter configs
     const filteredConfigs = configs.filter(c =>

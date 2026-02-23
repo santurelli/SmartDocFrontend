@@ -23,6 +23,7 @@ import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
 import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
 import CausaliEsigibilitaDifferitaManagementModal from '../../components/modals/CausaliEsigibilitaDifferitaManagementModal';
 import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
+import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -154,6 +155,7 @@ const NoteCreditoDetail = () => {
     const [showProgettoModal, setShowProgettoModal] = useState(false);
     const [showCausaleEsigibilitaModal, setShowCausaleEsigibilitaModal] = useState(false);
     const [showActionsMenu, setShowActionsMenu] = useState(false);
+    const [showParticelleModal, setShowParticelleModal] = useState(false);
     const actionsMenuRef = useRef(null);
 
     useEffect(() => {
@@ -196,7 +198,10 @@ const NoteCreditoDetail = () => {
         try {
             const res = await NoteCreditoService.getCombosMap();
             if (res.data && res.data.payload) {
-                setCombos(res.data.payload);
+                setCombos(prev => ({
+                    ...prev,
+                    ...res.data.payload
+                }));
             }
         } catch (error) {
             console.error(error);
@@ -609,6 +614,14 @@ const NoteCreditoDetail = () => {
                                                     formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
                                                 />
                                             </div>
+                                            <button
+                                                type="button"
+                                                className="premium-wrench-btn"
+                                                onClick={() => setShowParticelleModal(true)}
+                                                title="Configura suffissi"
+                                            >
+                                                <FaWrench />
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -987,6 +1000,17 @@ const NoteCreditoDetail = () => {
                     indirizzi={clientIndirizzi}
                     onSelect={handleSelectIndirizzo}
                     target={addressTarget}
+                />
+            )}
+
+            {showParticelleModal && (
+                <ParticelleManagementModal
+                    isOpen={showParticelleModal}
+                    currentParticelle={combos.particelle}
+                    onClose={() => {
+                        setShowParticelleModal(false);
+                        fetchCombos();
+                    }}
                 />
             )}
 

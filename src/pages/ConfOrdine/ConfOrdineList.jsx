@@ -5,6 +5,7 @@ import Select from 'react-select';
 import ConfOrdineService from '../../services/ConfOrdineService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
+import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
@@ -12,7 +13,7 @@ import storageHelper from '../../utils/storageHelper';
 import { formatStato } from '../../utils/documentUtils';
 import './ConfOrdineList.css';
 
-const MODULE_NAME = 'conf-ordine';
+const MODULE_NAME = 'conferme';
 
 const ConfOrdineList = () => {
     const navigate = useNavigate();
@@ -35,6 +36,7 @@ const ConfOrdineList = () => {
     const [conferme, setConferme] = useState([]);
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
+    const [docConfigs, setDocConfigs] = useState(null);
 
     // Filters
     const [idCliente, setIdCliente] = useState(initialState.idCliente);
@@ -100,8 +102,26 @@ const ConfOrdineList = () => {
 
     useEffect(() => {
         loadAgenti();
-        fetchConferme();
+        loadDocConfigs();
+        handleSearch();
     }, [currentPage, pageSize, sortCol, sortDir]);
+
+    useEffect(() => {
+        window.addEventListener('configupdated', loadDocConfigs);
+        return () => window.removeEventListener('configupdated', loadDocConfigs);
+    }, []);
+
+    const loadDocConfigs = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
+            if (res.data) setDocConfigs(res.data);
+        } catch (err) {
+            console.error("Error loading conferme configurations:", err);
+        }
+    };
+
+    const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
+
 
     const loadAgenti = async () => {
         try {
@@ -139,7 +159,11 @@ const ConfOrdineList = () => {
         });
     };
 
-    const fetchConferme = async () => {
+    const handleSearch = async (e) => {
+        if (e) {
+            e.preventDefault();
+            setCurrentPage(0);
+        }
         setLoading(true);
         try {
             const params = {
@@ -147,7 +171,7 @@ const ConfOrdineList = () => {
                 idAgente,
                 dtFrom,
                 dtTo,
-                start: currentPage * pageSize,
+                start: (e ? 0 : currentPage) * pageSize,
                 length: pageSize,
                 orderColumn: sortCol,
                 orderDir: sortDir
@@ -161,12 +185,6 @@ const ConfOrdineList = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        setCurrentPage(0);
-        fetchConferme();
     };
 
     const handleDelete = async (id) => {
@@ -184,11 +202,39 @@ const ConfOrdineList = () => {
         if (result.isConfirmed) {
             try {
                 await ConfOrdineService.delete(id);
-                fetchConferme();
+                handleSearch();
                 Swal.fire('Eliminata!', 'La conferma d\'ordine è stata eliminata.', 'success');
             } catch (error) {
                 console.error("Error deleting conferma d'ordine:", error);
                 Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
+            }
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        const result = await Swal.fire({
+            title: `Elimina ${selectedIds.length} conferme d'ordine?`,
+            text: "L'operazione è irreversibile!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sì, elimina tutte'
+        });
+
+        if (result.isConfirmed) {
+            setLoading(true);
+            try {
+                for (const id of selectedIds) {
+                    await ConfOrdineService.delete(id);
+                }
+                Swal.fire('Eliminate!', 'Le conferme d\'ordine selezionate sono state eliminate.', 'success');
+                setSelectedIds([]);
+                handleSearch();
+            } catch (error) {
+                console.error("Bulk delete error:", error);
+                Swal.fire('Errore', "Errore durante l'eliminazione massiva", 'error');
+            } finally {
+                setLoading(false);
             }
         }
     };
@@ -210,6 +256,11 @@ const ConfOrdineList = () => {
     const handleBulkGenerateDDT = () => {
         if (selectedIds.length === 0) return;
         navigate(`/ddt/new?fromConferme=${selectedIds.join(',')}`);
+    };
+
+    const handleBulkGenerateFattura = () => {
+        if (selectedIds.length === 0) return;
+        navigate(`/fatture/new?fromConferme=${selectedIds.join(',')}`);
     };
 
     const handlePrintItem = async (id) => {
@@ -272,9 +323,16 @@ const ConfOrdineList = () => {
                         <div className="vibrant-bulk-toolbar">
                             <div className="toolbar-divider"></div>
                             <span className="selected-count-vibrant">{selectedIds.length} selezionat{selectedIds.length === 1 ? 'o' : 'i'}</span>
-                            <button className="btn-bulk-vibrant btn-bulk-generate" onClick={handleBulkGenerateDDT}>
-                                <FaArrowRight /> Genera DDT ({selectedIds.length})
-                            </button>
+                            {isEnabled('ABILITA_DDT') && (
+                                <button className="btn-bulk-vibrant btn-bulk-generate" onClick={handleBulkGenerateDDT}>
+                                    <FaArrowRight /> Genera DDT ({selectedIds.length})
+                                </button>
+                            )}
+                            {isEnabled('ABILITA_FATTURE') && (
+                                <button className="btn-bulk-vibrant btn-bulk-generate" style={{ backgroundColor: '#2980b9' }} onClick={handleBulkGenerateFattura}>
+                                    <FaArrowRight /> Genera Fattura ({selectedIds.length})
+                                </button>
+                            )}
                             <button className="btn-bulk-vibrant btn-bulk-delete" onClick={handleBulkDelete}>
                                 <FaTrash /> Elimina ({selectedIds.length})
                             </button>
@@ -431,9 +489,16 @@ const ConfOrdineList = () => {
                                                                 <button className="action-dropdown-item" onClick={() => handleExportPdfItem(docId, conf.numeroDocumento)}>
                                                                     <FaFilePdf /> Esporta PDF
                                                                 </button>
-                                                                <button className="action-dropdown-item" onClick={() => navigate(`/ddt/new?fromConferme=${docId}`)}>
-                                                                    <FaArrowRight /> Genera DDT
-                                                                </button>
+                                                                {isEnabled('ABILITA_DDT') && (
+                                                                    <button className="action-dropdown-item" onClick={() => navigate(`/ddt/new?fromConferme=${docId}`)}>
+                                                                        <FaArrowRight /> Genera DDT
+                                                                    </button>
+                                                                )}
+                                                                {isEnabled('ABILITA_FATTURE') && (
+                                                                    <button className="action-dropdown-item" onClick={() => navigate(`/fatture/new?fromConferme=${docId}`)}>
+                                                                        <FaArrowRight /> Genera Fattura
+                                                                    </button>
+                                                                )}
                                                                 <div className="action-dropdown-divider"></div>
                                                                 <button className="action-dropdown-item text-danger" onClick={() => handleDelete(docId)}>
                                                                     <FaTrash /> Elimina

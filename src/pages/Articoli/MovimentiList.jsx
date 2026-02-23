@@ -192,7 +192,7 @@ const MovimentiList = () => {
                                 type="date"
                                 className="form-control"
                                 value={dtFrom}
-                                onChange={(e) => setDtFrom(e.target.value)}
+                                onChange={(e) => { setDtFrom(e.target.value); setPage(0); }}
                                 title="Dal"
                             />
                         </div>
@@ -201,7 +201,7 @@ const MovimentiList = () => {
                                 type="date"
                                 className="form-control"
                                 value={dtTo}
-                                onChange={(e) => setDtTo(e.target.value)}
+                                onChange={(e) => { setDtTo(e.target.value); setPage(0); }}
                                 title="Al"
                             />
                         </div>
@@ -217,7 +217,7 @@ const MovimentiList = () => {
                                     })
                                 }
                                 value={selectedArticle}
-                                onChange={setSelectedArticle}
+                                onChange={(val) => { setSelectedArticle(val); setPage(0); }}
                                 placeholder="Cerca articolo..."
                                 isClearable
                                 styles={{

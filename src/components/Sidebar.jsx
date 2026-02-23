@@ -1,22 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import ConfigurazioneService from '../services/ConfigurazioneService';
 import {
     FaTachometerAlt, FaThLarge, FaCubes, FaAngleRight, FaAngleDown,
-    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaLock, FaUser, FaCircle
+    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaLock, FaUser, FaCircle, FaFileAlt
 } from 'react-icons/fa';
 import './Sidebar.css';
 
 const Sidebar = ({ user }) => {
     const [openMenus, setOpenMenus] = useState({});
+    const [docConfigs, setDocConfigs] = useState(null);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        const fetchDocConfigs = async () => {
+            try {
+                const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
+                if (res.data) setDocConfigs(res.data);
+            } catch (err) {
+                console.error("Error fetching sidebar configs:", err);
+            }
+        };
+        fetchDocConfigs();
+
+        window.addEventListener('configupdated', fetchDocConfigs);
+        return () => window.removeEventListener('configupdated', fetchDocConfigs);
+    }, []);
+
     const toggleMenu = (menuKey) => {
-        setOpenMenus(prevState => {
-            const isOpen = prevState[menuKey];
-            return {
-                [menuKey]: !isOpen
-            };
-        });
+        setOpenMenus(prevState => ({
+            [menuKey]: !prevState[menuKey]
+        }));
     };
 
     const handleLogout = () => {
@@ -24,6 +38,8 @@ const Sidebar = ({ user }) => {
         localStorage.removeItem('user');
         navigate('/login');
     };
+
+    const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
 
     const userName = user ? `${user.nome} ${user.cognome ? user.cognome.charAt(0) + '.' : ''}` : 'Utente';
 
@@ -88,13 +104,15 @@ const Sidebar = ({ user }) => {
                                     <FaAngleRight className="drop-icon" />
                                 </a>
                                 <ul className="submenu">
-                                    <li><NavLink to="/preventivi">Preventivi</NavLink></li>
-                                    <li><NavLink to="/conf-ordine">Conferme d'ordine</NavLink></li>
-                                    <li><NavLink to="/ddt">Doc. trasporto</NavLink></li>
-                                    <li><NavLink to="/fatture">Fatture/Note debito</NavLink></li>
-                                    <li><NavLink to="/note-credito">Note di credito</NavLink></li>
-                                    <li><NavLink to="/fatture-fornitore">Fatture fornitore</NavLink></li>
-                                    <li><NavLink to="/note-credito-fornitore">Note credito fornitore</NavLink></li>
+                                    {isEnabled('ABILITA_PREVENTIVI') && <li><NavLink to="/preventivi">Preventivi</NavLink></li>}
+                                    {isEnabled('ABILITA_CONF_ORDINE') && <li><NavLink to="/conf-ordine">Conferme d'ordine</NavLink></li>}
+                                    {isEnabled('ABILITA_DDT') && <li><NavLink to="/ddt">Doc. trasporto</NavLink></li>}
+                                    {(isEnabled('ABILITA_FATTURE') || isEnabled('ABILITA_NOTE_DEBITO') || isEnabled('ABILITA_FATTURE_PROFORMA') || isEnabled('ABILITA_FATTURE_ACCOMPAGNATORIE')) && (
+                                        <li><NavLink to="/fatture">Fatture/Note debito</NavLink></li>
+                                    )}
+                                    {isEnabled('ABILITA_NOTE_CREDITO') && <li><NavLink to="/note-credito">Note di credito</NavLink></li>}
+                                    {isEnabled('ABILITA_FATTURE_FORNITORE') && <li><NavLink to="/fatture-fornitore">Fatture fornitore</NavLink></li>}
+                                    {isEnabled('ABILITA_NOTE_CREDITO_FORNITORE') && <li><NavLink to="/note-credito-fornitore">Note credito fornitore</NavLink></li>}
                                 </ul>
                             </li>
 
@@ -147,7 +165,8 @@ const Sidebar = ({ user }) => {
                                 </a>
                                 <ul className="submenu">
                                     <li><NavLink to="/configurazione/dati-azienda">Dati azienda</NavLink></li>
-                                    <li><NavLink to="/configurazione/dati-sistema">Dati sistema</NavLink></li>
+                                    <li><NavLink to="/configurazione/fatturazione">Fatturazione</NavLink></li>
+                                    <li><NavLink to="/configurazione/documenti">Documenti</NavLink></li>
                                 </ul>
                             </li>
 

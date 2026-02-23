@@ -53,7 +53,7 @@ const DocumentRows = ({
     onDeleteRow,
     combos,
     isCeramica,
-    showDownloadColumn = false,
+    showRitenuta = false,
     readOnly = false,
     children
 }) => {
@@ -133,7 +133,6 @@ const DocumentRows = ({
                         <th style={{ width: '100px' }}>Sconto</th>
                         <th style={{ width: '100px' }}>IVA</th>
                         <th style={{ width: '120px' }}>Totale</th>
-                        {showDownloadColumn && <th style={{ width: '60px', textAlign: 'center' }}>Scarica</th>}
                         <th style={{ width: '40px' }}></th>
                     </tr>
                 </thead>
@@ -147,36 +146,51 @@ const DocumentRows = ({
                                     {row.tipo === 'F' && <span className="label label-info">F.M.</span>}
                                     {row.tipo === 'N' && <span className="label label-default">NOTA</span>}
                                 </td>
-                                <td colSpan={row.tipo === 'N' ? (showDownloadColumn ? 8 : 7) : 1}>
+                                <td colSpan={row.tipo === 'N' ? 7 : 1}>
                                     {row.tipo === 'A' ? (
-                                        <AsyncSelect
-                                            isClearable
-                                            cacheOptions
-                                            loadOptions={loadArticoli}
-                                            formatOptionLabel={formatArticleOptionLabel}
-                                            styles={tableSelectStyles}
-                                            placeholder="Cerca art..."
-                                            noOptionsMessage={() => "Nessun risultato"}
-                                            loadingMessage={() => "Caricamento..."}
-                                            menuPortalTarget={document.body}
-                                            value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
-                                            onChange={(opt) => {
-                                                const a = opt?.data || {};
-                                                onRowUpdate(idx, {
-                                                    idProdotto: opt?.value,
-                                                    codiceProdotto: a.codiceProdotto || '',
-                                                    descProdotto: a.descProdotto || '',
-                                                    prezzo: a.prezzo || 0,
-                                                    idUnitaMisura: a.idUnitaMisura,
-                                                    idAliquotaIva: a.idAliquotaIva,
-                                                    descrFormato: a.descrFormato,
-                                                    descrScelta: a.descrScelta,
-                                                    descrTono: a.descrTono,
-                                                    descrCalibro: a.descrCalibro
-                                                });
-                                            }}
-                                            isDisabled={readOnly}
-                                        />
+                                        <>
+                                            <AsyncSelect
+                                                isClearable
+                                                cacheOptions
+                                                loadOptions={loadArticoli}
+                                                formatOptionLabel={formatArticleOptionLabel}
+                                                styles={tableSelectStyles}
+                                                placeholder="Cerca art..."
+                                                noOptionsMessage={() => "Nessun risultato"}
+                                                loadingMessage={() => "Caricamento..."}
+                                                menuPortalTarget={document.body}
+                                                value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
+                                                onChange={(opt) => {
+                                                    const a = opt?.data || {};
+                                                    onRowUpdate(idx, {
+                                                        idProdotto: opt?.value,
+                                                        codiceProdotto: a.codiceProdotto || '',
+                                                        descProdotto: a.descProdotto || '',
+                                                        prezzo: a.prezzo || 0,
+                                                        idUnitaMisura: a.idUnitaMisura,
+                                                        idAliquotaIva: a.idAliquotaIva,
+                                                        descrFormato: a.descrFormato,
+                                                        descrScelta: a.descrScelta,
+                                                        descrTono: a.descrTono,
+                                                        descrCalibro: a.descrCalibro
+                                                    });
+                                                }}
+                                                isDisabled={readOnly}
+                                            />
+                                            {showRitenuta && (
+                                                <div className="ritenuta-inline-box" style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#d32f2f' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`ritenuta-${idx}`}
+                                                        checked={row.flRitenuta === 1}
+                                                        onChange={(e) => onRowChange(idx, 'flRitenuta', e.target.checked ? 1 : 0)}
+                                                        disabled={readOnly}
+                                                        style={{ cursor: 'pointer', margin: 0, width: '15px', height: '15px' }}
+                                                    />
+                                                    <label htmlFor={`ritenuta-${idx}`} style={{ cursor: 'pointer', fontWeight: 500, margin: 0 }}>Soggetto a Ritenuta</label>
+                                                </div>
+                                            )}
+                                        </>
                                     ) : row.tipo === 'F' ? (
                                         <div className="flex-column gap-1">
                                             {isCeramica && (
@@ -217,49 +231,53 @@ const DocumentRows = ({
                                                     <input type="text" className="form-control form-control-xs" value={row.fmTaglia || ''} onChange={(e) => onRowChange(idx, 'fmTaglia', e.target.value)} placeholder="Cal." style={{ width: '33%' }} disabled={readOnly} />
                                                 </div>
                                             )}
+                                            {showRitenuta && (
+                                                <div className="ritenuta-inline-box" style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#d32f2f' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`ritenuta-${idx}`}
+                                                        checked={row.flRitenuta === 1}
+                                                        onChange={(e) => onRowChange(idx, 'flRitenuta', e.target.checked ? 1 : 0)}
+                                                        disabled={readOnly}
+                                                        style={{ cursor: 'pointer', margin: 0, width: '15px', height: '15px' }}
+                                                    />
+                                                    <label htmlFor={`ritenuta-${idx}`} style={{ cursor: 'pointer', fontWeight: 500, margin: 0 }}>Soggetto a Ritenuta</label>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <input type="text" className="form-control" value={row.nota || row.fmDescrizione || row.descrizione || ''} onChange={(e) => onRowChange(idx, 'nota', e.target.value)} placeholder="Testo della nota..." disabled={readOnly} />
                                     )}
                                 </td>
 
-                                {row.tipo !== 'N' ? (
-                                    <>
-                                        <td><input type="number" step="0.01" className="form-control text-right" value={row.quantita} onChange={(e) => onRowChange(idx, 'quantita', e.target.value)} disabled={readOnly} /></td>
-                                        <td>
-                                            <div className="cell-select-group">
-                                                <select className="form-control input-sm" value={row.idUnitaMisura || ''} onChange={(e) => onRowChange(idx, 'idUnitaMisura', e.target.value)} disabled={readOnly}>
-                                                    <option value="">-</option>
-                                                    {(combos.unitaMisura || []).map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td><input type="number" step="0.01" className="form-control text-right" value={row.prezzo} onChange={(e) => onRowChange(idx, 'prezzo', e.target.value)} disabled={readOnly} /></td>
-                                        <td><input type="text" className="form-control text-right" value={row.sconto || ''} onChange={(e) => onRowChange(idx, 'sconto', e.target.value)} disabled={readOnly} /></td>
-                                        <td>
-                                            <div className="cell-select-group">
-                                                <select className="form-control input-sm" value={row.idAliquotaIva || ''} onChange={(e) => onRowChange(idx, 'idAliquotaIva', e.target.value)} disabled={readOnly}>
-                                                    <option value="">-</option>
-                                                    {(combos.aliquoteIva || []).map(a => <option key={a.id} value={a.id}>{a.codice}</option>)}
-                                                </select>
-                                            </div>
-                                        </td>
-                                        <td className="text-right" style={{ verticalAlign: 'middle', fontWeight: 600 }}>
-                                            {formatCurrency(vals.total)}
-                                        </td>
-                                        {showDownloadColumn && (
-                                            <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={row.scaricaMagazzino === true}
-                                                    onChange={(e) => onRowChange(idx, 'scaricaMagazzino', e.target.checked)}
-                                                    disabled={readOnly}
-                                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                                />
+                                {
+                                    row.tipo !== 'N' ? (
+                                        <>
+                                            <td><input type="number" step="0.01" className="form-control text-right" value={row.quantita} onChange={(e) => onRowChange(idx, 'quantita', e.target.value)} disabled={readOnly} /></td>
+                                            <td>
+                                                <div className="cell-select-group">
+                                                    <select className="form-control input-sm" value={row.idUnitaMisura || ''} onChange={(e) => onRowChange(idx, 'idUnitaMisura', e.target.value)} disabled={readOnly}>
+                                                        <option value="">-</option>
+                                                        {(combos.unitaMisura || []).map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
+                                                    </select>
+                                                </div>
                                             </td>
-                                        )}
-                                    </>
-                                ) : null}
+                                            <td><input type="number" step="0.01" className="form-control text-right" value={row.prezzo} onChange={(e) => onRowChange(idx, 'prezzo', e.target.value)} disabled={readOnly} /></td>
+                                            <td><input type="text" className="form-control text-right" value={row.sconto || ''} onChange={(e) => onRowChange(idx, 'sconto', e.target.value)} disabled={readOnly} /></td>
+                                            <td>
+                                                <div className="cell-select-group">
+                                                    <select className="form-control input-sm" value={row.idAliquotaIva || ''} onChange={(e) => onRowChange(idx, 'idAliquotaIva', e.target.value)} disabled={readOnly}>
+                                                        <option value="">-</option>
+                                                        {(combos.aliquoteIva || []).map(a => <option key={a.id} value={a.id}>{a.codice}</option>)}
+                                                    </select>
+                                                </div>
+                                            </td>
+                                            <td className="text-right" style={{ verticalAlign: 'middle', fontWeight: 600 }}>
+                                                {formatCurrency(vals.total)}
+                                            </td>
+                                        </>
+                                    ) : null
+                                }
                                 <td>
                                     {!readOnly && (
                                         <button className="btn-delete-row" onClick={() => onDeleteRow(idx)} tabIndex="-1">
@@ -272,14 +290,14 @@ const DocumentRows = ({
                     })}
                     {children && (
                         <tr className="row-add-actions">
-                            <td colSpan={showDownloadColumn ? 10 : 9} style={{ padding: '0px' }}>
+                            <td colSpan={9} style={{ padding: '0px' }}>
                                 {children}
                             </td>
                         </tr>
                     )}
                 </tbody>
             </table>
-        </div>
+        </div >
     );
 };
 

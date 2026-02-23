@@ -2,10 +2,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import FattureService from '../../services/FattureService';
 import DDTService from '../../services/DDTService';
+import PreventiviService from '../../services/PreventiviService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
+import ConfOrdineService from '../../services/ConfOrdineService';
 import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
@@ -22,6 +24,7 @@ import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
 import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
 import CausaliEsigibilitaDifferitaManagementModal from '../../components/modals/CausaliEsigibilitaDifferitaManagementModal';
 import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
+import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -69,7 +72,12 @@ const FattureDetail = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const fromDDTId = searchParams.get('fromDDT');
+    const fromPreventiviId = searchParams.get('fromPreventivi');
+    const fromConfermeId = searchParams.get('fromConferme');
+    const tipoParam = searchParams.get('tipo');
+    const eletParam = searchParams.get('elet');
     const isNew = !id || id === 'new';
+    const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('generale'); // legale, articoli, note, pagamento
     const [isCeramica, setIsCeramica] = useState(false);
 
@@ -112,7 +120,8 @@ const FattureDetail = () => {
         idCausaleEsigibilitaDifferita: null,
         flRitenutaAcconto: 0,
         percRitenutaAcconto: 20,
-        importoRitenutaAcconto: 0
+        importoRitenutaAcconto: 0,
+        tipoRitenuta: ''
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -136,6 +145,7 @@ const FattureDetail = () => {
     const [showProgettoModal, setShowProgettoModal] = useState(false);
     const [showCausaleEsigibilitaModal, setShowCausaleEsigibilitaModal] = useState(false);
     const [showSaveMenu, setShowSaveMenu] = useState(false);
+    const [showParticelleModal, setShowParticelleModal] = useState(false);
     const saveMenuRef = useRef(null);
 
     const getDocTitle = () => {
@@ -153,9 +163,6 @@ const FattureDetail = () => {
         if (!isNew) {
             fetchData();
         } else {
-            const tipoParam = searchParams.get('tipo');
-            const eletParam = searchParams.get('elet');
-
             if (tipoParam || eletParam) {
                 setFormData(prev => ({
                     ...prev,
@@ -166,8 +173,13 @@ const FattureDetail = () => {
 
             if (fromDDTId) {
                 fetchDataFromDDT(fromDDTId);
+            } else if (fromPreventiviId) { // Added this block
+                fetchDataFromPreventivo(fromPreventiviId);
+            } else if (fromConfermeId) {
+                fetchDataFromConfOrdine(fromConfermeId);
             } else {
                 fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
+                fetchRitenutaPreferences();
             }
         }
 
@@ -191,14 +203,35 @@ const FattureDetail = () => {
         try {
             const res = await FattureService.getCombosMap();
             if (res.data && res.data.payload) {
-                setCombos(res.data.payload);
+                setCombos(prev => ({
+                    ...prev,
+                    ...res.data.payload
+                }));
             }
         } catch (error) {
             console.error(error);
         }
     };
 
+    const fetchRitenutaPreferences = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('FATTURAZIONE');
+            if (res.data) {
+                const prefs = res.data;
+                setFormData(prev => ({
+                    ...prev,
+                    flRitenutaAcconto: prefs.EMETTI_RITENUTA === '1' ? 1 : prev.flRitenutaAcconto,
+                    percRitenutaAcconto: prefs.PERC_RITENUTA ? parseFloat(prefs.PERC_RITENUTA) : prev.percRitenutaAcconto,
+                    tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta
+                }));
+            }
+        } catch (error) {
+            console.error("Errore nel recupero delle preferenze ritenuta", error);
+        }
+    };
+
     const fetchDataFromDDT = async (ddtIdsStr) => {
+        setLoading(true);
         try {
             const ids = ddtIdsStr.split(',');
             let allProdotti = [];
@@ -228,25 +261,28 @@ const FattureDetail = () => {
                             ...p,
                             id: 0,
                             idDocumento: 0,
-                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N')
+                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
+                            scarica: 0 // <--- Da DDT: NON scaricare magazzino
                         }));
                         allProdotti = [...allProdotti, ...mappedProdotti];
                     }
                 }
             }
 
+            setProdotti(allProdotti);
+
             if (firstDDTData) {
                 setFormData(prev => ({
                     ...prev,
                     idCliente: firstDDTData.idCliente,
-                    nomeCliente: firstDDTData.nomeCliente,
+                    soggetto: firstDDTData.soggetto,
                     idAgente: firstDDTData.idAgente,
-                    idProgetto: firstDDTData.idProgetto,
-                    idListino: firstDDTData.idListino || '',
+                    agente: firstDDTData.agente,
                     idTipoPagamento: firstDDTData.idTipoPagamento,
-                    idNsBanca: firstDDTData.idNsBanca,
-                    descrizioneBanca: firstDDTData.descrizioneBanca,
-                    iban: firstDDTData.iban,
+                    tipologiaDocumento: tipoParam || firstDDTData.tipologiaDocumento || 'FATTURA',
+                    idProgetto: firstDDTData.idProgetto,
+                    nomeProgetto: firstDDTData.nomeProgetto,
+                    idListino: firstDDTData.idListino || '',
                     cittaIntestazione: firstDDTData.cittaIntestazione,
                     indirizzoIntestazione: firstDDTData.indirizzoIntestazione,
                     capIntestazione: firstDDTData.capIntestazione,
@@ -258,14 +294,169 @@ const FattureDetail = () => {
                     capDestinazione: firstDDTData.capDestinazione,
                     provinciaDestinazione: firstDDTData.provinciaDestinazione
                 }));
-                setProdotti(allProdotti);
-                if (firstDDTData.idCliente) {
-                    loadClientAddresses(firstDDTData.idCliente, false);
-                }
+                loadClientAddresses(firstDDTData.idCliente, false);
             }
         } catch (error) {
             console.error(error);
-            Swal.fire('Errore', 'Impossibile caricare i dati dai DDT', 'error');
+            Swal.fire('Errore', 'Errore nel caricamento dati dal DDT', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchDataFromPreventivo = async (prevIdsStr) => {
+        setLoading(true);
+        try {
+            const ids = prevIdsStr.split(',');
+            let allProdotti = [];
+            let firstPrevData = null;
+
+            for (const prevId of ids) {
+                const res = await PreventiviService.getById(prevId);
+                if (res.data && res.data.payload) {
+                    const prevData = res.data.payload;
+                    if (!firstPrevData) firstPrevData = prevData;
+
+                    // Add a reference note row
+                    const refNum = prevData.numDocumento || prevData.numeroDocumento || prevId || '';
+                    const refDate = prevData.dataDocumento || prevData.dataDoc || '';
+                    const refText = `Rif. preventivo num. ${refNum} del ${refDate}`;
+
+                    allProdotti.push({
+                        id: 0,
+                        idDocumento: 0,
+                        tipo: 'N',
+                        fmDescrizione: refText,
+                        quantita: 0,
+                        prezzo: 0,
+                        sconto: 0,
+                        iva: 0
+                    });
+
+                    // Add products of this preventivo
+                    if (prevData.prodotti) {
+                        const mappedProdotti = prevData.prodotti.map(p => ({
+                            ...p,
+                            id: 0,
+                            idDocumento: 0,
+                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
+                            scarica: 1
+                        }));
+                        allProdotti = [...allProdotti, ...mappedProdotti];
+                    }
+                }
+            }
+
+            setProdotti(allProdotti);
+
+            if (firstPrevData) {
+                setFormData(prev => ({
+                    ...prev,
+                    idCliente: firstPrevData.idCliente,
+                    soggetto: firstPrevData.soggetto,
+                    idAgente: firstPrevData.idAgente,
+                    agente: firstPrevData.agente,
+                    idTipoPagamento: firstPrevData.idTipoPagamento,
+                    tipologiaDocumento: tipoParam || 'FATTURA',
+                    idProgetto: firstPrevData.idProgetto,
+                    nomeProgetto: firstPrevData.nomeProgetto,
+                    idListino: firstPrevData.idListino || '',
+                    cittaIntestazione: firstPrevData.cittaIntestazione,
+                    indirizzoIntestazione: firstPrevData.indirizzoIntestazione,
+                    capIntestazione: firstPrevData.capIntestazione,
+                    provinciaIntestazione: firstPrevData.provinciaIntestazione,
+                    codiceFiscale: firstPrevData.codiceFiscale,
+                    partitaIva: firstPrevData.partitaIva,
+                    cittaDestinazione: firstPrevData.cittaDestinazione,
+                    indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
+                    capDestinazione: firstPrevData.capDestinazione,
+                    provinciaDestinazione: firstPrevData.provinciaDestinazione
+                }));
+                loadClientAddresses(firstPrevData.idCliente, false);
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Errore', 'Errore nel caricamento dati dal preventivo', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchDataFromConfOrdine = async (confIdsStr) => {
+        setLoading(true);
+        try {
+            const ids = confIdsStr.split(',');
+            let allProdotti = [];
+            let firstConfData = null;
+
+            for (const confId of ids) {
+                const res = await ConfOrdineService.getById(confId);
+                if (res.data && res.data.payload) {
+                    const confData = res.data.payload;
+                    if (!firstConfData) firstConfData = confData;
+
+                    // Aggiunge riga di riferimento
+                    const refNum = confData.numDocumento || confData.numeroDocumento || confId || '';
+                    const refDate = confData.dataDocumento || confData.dataDoc || '';
+                    const refText = `Rif. conferma d'ordine num. ${refNum} del ${refDate}`;
+
+                    allProdotti.push({
+                        id: 0,
+                        idDocumento: 0,
+                        tipo: 'N',
+                        fmDescrizione: refText,
+                        quantita: 0,
+                        prezzo: 0,
+                        sconto: 0,
+                        iva: 0
+                    });
+
+                    // Aggiunge prodotti della conferma
+                    if (confData.prodotti) {
+                        const mappedProdotti = confData.prodotti.map(p => ({
+                            ...p,
+                            id: 0,
+                            idDocumento: 0,
+                            tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
+                            scarica: 1 // <--- Da Conf Ordine: scarica magazzino
+                        }));
+                        allProdotti = [...allProdotti, ...mappedProdotti];
+                    }
+                }
+            }
+
+            setProdotti(allProdotti);
+
+            if (firstConfData) {
+                setFormData(prev => ({
+                    ...prev,
+                    idCliente: firstConfData.idCliente,
+                    soggetto: firstConfData.soggetto,
+                    idAgente: firstConfData.idAgente,
+                    agente: firstConfData.agente,
+                    idTipoPagamento: firstConfData.idTipoPagamento,
+                    tipologiaDocumento: tipoParam || firstConfData.tipologiaDocumento || 'FATTURA',
+                    idProgetto: firstConfData.idProgetto,
+                    nomeProgetto: firstConfData.nomeProgetto,
+                    idListino: firstConfData.idListino || '',
+                    cittaIntestazione: firstConfData.cittaIntestazione,
+                    indirizzoIntestazione: firstConfData.indirizzoIntestazione,
+                    capIntestazione: firstConfData.capIntestazione,
+                    provinciaIntestazione: firstConfData.provinciaIntestazione,
+                    codiceFiscale: firstConfData.codiceFiscale,
+                    partitaIva: firstConfData.partitaIva,
+                    cittaDestinazione: firstConfData.cittaDestinazione,
+                    indirizzoDestinazione: firstConfData.indirizzoDestinazione,
+                    capDestinazione: firstConfData.capDestinazione,
+                    provinciaDestinazione: firstConfData.provinciaDestinazione
+                }));
+                loadClientAddresses(firstConfData.idCliente, false);
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Errore', "Errore nel caricamento dati dalla conferma d'ordine", 'error');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -406,7 +597,9 @@ const FattureDetail = () => {
                 prezzo: 0,
                 sconto: '',
                 idAliquotaIva: defaultAliquota?.id || null,
-                nota: ''
+                nota: '',
+                flRitenuta: 1,
+                scarica: 1 // Default to scarica: 1 for new 'A' or 'F' rows
             };
             if (type === 'F') {
                 newRow.fmDescrizione = '';
@@ -646,6 +839,22 @@ const FattureDetail = () => {
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
                                 <div className="compact-row">
+                                    <div className="compact-col compact-col-sm">
+                                        <div className="form-group">
+                                            <label>Tipo Documento</label>
+                                            <select
+                                                className="form-control premium-input"
+                                                name="tipoFattura"
+                                                value={formData.tipoFattura}
+                                                onChange={handleHeaderChange}
+                                            >
+                                                <option value="FATTURA">Fattura</option>
+                                                <option value="FATTURA_ACCOMPAGNATORIA">Fattura Accompagnatoria</option>
+                                                <option value="FATTURA_PROFORMA">Fattura Pro Forma</option>
+                                                <option value="NOTA_DEBITO">Nota di Debito</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div className="compact-col compact-col-md">
                                         <div className="form-group">
                                             <label>Numero</label>
@@ -670,6 +879,14 @@ const FattureDetail = () => {
                                                         formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
                                                     />
                                                 </div>
+                                                <button
+                                                    type="button"
+                                                    className="premium-wrench-btn"
+                                                    onClick={() => setShowParticelleModal(true)}
+                                                    title="Configura suffissi"
+                                                >
+                                                    <FaWrench />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -713,24 +930,6 @@ const FattureDetail = () => {
                                             placeholder="Seleziona agente..."
                                             widthClass="w-md"
                                         />
-                                    </div>
-                                </div>
-                                <div className="compact-row">
-                                    <div className="compact-col compact-col-sm">
-                                        <div className="form-group">
-                                            <label>Tipo Documento</label>
-                                            <select
-                                                className="form-control premium-input"
-                                                name="tipoFattura"
-                                                value={formData.tipoFattura}
-                                                onChange={handleHeaderChange}
-                                            >
-                                                <option value="FATTURA">Fattura</option>
-                                                <option value="FATTURA_ACCOMPAGNATORIA">Fattura Accompagnatoria</option>
-                                                <option value="FATTURA_PROFORMA">Fattura Pro Forma</option>
-                                                <option value="NOTA_DEBITO">Nota di Debito</option>
-                                            </select>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -905,26 +1104,46 @@ const FattureDetail = () => {
                                     </div>
                                 </div>
                                 {formData.flRitenutaAcconto === 1 && (
-                                    <div className="col-md-2">
-                                        <div className="form-group mb-0">
-                                            <label className="premium-label">Perc. Ritenuta (%)</label>
-                                            <input
-                                                type="number"
-                                                className="form-control premium-input text-right"
-                                                name="percRitenutaAcconto"
-                                                value={formData.percRitenutaAcconto}
-                                                onChange={handleHeaderChange}
-                                                min="0"
-                                                max="100"
-                                                step="0.01"
-                                            />
+                                    <>
+                                        <div className="col-md-4">
+                                            <div className="form-group mb-0">
+                                                <label className="premium-label">Tipo Ritenuta</label>
+                                                <select
+                                                    className="form-control premium-input"
+                                                    name="tipoRitenuta"
+                                                    value={formData.tipoRitenuta || ''}
+                                                    onChange={handleHeaderChange}
+                                                >
+                                                    <option value="">Seleziona tipo...</option>
+                                                    <option value="RT01">RT01 - Ritenuta persone fisiche</option>
+                                                    <option value="RT02">RT02 - Ritenuta persone giuridiche</option>
+                                                    <option value="RT03">RT03 - Contributo INPS</option>
+                                                    <option value="RT04">RT04 - Contributo ENASARCO</option>
+                                                    <option value="RT05">RT05 - Contributo ENPAM</option>
+                                                    <option value="RT06">RT06 - Altro contributo previdenziale</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                    </div>
+                                        <div className="col-md-2">
+                                            <div className="form-group mb-0">
+                                                <label className="premium-label">Perc. Ritenuta (%)</label>
+                                                <input
+                                                    type="number"
+                                                    className="form-control premium-input text-right"
+                                                    name="percRitenutaAcconto"
+                                                    value={formData.percRitenutaAcconto}
+                                                    onChange={handleHeaderChange}
+                                                    min="0"
+                                                    max="100"
+                                                    step="0.01"
+                                                />
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
 
-                        {/* Tab Articoli */}
                         <div className={`tab-pane ${activeTab === 'articoli' ? 'active' : ''}`}>
                             <DocumentRows
                                 rows={prodotti}
@@ -941,6 +1160,7 @@ const FattureDetail = () => {
                                 }}
                                 combos={combos}
                                 isCeramica={isCeramica}
+                                showRitenuta={formData.flRitenutaAcconto === 1}
                             >
                                 <div className="table-row-add-toolbar">
                                     <button type="button" className="btn-add-inline" onClick={handleAddArticolo}>
@@ -1110,6 +1330,16 @@ const FattureDetail = () => {
                 />
             )}
 
+            {showParticelleModal && (
+                <ParticelleManagementModal
+                    isOpen={showParticelleModal}
+                    currentParticelle={combos.particelle}
+                    onClose={() => {
+                        setShowParticelleModal(false);
+                        fetchCombos();
+                    }}
+                />
+            )}
             {
                 showCausaleEsigibilitaModal && (
                     <CausaliEsigibilitaDifferitaManagementModal

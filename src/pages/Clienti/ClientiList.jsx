@@ -45,12 +45,16 @@ const ClientiList = () => {
         });
     }, [search, currentPage, pageSize, sortCol, sortDir]);
 
-    const fetchClienti = async () => {
+    const handleSearch = async (e) => {
+        if (e) {
+            e.preventDefault();
+            setCurrentPage(0);
+        }
         setLoading(true);
         try {
             const params = {
                 search,
-                start: currentPage * pageSize,
+                start: (e ? 0 : currentPage) * pageSize,
                 length: pageSize,
                 orderColumn: sortCol,
                 orderDir: sortDir
@@ -66,14 +70,8 @@ const ClientiList = () => {
     };
 
     useEffect(() => {
-        fetchClienti();
+        handleSearch();
     }, [currentPage, pageSize, sortCol, sortDir]);
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        setCurrentPage(0);
-        fetchClienti();
-    };
 
     const handleDelete = async (id) => {
         const result = await Swal.fire({
@@ -90,7 +88,7 @@ const ClientiList = () => {
         if (result.isConfirmed) {
             try {
                 await ClientiService.delete(id);
-                fetchClienti();
+                handleSearch();
                 Swal.fire(
                     'Eliminato!',
                     'Il cliente è stato eliminato.',

@@ -12,22 +12,34 @@ const ParticelleManagementModal = ({ isOpen, onClose, currentParticelle, onSave 
 
     useEffect(() => {
         if (isOpen && currentParticelle) {
-            setValore(currentParticelle.join('\n'));
+            // currentParticelle is the array returned by getAsArray.
+            // But if the backend mistakenly saved it as a single string with newlines,
+            // the array might just have 1 element with \n in it.
+            // Let's normalize it to ensure the textarea sees distinct lines.
+            const normalized = currentParticelle.join('\n').replace(/,/g, '\n');
+            const lines = normalized.split('\n').filter(s => s.trim() !== '');
+            setValore(lines.join('\n'));
         }
     }, [isOpen, currentParticelle]);
 
     const handleSave = async () => {
         setLoading(true);
         try {
+            // Backend expects comma-separated string
+            const commaSeparatedValue = valore.split('\n')
+                .map(s => s.trim())
+                .filter(s => s !== '')
+                .join(',');
+
             const dto = {
                 dominio: 'DOCUMENTI',
                 chiave: 'PARTICELLE',
-                valore: valore
+                valore: commaSeparatedValue
             };
             await ConfigurazioneService.save(dto);
 
             // Filter out empty lines for the parent state
-            const newList = valore.split('\n')
+            const newList = commaSeparatedValue.split(',')
                 .map(s => s.trim())
                 .filter(s => s !== '');
 

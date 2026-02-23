@@ -5,8 +5,9 @@ import Select from 'react-select';
 import PreventiviService from '../../services/PreventiviService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
+import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import { formatStato } from '../../utils/documentUtils';
@@ -34,8 +35,8 @@ const PreventiviList = () => {
 
     const [preventivi, setPreventivi] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [downloading, setDownloading] = useState(false);
     const [total, setTotal] = useState(0);
+    const [docConfigs, setDocConfigs] = useState(null);
 
     // Filters
     const [idCliente, setIdCliente] = useState(initialState.idCliente);
@@ -101,8 +102,25 @@ const PreventiviList = () => {
 
     useEffect(() => {
         loadAgenti();
-        fetchPreventivi();
+        loadDocConfigs();
+        handleSearch();
     }, [currentPage, pageSize, sortCol, sortDir]);
+
+    useEffect(() => {
+        window.addEventListener('configupdated', loadDocConfigs);
+        return () => window.removeEventListener('configupdated', loadDocConfigs);
+    }, []);
+
+    const loadDocConfigs = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
+            if (res.data) setDocConfigs(res.data);
+        } catch (err) {
+            console.error("Error loading preventivi configurations:", err);
+        }
+    };
+
+    const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
 
     const loadAgenti = async () => {
         try {
@@ -140,7 +158,11 @@ const PreventiviList = () => {
         });
     };
 
-    const fetchPreventivi = async () => {
+    const handleSearch = async (e) => {
+        if (e) {
+            e.preventDefault();
+            setCurrentPage(0);
+        }
         setLoading(true);
         try {
             const params = {
@@ -148,7 +170,7 @@ const PreventiviList = () => {
                 idAgente,
                 dtFrom,
                 dtTo,
-                start: currentPage * pageSize,
+                start: (e ? 0 : currentPage) * pageSize,
                 length: pageSize,
                 orderColumn: sortCol,
                 orderDir: sortDir
@@ -162,12 +184,6 @@ const PreventiviList = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        setCurrentPage(0);
-        fetchPreventivi();
     };
 
     const handleReset = () => {
@@ -197,7 +213,7 @@ const PreventiviList = () => {
         if (result.isConfirmed) {
             try {
                 await PreventiviService.delete(id);
-                fetchPreventivi();
+                handleSearch();
                 Swal.fire('Eliminato!', 'Il preventivo è stato eliminato.', 'success');
             } catch (error) {
                 console.error("Error deleting preventivo:", error);
@@ -225,6 +241,16 @@ const PreventiviList = () => {
         navigate(`/conf-ordine/new?fromPreventivi=${selectedIds.join(',')}`);
     };
 
+    const handleBulkGenerateDDT = () => {
+        if (selectedIds.length === 0) return;
+        navigate(`/ddt/new?fromPreventivi=${selectedIds.join(',')}`);
+    };
+
+    const handleBulkGenerateFattura = () => {
+        if (selectedIds.length === 0) return;
+        navigate(`/fatture/new?fromPreventivi=${selectedIds.join(',')}`);
+    };
+
     const handleBulkDelete = async () => {
         const result = await Swal.fire({
             title: `Elimina ${selectedIds.length} preventiv${selectedIds.length === 1 ? 'o' : 'i'}?`,
@@ -243,7 +269,7 @@ const PreventiviList = () => {
                 }
                 Swal.fire('Eliminati!', 'I preventivi selezionati sono stati eliminati.', 'success');
                 setSelectedIds([]);
-                fetchPreventivi();
+                handleSearch();
             } catch (error) {
                 console.error("Bulk delete error:", error);
                 Swal.fire('Errore', "Errore durante l'eliminazione massiva", 'error');
@@ -322,9 +348,21 @@ const PreventiviList = () => {
                         <div className="vibrant-bulk-toolbar">
                             <div className="toolbar-divider"></div>
                             <span className="selected-count-vibrant">{selectedIds.length} selezionat{selectedIds.length === 1 ? 'o' : 'i'}</span>
-                            <button className="btn-bulk-vibrant btn-bulk-generate" onClick={handleBulkGenerateConf}>
-                                <FaArrowRight /> Genera Conferma ({selectedIds.length})
-                            </button>
+                            {isEnabled('ABILITA_CONF_ORDINE') && (
+                                <button className="btn-bulk-vibrant btn-bulk-generate" onClick={handleBulkGenerateConf}>
+                                    <FaArrowRight /> Genera Conferma ({selectedIds.length})
+                                </button>
+                            )}
+                            {isEnabled('ABILITA_DDT') && (
+                                <button className="btn-bulk-vibrant btn-bulk-generate ddt" onClick={handleBulkGenerateDDT} style={{ backgroundColor: '#e67e22' }}>
+                                    <FaArrowRight /> Genera DDT ({selectedIds.length})
+                                </button>
+                            )}
+                            {isEnabled('ABILITA_FATTURE') && (
+                                <button className="btn-bulk-vibrant btn-bulk-generate fattura" onClick={handleBulkGenerateFattura} style={{ backgroundColor: '#2ecc71' }}>
+                                    <FaArrowRight /> Genera Fattura ({selectedIds.length})
+                                </button>
+                            )}
                             <button className="btn-bulk-vibrant btn-bulk-delete" onClick={handleBulkDelete}>
                                 <FaTrash /> Elimina ({selectedIds.length})
                             </button>
@@ -484,9 +522,21 @@ const PreventiviList = () => {
                                                                 <button className="action-dropdown-item" onClick={() => navigate(`/preventivi/${docId}`)}>
                                                                     <FaEdit /> Modifica
                                                                 </button>
-                                                                <button className="action-dropdown-item" onClick={() => navigate(`/conf-ordine/new?fromPreventivi=${docId}`)}>
-                                                                    <FaArrowRight /> Genera Conferma
-                                                                </button>
+                                                                {isEnabled('ABILITA_CONF_ORDINE') && (
+                                                                    <button className="action-dropdown-item" onClick={() => navigate(`/conf-ordine/new?fromPreventivi=${docId}`)}>
+                                                                        <FaArrowRight /> Genera Conferma
+                                                                    </button>
+                                                                )}
+                                                                {isEnabled('ABILITA_DDT') && (
+                                                                    <button className="action-dropdown-item" onClick={() => navigate(`/ddt/new?fromPreventivi=${docId}`)}>
+                                                                        <FaArrowRight /> Genera DDT
+                                                                    </button>
+                                                                )}
+                                                                {isEnabled('ABILITA_FATTURE') && (
+                                                                    <button className="action-dropdown-item" onClick={() => navigate(`/fatture/new?fromPreventivi=${docId}`)}>
+                                                                        <FaArrowRight /> Genera Fattura
+                                                                    </button>
+                                                                )}
                                                                 <button className="action-dropdown-item" onClick={() => handlePrintItem(docId)}>
                                                                     <FaPrint /> Stampa
                                                                 </button>

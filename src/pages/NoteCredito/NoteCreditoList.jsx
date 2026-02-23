@@ -25,9 +25,12 @@ const NoteCreditoList = () => {
 
     const [pageSize, setPageSize] = useState((() => {
         const saved = storageHelper.loadState('note_credito_filters', {});
-        return saved.pageSize || 50;
+        return saved.pageSize !== undefined ? saved.pageSize : 50;
     })());
-    const [currentPage, setCurrentPage] = useState(0);
+    const [currentPage, setCurrentPage] = useState((() => {
+        const saved = storageHelper.loadState('note_credito_filters', {});
+        return saved.currentPage || 0;
+    })());
 
     const [filters, setFilters] = useState(() => {
         return storageHelper.loadState('note_credito_filters', {
@@ -40,9 +43,14 @@ const NoteCreditoList = () => {
             nomeAgente: '',
             idStato: '',
             orderBy: 'data_notacredito',
-            orderDir: 'DESC'
+            orderDir: 'DESC',
+            selectedCliente: null,
+            selectedAgente: null,
+            showFilters: true
         });
     });
+
+    const [showFilters, setShowFilters] = useState(filters.showFilters);
 
     const [agenti, setAgenti] = useState([]);
 
@@ -55,6 +63,16 @@ const NoteCreditoList = () => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, [currentPage, pageSize]);
 
+    // Save filters and pagination to local storage whenever they change
+    useEffect(() => {
+        storageHelper.saveState('note_credito_filters', {
+            ...filters,
+            showFilters,
+            currentPage,
+            pageSize
+        });
+    }, [filters, showFilters, currentPage, pageSize]);
+
     const fetchAgenti = async () => {
         try {
             const res = await AgentiService.getAll();
@@ -65,9 +83,11 @@ const NoteCreditoList = () => {
     };
 
     const handleSearch = async (e) => {
-        if (e) e.preventDefault();
+        if (e) {
+            e.preventDefault();
+            setCurrentPage(0);
+        }
         setLoading(true);
-        storageHelper.saveState('note_credito_filters', { ...filters, pageSize });
         try {
             const params = {
                 dataInizio: filters.dataDa,
@@ -78,7 +98,7 @@ const NoteCreditoList = () => {
                 stato: filters.idStato,
                 orderColumn: filters.orderBy || 'data_notacredito',
                 orderDir: filters.orderDir || 'DESC',
-                start: currentPage * pageSize,
+                start: (e ? 0 : currentPage) * pageSize,
                 length: pageSize
             };
             const res = await NoteCreditoService.getList(params);
@@ -102,9 +122,13 @@ const NoteCreditoList = () => {
             nomeAgente: '',
             idStato: '',
             orderBy: 'data_notacredito',
-            orderDir: 'DESC'
+            orderDir: 'DESC',
+            selectedCliente: null,
+            selectedAgente: null,
+            showFilters: true
         };
         setFilters(reset);
+        setCurrentPage(0);
         storageHelper.clearState('note_credito_filters');
     };
 
@@ -129,7 +153,6 @@ const NoteCreditoList = () => {
             start: currentPage * pageSize,
             length: pageSize
         };
-        storageHelper.saveState('note_credito_filters', { ...filters, orderBy: column, orderDir: newDir, pageSize });
 
         NoteCreditoService.getList(params).then(res => {
             setNote(res.data?.payload || []);
