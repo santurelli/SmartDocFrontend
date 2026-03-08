@@ -423,20 +423,6 @@ const ConfOrdineDetail = () => {
 
     // --- Product Table Handlers ---
 
-    const handleAddArticolo = () => {
-        setProdotti([...prodotti, { tipo: 'A', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null }]);
-        setActiveTab('articoli');
-    };
-
-    const handleAddFM = () => {
-        setProdotti([...prodotti, { tipo: 'F', quantita: 1, prezzo: 0, sconto: '', idAliquotaIva: null, idUnitaMisura: null, fmDescrizione: '' }]);
-        setActiveTab('articoli');
-    };
-
-    const handleAddNota = () => {
-        setProdotti([...prodotti, { tipo: 'N', nota: '' }]);
-        setActiveTab('articoli');
-    };
 
     const handleDeleteRow = (idx) => {
         const newP = [...prodotti];
@@ -984,22 +970,14 @@ const ConfOrdineDetail = () => {
                                 onRowChange={handleRowChange}
                                 onRowUpdate={handleRowUpdate}
                                 onDeleteRow={handleDeleteRow}
+                                onAddRow={(newRow) => {
+                                    setProdotti([...prodotti, newRow]);
+                                    setActiveTab('articoli');
+                                }}
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showDownloadColumn={false}
-                            >
-                                <div className="table-row-add-toolbar">
-                                    <button type="button" className="btn-add-inline" onClick={handleAddArticolo}>
-                                        <FaPlus /> ARTICOLO
-                                    </button>
-                                    <button type="button" className="btn-add-inline fm" onClick={handleAddFM}>
-                                        <FaPlus /> FUORI MAGAZZINO
-                                    </button>
-                                    <button type="button" className="btn-add-inline note" onClick={handleAddNota}>
-                                        <FaPlus /> NOTA
-                                    </button>
-                                </div>
-                            </DocumentRows>
+                            />
                         </div>
 
                         {/* Tab Note */}

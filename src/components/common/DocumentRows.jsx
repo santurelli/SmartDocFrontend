@@ -1,6 +1,6 @@
 import React from 'react';
 import AsyncSelect from 'react-select/async';
-import { FaTrash } from 'react-icons/fa';
+import { FaTrash, FaPlus } from 'react-icons/fa';
 import ArticoliService from '../../services/ArticoliService';
 import { getRowValues } from '../../utils/documentUtils';
 
@@ -46,17 +46,21 @@ const tableSelectStyles = {
     })
 };
 
-const DocumentRows = ({
-    rows,
-    onRowChange,
-    onRowUpdate,
-    onDeleteRow,
-    combos,
-    isCeramica,
-    showRitenuta = false,
-    readOnly = false,
-    children
-}) => {
+const DocumentRows = (props) => {
+    const {
+        rows,
+        onRowChange,
+        onRowUpdate,
+        onDeleteRow,
+        onAddRow,
+        addExtraProps = {},
+        combos,
+        isCeramica,
+        showRitenuta = false,
+        readOnly = false,
+        children
+    } = props;
+
     // Debug log for isCeramica
     console.log('[DocumentRows] isCeramica prop:', isCeramica);
 
@@ -118,6 +122,34 @@ const DocumentRows = ({
                 )}
             </div>
         );
+    };
+
+    const addRow = (type) => {
+        const defaultAliquota = (combos.aliquoteIva || []).find(a => a.predefinita === 1) || (combos.aliquoteIva || [])[0] || null;
+        const defaultUM = (combos.unitaMisura || [])[0] || null;
+
+        let newRow = { tipo: type };
+        if (type === 'N') {
+            newRow.nota = '';
+        } else {
+            newRow = {
+                ...newRow,
+                idProdotto: null,
+                codiceProdotto: '',
+                descProdotto: '',
+                quantita: 1,
+                idUnitaMisura: defaultUM?.id || null,
+                prezzo: 0,
+                sconto: '',
+                idAliquotaIva: defaultAliquota?.id || null,
+                nota: '',
+                ...addExtraProps
+            };
+            if (type === 'F') {
+                newRow.fmDescrizione = '';
+            }
+        }
+        if (onAddRow) onAddRow(newRow);
     };
 
     return (
@@ -288,6 +320,23 @@ const DocumentRows = ({
                             </tr>
                         );
                     })}
+                    {onAddRow && !readOnly && (
+                        <tr className="row-add-actions">
+                            <td colSpan={9} style={{ padding: '0px' }}>
+                                <div className="table-row-add-toolbar">
+                                    <button type="button" className="btn-add-inline" onClick={() => addRow('A')}>
+                                        <FaPlus /> ARTICOLO
+                                    </button>
+                                    <button type="button" className="btn-add-inline fm" onClick={() => addRow('F')}>
+                                        <FaPlus /> FUORI MAGAZZINO
+                                    </button>
+                                    <button type="button" className="btn-add-inline note" onClick={() => addRow('N')}>
+                                        <FaPlus /> NOTA
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    )}
                     {children && (
                         <tr className="row-add-actions">
                             <td colSpan={9} style={{ padding: '0px' }}>

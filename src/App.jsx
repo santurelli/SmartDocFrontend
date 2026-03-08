@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './pages/Login';
 import authService from './services/authService';
 import './App.css';
@@ -29,7 +29,7 @@ import FattureDetail from './pages/Fatture/FattureDetail';
 import NoteCreditoList from './pages/NoteCredito/NoteCreditoList';
 import NoteCreditoDetail from './pages/NoteCredito/NoteCreditoDetail';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = () => {
   const user = authService.getCurrentUser();
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -43,7 +43,7 @@ const ProtectedRoute = ({ children }) => {
       />
       <Sidebar user={user.user} />
       <div id="content-wrapper">
-        {children}
+        <Outlet />
       </div>
     </div>
   );
@@ -98,48 +98,39 @@ const Dashboard = () => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="*"
-          element={
-            <ProtectedRoute>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/clienti" element={<ClientiList />} />
-                <Route path="/clienti/:id" element={<ClientiDetail />} />
-                <Route path="/preventivi" element={<PreventiviList />} />
-                <Route path="/preventivi/new" element={<PreventiviDetail />} />
-                <Route path="/preventivi/:id" element={<PreventiviDetail />} />
-                <Route path="/conf-ordine" element={<ConfOrdineList />} />
-                <Route path="/conf-ordine/new" element={<ConfOrdineDetail />} />
-                <Route path="/conf-ordine/:id" element={<ConfOrdineDetail />} />
-                <Route path="/configurazione/dati-azienda" element={<DatiAziendaPage />} />
-                <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
-                <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
-                <Route path="/fornitori" element={<FornitoriList />} />
-                <Route path="/fornitori/:id" element={<FornitoriDetail />} />
-                <Route path="/ddt" element={<DDTList />} />
-                <Route path="/ddt/new" element={<DDTDetail />} />
-                <Route path="/ddt/:id" element={<DDTDetail />} />
-                <Route path="/fatture" element={<FattureList />} />
-                <Route path="/fatture/new" element={<FattureDetail />} />
-                <Route path="/fatture/:id" element={<FattureDetail />} />
-                <Route path="/note-credito" element={<NoteCreditoList />} />
-                <Route path="/note-credito/new" element={<NoteCreditoDetail />} />
-                <Route path="/note-credito/:id" element={<NoteCreditoDetail />} />
-                <Route path="/articoli" element={<ArticoliList />} />
-                <Route path="/articoli/movimenti" element={<MovimentiList />} />
-                <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />
-                <Route path="/articoli/:id" element={<ArticoliDetail />} />
-                <Route path="*" element={<h2>404 Not Found</h2>} />
-              </Routes>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/clienti" element={<ClientiList />} />
+        <Route path="/clienti/:id" element={<ClientiDetail />} />
+        <Route path="/preventivi" element={<PreventiviList />} />
+        <Route path="/preventivi/new" element={<PreventiviDetail />} />
+        <Route path="/preventivi/:id" element={<PreventiviDetail />} />
+        <Route path="/conf-ordine" element={<ConfOrdineList />} />
+        <Route path="/conf-ordine/new" element={<ConfOrdineDetail />} />
+        <Route path="/conf-ordine/:id" element={<ConfOrdineDetail />} />
+        <Route path="/configurazione/dati-azienda" element={<DatiAziendaPage />} />
+        <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
+        <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
+        <Route path="/fornitori" element={<FornitoriList />} />
+        <Route path="/fornitori/:id" element={<FornitoriDetail />} />
+        <Route path="/ddt" element={<DDTList />} />
+        <Route path="/ddt/new" element={<DDTDetail />} />
+        <Route path="/ddt/:id" element={<DDTDetail />} />
+        <Route path="/fatture" element={<FattureList />} />
+        <Route path="/fatture/new" element={<FattureDetail />} />
+        <Route path="/fatture/:id" element={<FattureDetail />} />
+        <Route path="/note-credito" element={<NoteCreditoList />} />
+        <Route path="/note-credito/new" element={<NoteCreditoDetail />} />
+        <Route path="/note-credito/:id" element={<NoteCreditoDetail />} />
+        <Route path="/articoli" element={<ArticoliList />} />
+        <Route path="/articoli/movimenti" element={<MovimentiList />} />
+        <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />
+        <Route path="/articoli/:id" element={<ArticoliDetail />} />
+      </Route>
+      <Route path="*" element={<h2>404 Not Found</h2>} />
+    </Routes>
   );
 }
 

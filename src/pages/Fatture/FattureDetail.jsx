@@ -80,6 +80,8 @@ const FattureDetail = () => {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('generale'); // legale, articoli, note, pagamento
     const [isCeramica, setIsCeramica] = useState(false);
+    const [ritenutaEnabled, setRitenutaEnabled] = useState(true); // Default to true as per current behavior
+
 
     const [formData, setFormData] = useState({
         numDocumento: '',
@@ -218,9 +220,11 @@ const FattureDetail = () => {
             const res = await ConfigurazioneService.getByDomain('FATTURAZIONE');
             if (res.data) {
                 const prefs = res.data;
+                const isEnabled = prefs.EMETTI_RITENUTA === '1';
+                setRitenutaEnabled(isEnabled);
                 setFormData(prev => ({
                     ...prev,
-                    flRitenutaAcconto: prefs.EMETTI_RITENUTA === '1' ? 1 : prev.flRitenutaAcconto,
+                    flRitenutaAcconto: isEnabled ? 1 : prev.flRitenutaAcconto,
                     percRitenutaAcconto: prefs.PERC_RITENUTA ? parseFloat(prefs.PERC_RITENUTA) : prev.percRitenutaAcconto,
                     tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta
                 }));
@@ -579,38 +583,6 @@ const FattureDetail = () => {
         });
     };
 
-    const addRow = (type) => {
-        const defaultAliquota = (combos.aliquoteIva || []).find(a => a.predefinita === 1) || (combos.aliquoteIva || [])[0] || null;
-        const defaultUM = (combos.unitaMisura || [])[0] || null;
-
-        let newRow = { tipo: type };
-        if (type === 'N') {
-            newRow.nota = '';
-        } else {
-            newRow = {
-                ...newRow,
-                idProdotto: null,
-                codiceProdotto: '',
-                descProdotto: '',
-                quantita: 1,
-                idUnitaMisura: defaultUM?.id || null,
-                prezzo: 0,
-                sconto: '',
-                idAliquotaIva: defaultAliquota?.id || null,
-                nota: '',
-                flRitenuta: 1,
-                scarica: 1 // Default to scarica: 1 for new 'A' or 'F' rows
-            };
-            if (type === 'F') {
-                newRow.fmDescrizione = '';
-            }
-        }
-        setProdotti(prev => [...prev, newRow]);
-    };
-
-    const handleAddArticolo = () => addRow('A');
-    const handleAddFM = () => addRow('F');
-    const handleAddNota = () => addRow('N');
 
     const calculateTotalDocument = () => {
         return prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
@@ -622,7 +594,9 @@ const FattureDetail = () => {
 
     const calculateRitenutaAcconto = () => {
         if (formData.flRitenutaAcconto !== 1) return 0;
-        const base = calculateTotalImponibile();
+        const base = prodotti
+            .filter(row => row.tipo !== 'N' && (row.flRitenuta === 1 || row.flRitenuta === undefined))
+            .reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
         return (base * (formData.percRitenutaAcconto || 0)) / 100;
     };
 
@@ -1088,61 +1062,63 @@ const FattureDetail = () => {
                                 </div>
                             </div>
 
-                            <div className="row mb-3 px-3">
-                                <div className="col-md-4">
-                                    <div className="form-group mb-0" style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '10px 0' }}>
-                                        <label className="premium-label" style={{ marginBottom: 0, marginRight: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                                            <input
-                                                type="checkbox"
-                                                name="flRitenutaAcconto"
-                                                checked={formData.flRitenutaAcconto === 1}
-                                                onChange={handleHeaderChange}
-                                                style={{ marginRight: '10px', width: '18px', height: '18px' }}
-                                            />
-                                            <span style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50' }}>Gestione Ritenuta d'Acconto</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                {formData.flRitenutaAcconto === 1 && (
-                                    <>
-                                        <div className="col-md-4">
-                                            <div className="form-group mb-0">
-                                                <label className="premium-label">Tipo Ritenuta</label>
-                                                <select
-                                                    className="form-control premium-input"
-                                                    name="tipoRitenuta"
-                                                    value={formData.tipoRitenuta || ''}
-                                                    onChange={handleHeaderChange}
-                                                >
-                                                    <option value="">Seleziona tipo...</option>
-                                                    <option value="RT01">RT01 - Ritenuta persone fisiche</option>
-                                                    <option value="RT02">RT02 - Ritenuta persone giuridiche</option>
-                                                    <option value="RT03">RT03 - Contributo INPS</option>
-                                                    <option value="RT04">RT04 - Contributo ENASARCO</option>
-                                                    <option value="RT05">RT05 - Contributo ENPAM</option>
-                                                    <option value="RT06">RT06 - Altro contributo previdenziale</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-2">
-                                            <div className="form-group mb-0">
-                                                <label className="premium-label">Perc. Ritenuta (%)</label>
+                            {ritenutaEnabled && (
+                                <div className="row mb-3 px-3">
+                                    <div className="col-md-4">
+                                        <div className="form-group mb-0" style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '10px 0' }}>
+                                            <label className="premium-label" style={{ marginBottom: 0, marginRight: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                                 <input
-                                                    type="number"
-                                                    className="form-control premium-input text-right"
-                                                    name="percRitenutaAcconto"
-                                                    value={formData.percRitenutaAcconto}
+                                                    type="checkbox"
+                                                    name="flRitenutaAcconto"
+                                                    checked={formData.flRitenutaAcconto === 1}
                                                     onChange={handleHeaderChange}
-                                                    min="0"
-                                                    max="100"
-                                                    step="0.01"
+                                                    style={{ marginRight: '10px', width: '18px', height: '18px' }}
                                                 />
-                                            </div>
+                                                <span style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50' }}>Gestione Ritenuta d'Acconto</span>
+                                            </label>
                                         </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+                                    </div>
+                                    {formData.flRitenutaAcconto === 1 && (
+                                        <>
+                                            <div className="col-md-4">
+                                                <div className="form-group mb-0">
+                                                    <label className="premium-label">Tipo Ritenuta</label>
+                                                    <select
+                                                        className="form-control premium-input"
+                                                        name="tipoRitenuta"
+                                                        value={formData.tipoRitenuta || ''}
+                                                        onChange={handleHeaderChange}
+                                                    >
+                                                        <option value="">Seleziona tipo...</option>
+                                                        <option value="RT01">RT01 - Ritenuta persone fisiche</option>
+                                                        <option value="RT02">RT02 - Ritenuta persone giuridiche</option>
+                                                        <option value="RT03">RT03 - Contributo INPS</option>
+                                                        <option value="RT04">RT04 - Contributo ENASARCO</option>
+                                                        <option value="RT05">RT05 - Contributo ENPAM</option>
+                                                        <option value="RT06">RT06 - Altro contributo previdenziale</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-2">
+                                                <div className="form-group mb-0">
+                                                    <label className="premium-label">Perc. Ritenuta (%)</label>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control premium-input text-right"
+                                                        name="percRitenutaAcconto"
+                                                        value={formData.percRitenutaAcconto}
+                                                        onChange={handleHeaderChange}
+                                                        min="0"
+                                                        max="100"
+                                                        step="0.01"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+                        </div>{/* end tab-pane generale */}
 
                         <div className={`tab-pane ${activeTab === 'articoli' ? 'active' : ''}`}>
                             <DocumentRows
@@ -1158,22 +1134,12 @@ const FattureDetail = () => {
                                     newP.splice(idx, 1);
                                     setProdotti(newP);
                                 }}
+                                onAddRow={(newRow) => setProdotti(prev => [...prev, newRow])}
+                                addExtraProps={{ flRitenuta: 1, scarica: 1 }}
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showRitenuta={formData.flRitenutaAcconto === 1}
-                            >
-                                <div className="table-row-add-toolbar">
-                                    <button type="button" className="btn-add-inline" onClick={handleAddArticolo}>
-                                        <FaPlus /> ARTICOLO
-                                    </button>
-                                    <button type="button" className="btn-add-inline fm" onClick={handleAddFM}>
-                                        <FaPlus /> FUORI MAGAZZINO
-                                    </button>
-                                    <button type="button" className="btn-add-inline note" onClick={handleAddNota}>
-                                        <FaPlus /> NOTA
-                                    </button>
-                                </div>
-                            </DocumentRows>
+                            />
                         </div>
 
                         {/* Tab Pagamento */}
@@ -1316,8 +1282,8 @@ const FattureDetail = () => {
                                 </div>
                             </div>
                         </footer>
-                    </form >
-                </div >
+                    </form>
+                </div>
             </div >
 
             {showAddressModal && (
@@ -1330,16 +1296,18 @@ const FattureDetail = () => {
                 />
             )}
 
-            {showParticelleModal && (
-                <ParticelleManagementModal
-                    isOpen={showParticelleModal}
-                    currentParticelle={combos.particelle}
-                    onClose={() => {
-                        setShowParticelleModal(false);
-                        fetchCombos();
-                    }}
-                />
-            )}
+            {
+                showParticelleModal && (
+                    <ParticelleManagementModal
+                        isOpen={showParticelleModal}
+                        currentParticelle={combos.particelle}
+                        onClose={() => {
+                            setShowParticelleModal(false);
+                            fetchCombos();
+                        }}
+                    />
+                )
+            }
             {
                 showCausaleEsigibilitaModal && (
                     <CausaliEsigibilitaDifferitaManagementModal

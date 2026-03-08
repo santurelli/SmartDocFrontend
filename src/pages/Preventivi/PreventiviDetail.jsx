@@ -448,36 +448,6 @@ const PreventiviDetail = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const addRow = (type) => {
-        const defaultAliquota = combos.aliquoteIva.find(a => a.predefinita === 1) || (combos.aliquoteIva.length > 0 ? combos.aliquoteIva[0] : null);
-        const defaultUM = combos.unitaMisura.length > 0 ? combos.unitaMisura[0] : null;
-
-        let newRow = { tipo: type };
-        if (type === 'N') {
-            newRow.nota = '';
-        } else {
-            newRow = {
-                ...newRow,
-                idProdotto: null,
-                codiceProdotto: '',
-                descProdotto: '',
-                quantita: 1,
-                idUnitaMisura: defaultUM?.id || null,
-                prezzo: 0,
-                sconto: '',
-                idAliquotaIva: defaultAliquota?.id || null,
-                nota: ''
-            };
-            if (type === 'F') {
-                newRow.fmDescrizione = '';
-            }
-        }
-        setProdotti(prev => [...prev, newRow]);
-    };
-
-    const handleAddArticolo = () => addRow('A');
-    const handleAddFM = () => addRow('F');
-    const handleAddNota = () => addRow('N');
 
     const handleDeleteRow = (index) => {
         setProdotti(prev => prev.filter((_, i) => i !== index));
@@ -951,22 +921,14 @@ const PreventiviDetail = () => {
                                 onRowChange={handleRowChange}
                                 onRowUpdate={handleRowUpdate}
                                 onDeleteRow={handleDeleteRow}
+                                onAddRow={(newRow) => {
+                                    setProdotti(prev => [...prev, newRow]);
+                                    setActiveTab('articoli');
+                                }}
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showDownloadColumn={false}
-                            >
-                                <div className="table-row-add-toolbar">
-                                    <button type="button" className="btn-add-inline" onClick={handleAddArticolo}>
-                                        <FaPlus /> ARTICOLO
-                                    </button>
-                                    <button type="button" className="btn-add-inline fm" onClick={handleAddFM}>
-                                        <FaPlus /> FUORI MAGAZZINO
-                                    </button>
-                                    <button type="button" className="btn-add-inline note" onClick={handleAddNota}>
-                                        <FaPlus /> NOTA
-                                    </button>
-                                </div>
-                            </DocumentRows>
+                            />
                         </div>
 
                         {/* Tab Note */}
