@@ -33,21 +33,22 @@ const NoteCreditoList = () => {
     })());
 
     const [filters, setFilters] = useState(() => {
-        return storageHelper.loadState('note_credito_filters', {
-            numDocumento: '',
-            dataDa: '',
-            dataA: '',
-            idCliente: null,
-            nomeCliente: '',
-            idAgente: null,
-            nomeAgente: '',
-            idStato: '',
-            orderBy: 'data_notacredito',
-            orderDir: 'DESC',
-            selectedCliente: null,
-            selectedAgente: null,
-            showFilters: true
-        });
+        const saved = storageHelper.loadState('note_credito_filters', {});
+        return {
+            numDocumento: saved.numDocumento || '',
+            dataDa: saved.dataDa || '',
+            dataA: saved.dataA || '',
+            idCliente: saved.idCliente || null,
+            nomeCliente: saved.nomeCliente || '',
+            idAgente: saved.idAgente || null,
+            nomeAgente: saved.nomeAgente || '',
+            idStato: saved.idStato || '',
+            orderBy: saved.orderBy || 'data_notacredito',
+            orderDir: saved.orderDir || 'DESC',
+            selectedCliente: saved.selectedCliente || null,
+            selectedAgente: saved.selectedAgente || null,
+            showFilters: saved.showFilters !== undefined ? saved.showFilters : true
+        };
     });
 
     const [showFilters, setShowFilters] = useState(filters.showFilters);
@@ -61,7 +62,7 @@ const NoteCreditoList = () => {
         const handleClickOutside = () => setActiveActionMenu(null);
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
-    }, [currentPage, pageSize]);
+    }, [currentPage, pageSize, filters.orderBy, filters.orderDir]);
 
     // Save filters and pagination to local storage whenever they change
     useEffect(() => {
@@ -133,34 +134,11 @@ const NoteCreditoList = () => {
     };
 
     const handleSort = (column) => {
-        setFilters(prev => {
-            const newDir = prev.orderBy === column && prev.orderDir === 'ASC' ? 'DESC' : 'ASC';
-            const newFilters = { ...prev, orderBy: column, orderDir: newDir };
-            return newFilters;
-        });
-
-        setLoading(true);
-        const newDir = filters.orderBy === column && filters.orderDir === 'ASC' ? 'DESC' : 'ASC';
-        const params = {
-            dataInizio: filters.dataDa,
-            dataFine: filters.dataA,
-            idCliente: filters.idCliente,
-            idAgente: filters.idAgente,
-            stato: filters.idStato,
-            numDocumento: filters.numDocumento,
-            orderColumn: column,
-            orderDir: newDir,
-            start: currentPage * pageSize,
-            length: pageSize
-        };
-
-        NoteCreditoService.getList(params).then(res => {
-            setNote(res.data?.payload || []);
-            setLoading(false);
-        }).catch(err => {
-            console.error(err);
-            setLoading(false);
-        });
+        setFilters(prev => ({
+            ...prev,
+            orderBy: column,
+            orderDir: prev.orderBy === column && prev.orderDir === 'ASC' ? 'DESC' : 'ASC'
+        }));
     };
 
     // Sort Icon Helper

@@ -27,6 +27,7 @@ import ParticelleManagementModal from '../../components/modals/ParticelleManagem
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
+import ScadenzeTable from '../../components/common/ScadenzeTable';
 import { getRowValues } from '../../utils/documentUtils';
 
 const premiumSelectStyles = {
@@ -131,7 +132,12 @@ const NoteCreditoDetail = () => {
         noteConsegna: '',
         annotazioneEstesa: '',
         esigibilitaDifferita: 0,
-        idCausaleEsigibilitaDifferita: null
+        idCausaleEsigibilitaDifferita: null,
+        flRitenutaAcconto: 0,
+        percRitenutaAcconto: 20,
+        importoRitenutaAcconto: 0,
+        tipoRitenuta: '',
+        listaScadenzePagamentiDocumento: []
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -198,9 +204,20 @@ const NoteCreditoDetail = () => {
         try {
             const res = await NoteCreditoService.getCombosMap();
             if (res.data && res.data.payload) {
+                const payload = res.data.payload;
                 setCombos(prev => ({
                     ...prev,
-                    ...res.data.payload
+                    particelle: (payload.PARTICELLE || payload.particelle || prev.particelle || []).flatMap(p => typeof p === 'string' ? p.split(',').map(s => s.trim()).filter(Boolean) : p),
+                    listini: payload.LISTINI || payload.listini || prev.listini,
+                    tipiPagamento: payload.TIPIPAGAMENTO || payload.tipiPagamento || prev.tipiPagamento,
+                    risorse: payload.BANCHE || payload.risorse || prev.risorse,
+                    aliquoteIva: payload.ALIQUOTEIVA || payload.aliquoteIva || prev.aliquoteIva,
+                    unitaMisura: payload.UNITAMISURA || payload.unitaMisura || prev.unitaMisura,
+                    agenti: payload.AGENTI || payload.agenti || prev.agenti,
+                    progetti: payload.PROGETTI || payload.progetti || prev.progetti,
+                    causaliEsigibilitaDifferita: payload.CAUSALIESIGIBILITADIFFERITA || payload.causaliEsigibilitaDifferita || prev.causaliEsigibilitaDifferita,
+                    vettori: payload.VETTORI || payload.vettori || prev.vettori,
+                    ...payload
                 }));
             }
         } catch (error) {
@@ -869,7 +886,6 @@ const NoteCreditoDetail = () => {
                                         value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: combos.tipiPagamento.find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
                                         ModalComponent={TipiPagamentoManagementModal}
-                                        modalProps={{ isOpen: false }}
                                         title="Gestione Tipi Pagamento"
                                         placeholder="Seleziona..."
                                         onModalClose={fetchCombos}
@@ -897,7 +913,7 @@ const NoteCreditoDetail = () => {
                                         value={formData.idNsBanca ? { value: formData.idNsBanca, label: combos.risorse.find(r => r.id === formData.idNsBanca)?.descrizione } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idNsBanca: opt?.value }))}
                                         ModalComponent={RisorseManagementModal}
-                                        modalProps={{ initialTipologia: 'BA', isOpen: false }}
+                                        modalProps={{ initialTipologia: 'BA' }}
                                         title="Gestione Banche"
                                         placeholder="Seleziona..."
                                         onModalClose={fetchCombos}
@@ -940,6 +956,19 @@ const NoteCreditoDetail = () => {
                                         onModalClose={fetchCausaliEsigibilitaDifferita}
                                         placeholder="Seleziona causale..."
                                         isDisabled={formData.esigibilitaDifferita !== 1}
+                                    />
+                                </div>
+                            </div>
+                            <div className="row mt-4">
+                                <div className="col-12">
+                                    <ScadenzeTable
+                                        idTipoPagamento={formData.idTipoPagamento}
+                                        dataDocumento={formData.dataDocumento}
+                                        totaleDocumento={calculateTotalDocument()}
+                                        scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
+                                        onScadenzeChange={(newScadenze) => {
+                                            setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
+                                        }}
                                     />
                                 </div>
                             </div>

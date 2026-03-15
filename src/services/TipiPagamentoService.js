@@ -24,6 +24,20 @@ class TipiPagamentoService {
     getAll() {
         return api.get('/tipi-pagamento/combo');
     }
+
+    getScadenzeDocumento(idTipoPagamento, dataDocumento, totaleDocumento) {
+        let dataFormatted = dataDocumento;
+        if (dataFormatted && dataFormatted.includes('-')) {
+            const [y, m, d] = dataFormatted.split('-');
+            dataFormatted = `${d}/${m}/${y}`;
+        }
+        return api.get(`/tipi-pagamento/${idTipoPagamento}/scadenze-documento`, {
+            params: {
+                dataDocumento: dataFormatted,
+                totaleDocumento
+            }
+        });
+    }
 }
 
 export default new TipiPagamentoService();

@@ -40,27 +40,28 @@ const FattureList = () => {
     const [loading, setLoading] = useState(false);
     const [fatture, setFatture] = useState([]);
     const [total, setTotal] = useState(0);
+    const [totali, setTotali] = useState({ f: 0, s: 0, d: 0 }); // f = fatturato, s = saldato, d = da saldare
     const [selectedIds, setSelectedIds] = useState([]);
     const [activeActionMenu, setActiveActionMenu] = useState(null);
     const [docConfigs, setDocConfigs] = useState(null);
 
     // Filters
     const [filters, setFilters] = useState({
-        numDocumento: initialState.numDocumento,
-        dataDa: initialState.dataDa,
-        dataA: initialState.dataA,
-        idCliente: initialState.idCliente,
-        nomeCliente: initialState.nomeCliente,
-        idAgente: initialState.idAgente,
-        nomeAgente: initialState.nomeAgente,
-        idStato: initialState.idStato || '' // Keep idStato from old filters if present
+        numDocumento: initialState.numDocumento || '',
+        dataDa: initialState.dataDa || '',
+        dataA: initialState.dataA || '',
+        idCliente: initialState.idCliente || null,
+        nomeCliente: initialState.nomeCliente || '',
+        idAgente: initialState.idAgente || null,
+        nomeAgente: initialState.nomeAgente || '',
+        idStato: initialState.idStato || '',
+        orderBy: initialState.orderBy || 'data_fattura',
+        orderDir: initialState.orderDir || 'DESC'
     });
 
     // Pagination
-    const [currentPage, setCurrentPage] = useState(initialState.currentPage);
-    const [pageSize, setPageSize] = useState(initialState.pageSize);
-    const [sortCol, setSortCol] = useState(initialState.sortCol || 'data_fattura');
-    const [sortDir, setSortDir] = useState(initialState.sortDir || 'desc');
+    const [currentPage, setCurrentPage] = useState(initialState.currentPage || 0);
+    const [pageSize, setPageSize] = useState(initialState.pageSize || 50);
 
     // Dropdowns data
     const [agenti, setAgenti] = useState([]);
@@ -80,17 +81,15 @@ const FattureList = () => {
             ...filters,
             currentPage,
             pageSize,
-            sortCol,
-            sortDir,
             showFilters
         });
-    }, [filters, currentPage, pageSize, sortCol, sortDir, showFilters]);
+    }, [filters, currentPage, pageSize, showFilters]);
 
     useEffect(() => {
         fetchAgenti();
         loadDocConfigs();
         handleSearch();
-    }, [currentPage, pageSize, sortCol, sortDir]);
+    }, [currentPage, pageSize, filters.orderBy, filters.orderDir]);
 
     useEffect(() => {
         window.addEventListener('configupdated', loadDocConfigs);
@@ -137,58 +136,34 @@ const FattureList = () => {
                 length: pageSize
             };
             const res = await FattureService.getList(params);
-            setFatture(res.data?.payload || []);
-            setTotal(res.data?.totalCount || 0);
+            const payload = res.data?.payload;
+            if (payload) {
+                setFatture(payload.list || []);
+                setTotal(payload.totalCount || 0);
+                setTotali({
+                    f: payload.totFatturato || 0,
+                    s: payload.totSaldato || 0,
+                    d: payload.totDaSaldare || 0
+                });
+            } else {
+                setFatture([]);
+                setTotal(0);
+            }
         } catch (error) {
             console.error(error);
+            setFatture([]);
+            setTotal(0);
         } finally {
             setLoading(false);
         }
     };
 
     const handleSort = (column) => {
-        setFilters(prev => {
-            const newDir = prev.orderBy === column && prev.orderDir === 'ASC' ? 'DESC' : 'ASC';
-            const newFilters = { ...prev, orderBy: column, orderDir: newDir };
-            // Trigger search with new filters immediately is tricky because setFilters is async and handleSearch uses state.
-            // Better to just update state and let user click search, OR use a useEffect that triggers on sort change?
-            // Actually, standard pattern here is just update state and call search directly with new params.
-            // But handleSearch uses 'filters' state. So we must pass params to handleSearch or use a dedicated effect.
-            // For simplicity, let's update state and manually trigger search logic or use an effect.
-            // Given existing structure, let's update state and then call a modified search function or useEffect.
-            // Actually, let's just update state and modify handleSearch to accept overrides or use a separate effect for sort?
-            // A common pattern:
-            // update state -> useEffect([filters.orderBy, filters.orderDir]) -> handleSearch()
-            // But handleSearch is called on mount.
-            return newFilters;
-        });
-
-        // We need to trigger the search with the new values.
-        // Since setFilters is async, we can't rely on 'filters' immediately.
-        // But we computed newDir and column.
-
-        setLoading(true);
-        const newDir = filters.orderBy === column && filters.orderDir === 'ASC' ? 'DESC' : 'ASC';
-        const params = {
-            dataInizio: filters.dataDa,
-            dataFine: filters.dataA,
-            idCliente: filters.idCliente,
-            idAgente: filters.idAgente,
-            stato: filters.idStato,
-            numDocumento: filters.numDocumento,
-            orderColumn: column,
-            orderDir: newDir,
-            start: currentPage * pageSize,
-            length: pageSize
-        };
-
-        FattureService.getList(params).then(res => {
-            setFatture(res.data?.payload || []);
-            setLoading(false);
-        }).catch(err => {
-            console.error(err);
-            setLoading(false);
-        });
+        setFilters(prev => ({
+            ...prev,
+            orderBy: column,
+            orderDir: prev.orderBy === column && prev.orderDir === 'ASC' ? 'DESC' : 'ASC'
+        }));
     };
 
     // Sort Icon Helper
@@ -370,7 +345,9 @@ const FattureList = () => {
         });
     };
 
-    const totalAmount = fatture.reduce((sum, item) => sum + (item.totale || 0), 0);
+    const totalAmount = totali.f;
+    const paidAmount = totali.s;
+    const dueAmount = totali.d;
 
     // Sort columns
     // Data -> data_fattura
@@ -382,7 +359,18 @@ const FattureList = () => {
             <div className="header-row">
                 <h1>Fatture</h1>
                 <div id="total-display-header" className="hidden-xs">
-                    <strong>{formatMoney(totalAmount)}</strong> Totale
+                    <div className="total-display-item total-all">
+                        <span className="total-label">Fatturato</span>
+                        <strong>{formatMoney(totalAmount)}</strong>
+                    </div>
+                    <div className="total-display-item total-paid">
+                        <span className="total-label">Incassato</span>
+                        <strong>{formatMoney(paidAmount)}</strong>
+                    </div>
+                    <div className="total-display-item total-due">
+                        <span className="total-label">Da Incassare</span>
+                        <strong>{formatMoney(dueAmount)}</strong>
+                    </div>
                 </div>
             </div>
 
@@ -443,7 +431,7 @@ const FattureList = () => {
                                     </button>
                                 )}
                                 {isEnabled('ABILITA_FATTURE_ACCOMPAGNATORIE') && (
-                                    <button className="split-btn-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_ACCOMPAGNATORIE&elet=1')}>
+                                    <button className="split-btn-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_ACCOMPAGNATORIA&elet=1')}>
                                         <FaPlus /> Nuova Accompagnatoria El.
                                     </button>
                                 )}
@@ -599,7 +587,7 @@ const FattureList = () => {
                                                     />
                                                 </td>
                                                 <td>{f.dataDocumento}</td>
-                                                <td style={{ fontSize: '0.85rem', color: '#666' }}>{formatTipoFattura(f.tipoFattura)}</td>
+                                                <td className="column-tipo">{formatTipoFattura(f.tipoFattura)}</td>
                                                 <td><strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}</td>
                                                 <td>{f.denominazioneCliente}</td>
                                                 <td>{f.agente || '-'}</td>

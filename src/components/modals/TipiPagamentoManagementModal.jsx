@@ -102,7 +102,7 @@ const TipiPagamentoManagementModal = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
                             <div className="col-md-6 text-right">
-                                <button className="btn btn-success" onClick={handleAdd}>
+                                <button type="button" className="btn btn-success" onClick={handleAdd}>
                                     <FaPlus /> Nuovo Tipo Pagamento
                                 </button>
                             </div>
@@ -143,7 +143,7 @@ const TipiPagamentoManagementModal = ({ isOpen, onClose }) => {
                         </div>
                     </div>
                     <div className="modal-footer">
-                        <button className="btn btn-default" onClick={onClose}>Chiudi</button>
+                        <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>
                     </div>
                 </div>
             </div>

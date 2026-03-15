@@ -26,7 +26,18 @@ test.describe('Emissione Fattura Standard e Visibilità', () => {
                 payload: {
                     aliquoteIva: [{ id: 1, descrizione: '22%', percentuale: 22, predefinita: 1 }],
                     unitaMisura: [{ id: 1, codice: 'NR', descrizione: 'Numero' }],
-                    tipiPagamento: [{ id: 1, descrizione: 'Bonifico Bancario' }],
+                    tipiPagamento: [
+                        { id: 1, descrizione: 'Bonifico Bancario' },
+                        {
+                            id: 2,
+                            descrizione: 'Bonifico 30/60/90',
+                            scadenze: [
+                                { giorni: 30, percTotale: 33.33, fineMese: 0 },
+                                { giorni: 60, percTotale: 33.33, fineMese: 0 },
+                                { giorni: 90, percTotale: 33.34, fineMese: 0 }
+                            ]
+                        }
+                    ],
                     risorse: [{ id: 1, descrizione: 'Banca Intesa Sanpaolo' }],
                     causaliEsigibilitaDifferita: []
                 }
@@ -260,5 +271,75 @@ test.describe('Emissione Fattura Standard e Visibilità', () => {
             const rowRitLocator = rows.nth(i).locator('.ritenuta-inline-box');
             await expect(rowRitLocator).toBeVisible();
         }
+    test('salvataggio fattura con più scadenze (30/60/90)', async ({ page }) => {
+        const apiPattern = '**/api/**';
+
+        // Mock configurazione: ritenuta disabilitata per semplicità
+        await page.route(`${apiPattern}/configurazione/get-by-domain*`, async route => {
+            const json = { EMETTI_RITENUTA: '0' };
+            await route.fulfill({ json });
+        });
+
+        // Intercetta salvataggio
+        let savePayload = null;
+        await page.route(`${apiPattern}/fatture`, async route => {
+            if (route.request().method() === 'POST') {
+                savePayload = route.request().postDataJSON();
+                await route.fulfill({ json: { esito: { code: 200 }, payload: { id: 999 } } });
+            } else {
+                await route.continue();
+            }
+        });
+
+        await page.goto('/fatture/new');
+
+        // Selezione Cliente
+        const clienteInput = page.locator('.compact-col-xl', { hasText: 'Cliente' }).locator('input[type="text"]').first();
+        await clienteInput.fill('ClienteTest');
+        await page.waitForTimeout(500);
+        await clienteInput.press('Enter');
+
+        // Vai al tab Pagamento
+        await page.evaluate(() => {
+            const tabs = Array.from(document.querySelectorAll('.nav-tabs a'));
+            const pagTab = tabs.find(a => a.innerText.includes('Pagamento'));
+            if (pagTab) pagTab.click();
+        });
+
+        // Seleziona Tipo Pagamento "Bonifico 30/60/90"
+        // Nota: Poiché usiamo react-select, cerchiamo il contenitore o l'input
+        const pagSelect = page.locator('.form-group', { hasText: 'Tipo Pagamento' }).locator('.css-b62m3t-container');
+        await pagSelect.click();
+        await page.keyboard.type('Bonifico 30/60/90');
+        await page.keyboard.press('Enter');
+
+        // Aggiungi un articolo per avere un totale
+        await page.evaluate(() => {
+            const tabs = Array.from(document.querySelectorAll('.nav-tabs a'));
+            const artTab = tabs.find(a => a.innerText.includes('Articoli'));
+            if (artTab) artTab.click();
+        });
+        await page.evaluate(() => {
+            const fmBtn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('FUORI MAGAZZINO'));
+            if (fmBtn) fmBtn.click();
+        });
+        const firstRow = page.locator('table.table-items tbody tr').first();
+        await firstRow.locator('input[type="number"]').nth(1).fill('1000');
+        await firstRow.locator('input[type="number"]').nth(1).blur();
+
+        // Salva
+        await page.evaluate(() => {
+            const saveBtn = document.querySelector('button.btn-premium-save');
+            if (saveBtn) saveBtn.click();
+        });
+
+        await page.waitForResponse(resp => resp.url().includes('/api') && resp.url().includes('/fatture') && resp.request().method() === 'POST');
+
+        expect(savePayload).toBeTruthy();
+        expect(savePayload.idTipoPagamento).toBe(2);
+        // Verifica che le scadenze siano state inviate (anche se il calcolo avviene lato server, il client potrebbe inviarle se caricate dal tipo pagamento)
+        // Se il frontend le carica dal tipo pagamento e le mette nel DTO prima del save:
+        expect(savePayload.scadenze).toBeTruthy();
+        expect(savePayload.scadenze.length).toBeGreaterThanOrEqual(1);
     });
 });

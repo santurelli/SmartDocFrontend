@@ -26,6 +26,7 @@ import ParticelleManagementModal from '../../components/modals/ParticelleManagem
 import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
+import ScadenzeTable from '../../components/common/ScadenzeTable';
 import { getRowValues } from '../../utils/documentUtils';
 
 const premiumSelectStyles = {
@@ -158,7 +159,8 @@ const ConfOrdineDetail = () => {
         pesoLordo: '',
         pallet: '',
         idVettore: null,
-        annotazioneEstesa: ''
+        annotazioneEstesa: '',
+        listaScadenzePagamentiDocumento: []
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -215,7 +217,23 @@ const ConfOrdineDetail = () => {
         try {
             const res = await ConfOrdineService.getCombosMap();
             if (res.data && res.data.payload) {
-                setCombos(res.data.payload);
+                const payload = res.data.payload;
+                setCombos(prev => ({
+                    ...prev,
+                    particelle: (payload.PARTICELLE || payload.particelle || prev.particelle || []).flatMap(p => typeof p === 'string' ? p.split(',').map(s => s.trim()).filter(Boolean) : p),
+                    listini: payload.LISTINI || payload.listini || prev.listini,
+                    tipiPagamento: payload.TIPIPAGAMENTO || payload.tipiPagamento || prev.tipiPagamento,
+                    risorse: payload.BANCHE || payload.risorse || prev.risorse,
+                    aliquoteIva: payload.ALIQUOTEIVA || payload.aliquoteIva || prev.aliquoteIva,
+                    unitaMisura: payload.UNITAMISURA || payload.unitaMisura || prev.unitaMisura,
+                    vettori: payload.VETTORI || payload.vettori || prev.vettori,
+                    causaliTrasporto: payload.CAUSALITRASPORTO || payload.causaliTrasporto || prev.causaliTrasporto,
+                    aspettiBeni: payload.ASPETTIBENI || payload.aspettiBeni || prev.aspettiBeni,
+                    tipiPorto: payload.TIPIPORTO || payload.tipiPorto || prev.tipiPorto,
+                    agenti: payload.AGENTI || payload.agenti || prev.agenti,
+                    progetti: payload.PROGETTI || payload.progetti || prev.progetti,
+                    ...payload
+                }));
             }
         } catch (error) {
             console.error(error);
@@ -904,7 +922,6 @@ const ConfOrdineDetail = () => {
                                         value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: combos.tipiPagamento.find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
                                         ModalComponent={TipiPagamentoManagementModal}
-                                        modalProps={{ isOpen: false }}
                                         title="Gestione Tipi Pagamento"
                                         placeholder="Seleziona..."
                                         onModalClose={fetchCombos}
@@ -932,9 +949,22 @@ const ConfOrdineDetail = () => {
                                         value={formData.idNsBanca ? { value: formData.idNsBanca, label: combos.risorse.find(r => r.id === formData.idNsBanca)?.descrizione } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idNsBanca: opt?.value }))}
                                         ModalComponent={RisorseManagementModal}
-                                        modalProps={{ initialTipologia: 'BA', isOpen: false }}
+                                        modalProps={{ initialTipologia: 'BA' }}
                                         title="Gestione Banche"
                                         placeholder="Seleziona banca..."
+                                    />
+                                </div>
+                            </div>
+                            <div className="row mt-4">
+                                <div className="col-12">
+                                    <ScadenzeTable
+                                        idTipoPagamento={formData.idTipoPagamento}
+                                        dataDocumento={formData.dataDocumento}
+                                        totaleDocumento={calculateTotalDocument()}
+                                        scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
+                                        onScadenzeChange={(newScadenze) => {
+                                            setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
+                                        }}
                                     />
                                 </div>
                             </div>

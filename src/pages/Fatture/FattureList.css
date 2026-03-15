@@ -45,6 +45,71 @@
     font-size: 32px;
 }
 
+/* Totals Header Box */
+#total-display-header {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.total-display-item {
+    background: #fff;
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    min-width: 130px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.total-display-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+.total-display-item strong {
+    font-size: 16px;
+    color: #333;
+    display: block;
+    line-height: 1.2;
+}
+
+.total-display-item .total-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #999;
+    letter-spacing: 0.8px;
+    margin-bottom: 2px;
+}
+
+.total-display-item.total-paid {
+    border-bottom: 3px solid #2ecc71;
+}
+
+.total-display-item.total-paid strong {
+    color: #27ae60;
+}
+
+.total-display-item.total-due {
+    border-bottom: 3px solid #e74c3c;
+}
+
+.total-display-item.total-due strong {
+    color: #c0392b;
+}
+
+.total-display-item.total-all {
+    border-bottom: 3px solid #03a9f4;
+}
+
+.total-display-item.total-all strong {
+    color: #0288d1;
+}
+
 /* Toolbar Row */
 .toolbar-row {
     background: #fff;
@@ -695,4 +760,11 @@
 .btn-sdi-error:hover {
     transform: scale(1.2);
     color: #c0392b;
+}
+
+.column-tipo {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #444 !important;
+    text-transform: capitalize !important;
 }

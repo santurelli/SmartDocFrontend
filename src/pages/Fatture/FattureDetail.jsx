@@ -28,6 +28,7 @@ import ParticelleManagementModal from '../../components/modals/ParticelleManagem
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
+import ScadenzeTable from '../../components/common/ScadenzeTable';
 import { getRowValues } from '../../utils/documentUtils';
 
 const particellaSelectStyles = {
@@ -123,7 +124,8 @@ const FattureDetail = () => {
         flRitenutaAcconto: 0,
         percRitenutaAcconto: 20,
         importoRitenutaAcconto: 0,
-        tipoRitenuta: ''
+        tipoRitenuta: '',
+        listaScadenzePagamentiDocumento: []
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -205,9 +207,19 @@ const FattureDetail = () => {
         try {
             const res = await FattureService.getCombosMap();
             if (res.data && res.data.payload) {
+                const payload = res.data.payload;
                 setCombos(prev => ({
                     ...prev,
-                    ...res.data.payload
+                    particelle: (payload.PARTICELLE || payload.particelle || prev.particelle || []).flatMap(p => typeof p === 'string' ? p.split(',').map(s => s.trim()).filter(Boolean) : p),
+                    listini: payload.LISTINI || payload.listini || prev.listini,
+                    tipiPagamento: payload.TIPIPAGAMENTO || payload.tipiPagamento || prev.tipiPagamento,
+                    risorse: payload.BANCHE || payload.risorse || prev.risorse,
+                    aliquoteIva: payload.ALIQUOTEIVA || payload.aliquoteIva || prev.aliquoteIva,
+                    unitaMisura: payload.UNITAMISURA || payload.unitaMisura || prev.unitaMisura,
+                    agenti: payload.AGENTI || payload.agenti || prev.agenti,
+                    progetti: payload.PROGETTI || payload.progetti || prev.progetti,
+                    causaliEsigibilitaDifferita: payload.CAUSALIESIGIBILITADIFFERITA || payload.causaliEsigibilitaDifferita || prev.causaliEsigibilitaDifferita,
+                    ...payload
                 }));
             }
         } catch (error) {
@@ -1154,7 +1166,6 @@ const FattureDetail = () => {
                                             value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: (combos.tipiPagamento || []).find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
                                             ModalComponent={TipiPagamentoManagementModal}
-                                            modalProps={{ isOpen: false }}
                                             title="Gestione Tipi Pagamento"
                                             placeholder="Seleziona..."
                                             onModalClose={fetchCombos}
@@ -1182,7 +1193,7 @@ const FattureDetail = () => {
                                             value={formData.idNsBanca ? { value: formData.idNsBanca, label: (combos.risorse || []).find(r => r.id === formData.idNsBanca)?.descrizione } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idNsBanca: opt?.value }))}
                                             ModalComponent={RisorseManagementModal}
-                                            modalProps={{ initialTipologia: 'BA', isOpen: false }}
+                                            modalProps={{ initialTipologia: 'BA' }}
                                             title="Gestione Banche"
                                             placeholder="Seleziona..."
                                             onModalClose={fetchCombos}
@@ -1222,11 +1233,23 @@ const FattureDetail = () => {
                                             value={formData.idCausaleEsigibilitaDifferita ? { value: formData.idCausaleEsigibilitaDifferita, label: (combos.causaliEsigibilitaDifferita || []).find(c => c.id === formData.idCausaleEsigibilitaDifferita)?.descrizione } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idCausaleEsigibilitaDifferita: opt?.value }))}
                                             ModalComponent={CausaliEsigibilitaDifferitaManagementModal}
-                                            modalProps={{ isOpen: false }}
                                             title="Gestione Causali Esigibilità"
                                             placeholder="Seleziona causale..."
                                             onModalClose={fetchCombos}
                                             disabled={formData.esigibilitaDifferita !== 1}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="row mt-4">
+                                    <div className="col-12">
+                                        <ScadenzeTable
+                                            idTipoPagamento={formData.idTipoPagamento}
+                                            dataDocumento={formData.dataDocumento}
+                                            totaleDocumento={calculateTotalDocument()}
+                                            scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
+                                            onScadenzeChange={(newScadenze) => {
+                                                setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
+                                            }}
                                         />
                                     </div>
                                 </div>

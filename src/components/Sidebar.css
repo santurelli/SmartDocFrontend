@@ -140,36 +140,27 @@
 
 /* User Profile Box */
 #user-left-box {
-    padding: 15px 15px 15px 20px;
+    padding: 20px 15px 20px 20px;
     display: flex;
     align-items: center;
     border-bottom: 1px solid #253443;
     background: #2c3e50;
-    /* Same as sidebar, no separator feel */
 }
 
-.user-avatar {
-    width: 65px;
-    height: 65px;
-    border-radius: 4px;
-    /* Square with rounded corners */
-    background: #bcc3c7;
-    /* Generic grey background like image 1 */
+.user-avatar-initials {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     color: #fff;
-    font-size: 3em;
+    font-size: 1.2em;
+    font-weight: 700;
     display: flex;
-    align-items: flex-end;
-    /* Icon at bottom like silhouette */
+    align-items: center;
     justify-content: center;
-    border: 3px solid #fff;
-    /* White border */
-    overflow: hidden;
-}
-
-.user-avatar svg {
-    margin-bottom: -5px;
-    /* Position silhouette */
-    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
 }
 
 #user-left-box .user-box {
@@ -195,8 +186,15 @@
     display: flex;
     align-items: center;
     font-size: 0.85em;
-    color: #e1e1e1;
+    color: #9db3c8;
     font-weight: 400;
+    margin-top: 2px;
+}
+
+#user-left-box .user-box .status .status-icon {
+    color: #2ecc71;
+    font-size: 8px;
+    margin-right: 6px;
 }
 
 .drop-icon {

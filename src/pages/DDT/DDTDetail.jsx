@@ -30,6 +30,7 @@ import ParticelleManagementModal from '../../components/modals/ParticelleManagem
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
+import ScadenzeTable from '../../components/common/ScadenzeTable';
 import { getRowValues } from '../../utils/documentUtils';
 
 const premiumSelectStyles = {
@@ -133,7 +134,8 @@ const DDTDetail = () => {
         pesoLordo: '',
         pallet: '',
         idVettore: null,
-        annotazioneEstesa: ''
+        annotazioneEstesa: '',
+        listaScadenzePagamentiDocumento: []
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -192,9 +194,20 @@ const DDTDetail = () => {
         try {
             const res = await DDTService.getCombosMap();
             if (res.data && res.data.payload) {
+                const payload = res.data.payload;
                 setCombos(prev => ({
                     ...prev,
-                    ...res.data.payload
+                    particelle: (payload.PARTICELLE || payload.particelle || prev.particelle || []).flatMap(p => typeof p === 'string' ? p.split(',').map(s => s.trim()).filter(Boolean) : p),
+                    listini: payload.LISTINI || payload.listini || prev.listini,
+                    tipiPagamento: payload.TIPIPAGAMENTO || payload.tipiPagamento || prev.tipiPagamento,
+                    risorse: payload.BANCHE || payload.risorse || prev.risorse,
+                    aliquoteIva: payload.ALIQUOTEIVA || payload.aliquoteIva || prev.aliquoteIva,
+                    unitaMisura: payload.UNITAMISURA || payload.unitaMisura || prev.unitaMisura,
+                    agenti: payload.AGENTI || payload.agenti || prev.agenti,
+                    progetti: payload.PROGETTI || payload.progetti || prev.progetti,
+                    vettori: payload.VETTORI || payload.vettori || prev.vettori,
+                    causaliEsigibilitaDifferita: payload.CAUSALIESIGIBILITADIFFERITA || payload.causaliEsigibilitaDifferita || prev.causaliEsigibilitaDifferita,
+                    ...payload
                 }));
             }
         } catch (error) {
@@ -920,7 +933,6 @@ const DDTDetail = () => {
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idVettore: opt?.value }))}
                                             placeholder="Seleziona..."
                                             ModalComponent={VettoriManagementModal}
-                                            modalProps={{ isOpen: false }}
                                             title="Gestione Vettori"
                                             onModalClose={fetchCombos}
                                         />
@@ -934,7 +946,6 @@ const DDTDetail = () => {
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idCausaleTrasporto: opt?.value }))}
                                             placeholder="Seleziona..."
                                             ModalComponent={CausaliTrasportoManagementModal}
-                                            modalProps={{ isOpen: false }}
                                             title="Gestione Causali Trasporto"
                                             onModalClose={fetchCombos}
                                         />
@@ -948,7 +959,6 @@ const DDTDetail = () => {
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idAspettoBeni: opt?.value }))}
                                             placeholder="Seleziona..."
                                             ModalComponent={AspettoBeniManagementModal}
-                                            modalProps={{ isOpen: false }}
                                             title="Gestione Aspetto Beni"
                                             onModalClose={fetchCombos}
                                         />
@@ -964,7 +974,6 @@ const DDTDetail = () => {
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPorto: opt?.value }))}
                                             placeholder="Seleziona..."
                                             ModalComponent={TipiPortoManagementModal}
-                                            modalProps={{ isOpen: false }}
                                             title="Gestione Tipi Porto"
                                             onModalClose={fetchCombos}
                                         />
@@ -1023,7 +1032,6 @@ const DDTDetail = () => {
                                             value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: combos.tipiPagamento.find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
                                             ModalComponent={TipiPagamentoManagementModal}
-                                            modalProps={{ isOpen: false }}
                                             title="Gestione Tipi Pagamento"
                                             placeholder="Seleziona..."
                                             onModalClose={fetchCombos}
@@ -1042,6 +1050,19 @@ const DDTDetail = () => {
                                                 </button>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                                <div className="row mt-4">
+                                    <div className="col-12">
+                                        <ScadenzeTable
+                                            idTipoPagamento={formData.idTipoPagamento}
+                                            dataDocumento={formData.dataDocumento}
+                                            totaleDocumento={calculateTotalDocument()}
+                                            scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
+                                            onScadenzeChange={(newScadenze) => {
+                                                setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             </div>

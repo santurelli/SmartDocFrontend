@@ -10,8 +10,8 @@ const FattureService = {
         return api.get(`/fatture/${id}`);
     },
 
-    getCombosMap: () => {
-        return api.get('/fatture/combos');
+    getCombosMap: (tipo) => {
+        return api.get('/fatture/combos', { params: { tipo } });
     },
 
     getNextNum: (data, flElettronica, tipo) => {
@@ -29,6 +29,10 @@ const FattureService = {
 
     print: (id) => {
         return api.get(`/fatture/print/${id}`, { responseType: 'blob' });
+    },
+
+    getUltimeFatture: () => {
+        return api.get('/fatture/ultime');
     }
 };
 

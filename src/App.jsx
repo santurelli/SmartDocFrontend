@@ -28,6 +28,7 @@ import FattureList from './pages/Fatture/FattureList';
 import FattureDetail from './pages/Fatture/FattureDetail';
 import NoteCreditoList from './pages/NoteCredito/NoteCreditoList';
 import NoteCreditoDetail from './pages/NoteCredito/NoteCreditoDetail';
+import Dashboard from './pages/Dashboard/Dashboard';
 
 const ProtectedRoute = () => {
   const user = authService.getCurrentUser();
@@ -49,52 +50,6 @@ const ProtectedRoute = () => {
   );
 };
 
-const Dashboard = () => {
-  const user = authService.getCurrentUser();
-  const handleLogout = () => {
-    authService.logout();
-    window.location.reload();
-  };
-
-  if (!user || !user.user) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>Errore nel caricamento dei dati utente</h1>
-        <button onClick={handleLogout} className="login-button" style={{ maxWidth: '200px', margin: '0 auto' }}>Esci e Riprova</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="row">
-      <div className="col-lg-12">
-        <div className="row">
-          <div className="col-lg-12">
-            <div id="content-header" className="clearfix">
-              <div className="pull-left">
-                <ol className="breadcrumb">
-                  <li><a href="#">Home</a></li>
-                  <li className="active"><span>Dashboard</span></li>
-                </ol>
-                <h1>Dashboard</h1>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="main-box clearfix">
-          <header className="main-box-header clearfix">
-            <h2>Benvenuto, {user.user.nome} {user.user.cognome}</h2>
-          </header>
-          <div className="main-box-body clearfix">
-            <p>Hai effettuato l'accesso con successo in <strong>{user.user.nomeAzienda}</strong>.</p>
-            <p style={{ marginTop: '10px' }}>Questa è la nuova dashboard di SmartDoc.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function App() {
   return (

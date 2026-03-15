@@ -50,26 +50,21 @@ const Sidebar = ({ user }) => {
 
                     {/* User Profile Box */}
                     <div id="user-left-box" className="clearfix hidden-sm hidden-xs dropdown profile2-dropdown">
-                        <div className="user-avatar">
-                            <FaUser />
+                        <div className="user-avatar-initials">
+                            {user && user.nome ? (user.nome[0] + (user.cognome ? user.cognome[0] : '')).toUpperCase() : 'U'}
                         </div>
                         <div className="user-box">
                             <span className="name">
-                                {userName} <FaAngleDown style={{ fontSize: '10px', marginLeft: '3px' }} />
+                                {userName} <FaAngleDown style={{ fontSize: '10px', marginLeft: '3px', opacity: 0.7 }} />
                             </span>
                             <span className="status">
-                                <FaCircle style={{ color: '#8bc34a', fontSize: '8px', marginRight: '5px' }} />
-                                Online
+                                <FaCircle className="status-icon" /> Online
                             </span>
                         </div>
                     </div>
 
                     <div className="collapse navbar-collapse navbar-ex1-collapse" id="sidebar-nav">
                         <ul className="nav nav-pills nav-stacked">
-
-                            <li className="nav-header nav-header-first hidden-sm hidden-xs">
-                                Navigation
-                            </li>
 
                             <li>
                                 <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>
