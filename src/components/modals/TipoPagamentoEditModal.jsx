@@ -47,8 +47,8 @@ const TipoPagamentoEditModal = ({ isOpen, onClose, tipoPagamentoId, onSave }) =>
     const loadSpeseIncasso = async () => {
         try {
             const res = await SpeseIncassoService.getAll();
-            if (res.data) {
-                setSpeseIncassoList(res.data || []);
+            if (res.data && res.data.payload) {
+                setSpeseIncassoList(res.data.payload);
             }
         } catch (error) {
             console.error("Errore caricamento spese incasso", error);

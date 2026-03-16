@@ -596,8 +596,12 @@ const FattureDetail = () => {
     };
 
 
-    const calculateTotalDocument = () => {
-        return prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
+    const calculateTotalDocument = (includeFees = true) => {
+        const prodTotal = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
+        if (!includeFees) return prodTotal;
+        
+        const feesTotal = (formData.listaScadenzePagamentiDocumento || []).reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0);
+        return prodTotal + feesTotal;
     };
 
     const calculateTotalImponibile = () => {
@@ -613,7 +617,7 @@ const FattureDetail = () => {
     };
 
     const calculateNettoAPagare = () => {
-        return calculateTotalDocument() - calculateRitenutaAcconto();
+        return calculateTotalDocument(true) - calculateRitenutaAcconto();
     };
 
     const loadClienti = (inputValue, callback) => {
@@ -1245,10 +1249,27 @@ const FattureDetail = () => {
                                         <ScadenzeTable
                                             idTipoPagamento={formData.idTipoPagamento}
                                             dataDocumento={formData.dataDocumento}
-                                            totaleDocumento={calculateTotalDocument()}
+                                            totaleDocumento={calculateTotalDocument(false)}
                                             scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
                                             onScadenzeChange={(newScadenze) => {
-                                                setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
+                                                const totalFees = newScadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0);
+                                                
+                                                // Map scadenze fees to listaSpeseIncassoFattura for backend persistence
+                                                // We create one entry per scadenza that has fees
+                                                const newSpeseIncasso = newScadenze
+                                                    .filter(s => s.importoSpeseIncasso > 0)
+                                                    .map(s => ({
+                                                        descrizione: `Spese incasso scadenza ${s.dtScadenza}`,
+                                                        importo: s.importoSpeseIncasso,
+                                                        tipo: 'I' // Assuming 'I' for Incasso
+                                                    }));
+
+                                                setFormData(prev => ({ 
+                                                    ...prev, 
+                                                    listaScadenzePagamentiDocumento: newScadenze,
+                                                    listaSpeseIncassoFattura: newSpeseIncasso,
+                                                    totale: calculateTotalDocument(false) + totalFees
+                                                }));
                                             }}
                                         />
                                     </div>

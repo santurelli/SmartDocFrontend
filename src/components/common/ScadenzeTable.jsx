@@ -161,20 +161,25 @@ const ScadenzeTable = ({
                             </tr>
                         )}
                     </tbody>
-                    {scadenze.length > 0 && (
                         <tfoot style={{ borderTop: '2px solid #ebedf2', backgroundColor: '#fdfdfe' }}>
-                            <tr>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#555' }}>Totale:</td>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#28a745', fontSize: '15px' }}>
+                            <tr style={{ borderBottom: '1px solid #ebedf2' }}>
+                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#555' }}>Subtotale:</td>
+                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#28a745' }}>
                                     {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importo || 0), 0))}
                                 </td>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#6c757d' }}>
+                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#6c757d' }}>
                                     {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0))}
                                 </td>
                                 <td></td>
                             </tr>
+                            <tr style={{ backgroundColor: '#f0f4f8' }}>
+                                <td className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#333', fontSize: '15px' }}>TOTALE COMPLESSIVO:</td>
+                                <td colSpan="2" className="text-center align-middle font-weight-bold" style={{ padding: '12px', color: '#0056b3', fontSize: '18px' }}>
+                                    {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importo || 0) + (s.importoSpeseIncasso || 0), 0))}
+                                </td>
+                                <td></td>
+                            </tr>
                         </tfoot>
-                    )}
                 </table>
             </div>
         </div>
