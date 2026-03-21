@@ -1,0 +1,114 @@
+/* ScadenzeTable.css - Premium Invoicing Aesthetics */
+
+.scadenze-container {
+    background: #fff;
+    padding: 10px 0;
+}
+
+.scadenze-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px; /* Spacing from table */
+    padding: 0 5px;
+}
+
+/* Button container spacing */
+.scadenze-header > div.d-flex {
+    gap: 20px !important;
+}
+
+/* Premium Buttons Styling */
+.btn-premium-add {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    cursor: pointer;
+    text-transform: none;
+}
+
+.btn-premium-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(40, 167, 69, 0.35);
+    background: linear-gradient(135deg, #2ecc71 0%, #28a745 100%);
+    color: white;
+}
+
+.btn-premium-add:active {
+    transform: translateY(0);
+}
+
+.btn-premium-sync {
+    background: #fff;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 8px 22px;
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.btn-premium-sync:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+    color: #212529;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.btn-premium-sync:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-premium-sync svg.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+/* Table Enhancements */
+.scadenze-table-wrapper {
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #ebedf2;
+}
+
+.scadenze-row:hover {
+    background-color: #f8fbff !important;
+}
+
+/* Difference Badge */
+.difference-alert-row {
+    background-color: #fff8f8;
+}
+
+.difference-text {
+    color: #dc3545;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.difference-indicator {
+    padding: 4px 10px;
+    background: #ffe5e5;
+    border-radius: 6px;
+    color: #d11212;
+}

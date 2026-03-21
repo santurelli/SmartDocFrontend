@@ -1,7 +1,20 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaSyncAlt, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
+import { FaSyncAlt, FaExclamationTriangle, FaCalendarAlt, FaPlus, FaTrash, FaInfoCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import TipiPagamentoService from '../../services/TipiPagamentoService';
+import './ScadenzeTable.css';
+
+const MODALITA_PAGAMENTO = [
+    { value: 'CONTANTI', label: 'Contanti' },
+    { value: 'ASSEGNO', label: 'Assegno' },
+    { value: 'ASSEGNO_CIRCOLARE', label: 'Assegno circolare' },
+    { value: 'BONIFICO', label: 'Bonifico' },
+    { value: 'RIBA', label: 'Riba' },
+    { value: 'MAV', label: 'MAV' },
+    { value: 'RID', label: 'RID' },
+    { value: 'CARTA_CREDITO', label: 'Carta di credito' },
+    { value: 'BOLLETTINO_POSTA', label: 'Bollettino postale' },
+];
 
 const ScadenzeTable = ({ 
     idTipoPagamento, 
@@ -25,26 +38,64 @@ const ScadenzeTable = ({
         }
     }, [scadenzeIniziali, idTipoPagamento, totaleDocumento, dataDocumento]);
 
+    const lastSentScadenzeRef = useRef(null);
+
     // Force updates parent component when local scadenze state changes
     useEffect(() => {
         if (onScadenzeChange) {
-            onScadenzeChange(scadenze);
+            const scadenzeJson = JSON.stringify(scadenze);
+            if (lastSentScadenzeRef.current !== scadenzeJson) {
+                onScadenzeChange(scadenze);
+                lastSentScadenzeRef.current = scadenzeJson;
+            }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [scadenze]);
+    }, [scadenze, onScadenzeChange]);
 
     const formatCurrency = (amount) => {
         if (amount == null) return '€ 0,00';
         return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
     };
 
-    const formatDate = (dateString) => {
-        if (!dateString) return '-';
-        if (dateString.includes('-')) {
-            const [y, m, d] = dateString.split('-');
-            return `${d}/${m}/${y}`;
+    const formatDateForInput = (dateString) => {
+        if (!dateString) return '';
+        if (dateString.includes('/')) {
+            const [d, m, y] = dateString.split('/');
+            return `${y}-${m}-${d}`;
         }
         return dateString;
+    };
+
+    const handleDateChange = (index, value) => {
+        const newScadenze = [...scadenze];
+        newScadenze[index].dtScadenza = value;
+        setScadenze(newScadenze);
+    };
+
+    const handleImportoChange = (index, value) => {
+        const newScadenze = [...scadenze];
+        newScadenze[index].importo = parseFloat(value) || 0;
+        setScadenze(newScadenze);
+    };
+
+    const handleModalitaChange = (index, value) => {
+        const newScadenze = [...scadenze];
+        newScadenze[index].modalitaPagamento = value;
+        setScadenze(newScadenze);
+    };
+
+    const addScadenza = () => {
+        const newScadenza = {
+            dtScadenza: dataDocumento || new Date().toISOString().split('T')[0],
+            importo: 0,
+            importoSpeseIncasso: 0,
+            modalitaPagamento: 'BONIFICO'
+        };
+        setScadenze([...scadenze, newScadenza]);
+    };
+
+    const deleteScadenza = (index) => {
+        const newScadenze = scadenze.filter((_, i) => i !== index);
+        setScadenze(newScadenze);
     };
 
     const calcolaScadenze = useCallback(async (isManualTrigger = false) => {
@@ -83,7 +134,6 @@ const ScadenzeTable = ({
         if (idChanged || totChanged || dataChanged) {
             prevDeps.current = { id: idTipoPagamento, tot: totaleDocumento, data: dataDocumento };
             
-            // Skip auto calculation on first render if we are waiting for scadenzeIniziali
             if (!initialScadenzeLoaded.current && scadenzeIniziali && scadenzeIniziali.length > 0) {
                 return;
             }
@@ -91,36 +141,51 @@ const ScadenzeTable = ({
             if (idTipoPagamento && totaleDocumento > 0) {
                 const timer = setTimeout(() => {
                     calcolaScadenze(false);
-                }, 500); // 500ms debounce
+                }, 500);
                 return () => clearTimeout(timer);
-            } else {
+            } else if (!initialScadenzeLoaded.current) {
                 setScadenze([]);
             }
         }
     }, [idTipoPagamento, totaleDocumento, dataDocumento, calcolaScadenze, scadenzeIniziali]);
 
+    const sumScadenze = scadenze.reduce((acc, s) => acc + (s.importo || 0), 0);
+    const difference = parseFloat((sumScadenze - totaleDocumento).toFixed(2));
+
     return (
         <div className="scadenze-container mt-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
+            <div className="scadenze-header">
                 <h6 className="m-0 text-primary" style={{ fontWeight: '600', fontSize: '15px' }}>
                     <FaCalendarAlt className="mr-2" style={{ color: '#007bff' }} /> 
                     Piano di Pagamento
                 </h6>
-                {!readOnly && (
-                    <button 
-                        type="button" 
-                        className="btn btn-sm btn-light" 
-                        style={{ border: '1px solid #ced4da', borderRadius: '4px', fontSize: '13px', fontWeight: '500', color: '#495057' }}
-                        onClick={() => calcolaScadenze(true)}
-                        disabled={isLoading || !idTipoPagamento}
-                        title="Forza il ricalcolo delle scadenze"
-                    >
-                        <FaSyncAlt className={isLoading ? 'fa-spin mr-1' : 'mr-1'} /> Ricalcola
-                    </button>
-                )}
+                <div className="d-flex align-items-center">
+                    {!readOnly && (
+                        <>
+                            <button 
+                                type="button" 
+                                className="btn-premium-add" 
+                                onClick={addScadenza}
+                                title="Aggiungi una nuova scadenza manuale"
+                            >
+                                <FaPlus className="mr-2" /> Aggiungi riga
+                            </button>
+                            <button 
+                                type="button" 
+                                className="btn-premium-sync" 
+                                style={{ marginLeft: '15px' }}
+                                onClick={() => calcolaScadenze(true)}
+                                disabled={isLoading || !idTipoPagamento}
+                                title="Forza il ricalcolo delle scadenze"
+                            >
+                                <FaSyncAlt className={isLoading ? 'fa-spin mr-2' : 'mr-2'} /> Ricalcola
+                            </button>
+                        </>
+                    )}
+                </div>
             </div>
 
-            <div className="table-responsive" style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #ebedf2' }}>
+            <div className="table-responsive scadenze-table-wrapper">
                 <table className="table mb-0 table-hover" style={{ backgroundColor: '#fff', fontSize: '14px' }}>
                     <thead style={{ backgroundColor: '#f9f9fa', color: '#6c757d', fontSize: '12px', textTransform: 'uppercase' }}>
                         <tr>
@@ -128,58 +193,112 @@ const ScadenzeTable = ({
                             <th className="text-right font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Importo Rata</th>
                             <th className="text-right font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Spese Incasso</th>
                             <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Mod. Pag.</th>
+                            {!readOnly && <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px', width: '50px' }}></th>}
                         </tr>
                     </thead>
                     <tbody>
                         {scadenze.length > 0 ? (
                             scadenze.map((s, index) => (
-                                <tr key={s.id || index}>
-                                    <td className="text-center align-middle font-weight-bold" style={{ color: '#333' }}>
-                                        {formatDate(s.dtScadenza)}
+                                <tr key={s.id || index} className="scadenze-row">
+                                    <td className="text-center align-middle">
+                                        {readOnly ? (
+                                            <span className="font-weight-bold" style={{ color: '#333' }}>{s.dtScadenza}</span>
+                                        ) : (
+                                            <input 
+                                                type="date" 
+                                                className="form-control form-control-sm text-center" 
+                                                value={formatDateForInput(s.dtScadenza)} 
+                                                onChange={(e) => handleDateChange(index, e.target.value)}
+                                            />
+                                        )}
                                     </td>
-                                    <td className="text-right align-middle" style={{ fontWeight: '600', color: '#17a2b8' }}>
-                                        {formatCurrency(s.importo)}
+                                    <td className="text-right align-middle">
+                                        {readOnly ? (
+                                            <span style={{ fontWeight: '600', color: '#17a2b8' }}>{formatCurrency(s.importo)}</span>
+                                        ) : (
+                                            <input 
+                                                type="number" 
+                                                step="0.01" 
+                                                className="form-control form-control-sm text-right font-weight-bold" 
+                                                style={{ color: '#17a2b8' }}
+                                                value={s.importo} 
+                                                onChange={(e) => handleImportoChange(index, e.target.value)}
+                                            />
+                                        )}
                                     </td>
-                                    <td className="text-right align-middle text-muted" style={{ fontStyle: s.importoSpeseIncasso > 0 ? 'normal' : 'italic' }}>
-                                        {s.importoSpeseIncasso > 0 ? formatCurrency(s.importoSpeseIncasso) : '-'}
+                                    <td className="text-right align-middle text-muted">
+                                        {formatCurrency(s.importoSpeseIncasso || 0)}
                                     </td>
                                     <td className="text-center align-middle">
-                                        <span style={{ fontSize: '13px', padding: '4px 8px', color: '#495057', backgroundColor: '#e9ecef', border: '1px solid #ced4da', borderRadius: '4px', fontWeight: '500', display: 'inline-block' }}>
-                                            {s.modalitaPagamento || '-'}
-                                        </span>
+                                        {readOnly ? (
+                                            <span style={{ fontSize: '13px', padding: '4px 8px', color: '#495057', backgroundColor: '#e9ecef', border: '1px solid #ced4da', borderRadius: '4px', fontWeight: '500' }}>
+                                                {s.modalitaPagamento || '-'}
+                                            </span>
+                                        ) : (
+                                            <select 
+                                                className="form-control form-control-sm"
+                                                value={s.modalitaPagamento || 'BONIFICO'}
+                                                onChange={(e) => handleModalitaChange(index, e.target.value)}
+                                            >
+                                                {MODALITA_PAGAMENTO.map(m => (
+                                                    <option key={m.value} value={m.value}>{m.label}</option>
+                                                ))}
+                                            </select>
+                                        )}
                                     </td>
+                                    {!readOnly && (
+                                        <td className="text-center align-middle">
+                                            <button type="button" className="btn btn-link text-danger p-0" onClick={() => deleteScadenza(index)}>
+                                                <FaTrash />
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="4" className="text-center text-muted py-4">
+                                <td colSpan={readOnly ? 4 : 5} className="text-center text-muted py-4">
                                     <FaExclamationTriangle className="text-warning mr-2 mb-1" style={{ fontSize: '16px' }} />
                                     {idTipoPagamento 
-                                        ? "Dati scadenze non disponibili. Assicurati che il totale sia maggiore di zero." 
+                                        ? "Nessuna scadenza. Aggiungine una o ricalcola." 
                                         : "Seleziona un tipo di pagamento per visualizzare le scadenze."}
                                 </td>
                             </tr>
                         )}
                     </tbody>
-                        <tfoot style={{ borderTop: '2px solid #ebedf2', backgroundColor: '#fdfdfe' }}>
-                            <tr style={{ borderBottom: '1px solid #ebedf2' }}>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#555' }}>Subtotale:</td>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#28a745' }}>
-                                    {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importo || 0), 0))}
+                    <tfoot style={{ borderTop: '2px solid #ebedf2', backgroundColor: '#fdfdfe' }}>
+                        <tr style={{ borderBottom: '1px solid #ebedf2' }}>
+                            <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#555' }}>Subtotale:</td>
+                            <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: difference !== 0 ? '#dc3545' : '#28a745' }}>
+                                {formatCurrency(sumScadenze)}
+                            </td>
+                            <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#6c757d' }}>
+                                {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0))}
+                            </td>
+                            <td colSpan={readOnly ? 1 : 2}></td>
+                        </tr>
+                        {difference !== 0 && (
+                            <tr className="difference-alert-row" style={{ borderBottom: '1px solid #ebedf2' }}>
+                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#dc3545' }}>Differenza (Abbuono/Magg.):</td>
+                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px' }}>
+                                    <span className="difference-indicator">{formatCurrency(difference)}</span>
                                 </td>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#6c757d' }}>
-                                    {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0))}
+                                <td colSpan={readOnly ? 2 : 3} className="px-3">
+                                    <span className="difference-text">
+                                        <FaInfoCircle className="mr-2" /> 
+                                        {difference > 0 ? "La somma delle rate supera l'importo da incassare (Maggiorazione)." : "La somma delle rate è inferiore all'importo da incassare (Sconto/Abbuono)."}
+                                    </span>
                                 </td>
-                                <td></td>
                             </tr>
-                            <tr style={{ backgroundColor: '#f0f4f8' }}>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#333', fontSize: '15px' }}>TOTALE COMPLESSIVO:</td>
-                                <td colSpan="2" className="text-center align-middle font-weight-bold" style={{ padding: '12px', color: '#0056b3', fontSize: '18px' }}>
-                                    {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importo || 0) + (s.importoSpeseIncasso || 0), 0))}
-                                </td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
+                        )}
+                        <tr style={{ backgroundColor: '#f0f4f8' }}>
+                            <td className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#333', fontSize: '15px' }}>TOTALE COMPLESSIVO:</td>
+                            <td colSpan="2" className="text-center align-middle font-weight-bold" style={{ padding: '12px', color: '#0056b3', fontSize: '18px' }}>
+                                {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importo || 0) + (s.importoSpeseIncasso || 0), 0))}
+                            </td>
+                            <td colSpan={readOnly ? 1 : 2}></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>

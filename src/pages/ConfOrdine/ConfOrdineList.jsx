@@ -373,15 +373,15 @@ const ConfOrdineList = () => {
                                 }}
                                 value={selectedCliente}
                                 placeholder="Scegli cliente..."
+                                noOptionsMessage={({ inputValue }) =>
+                                    !inputValue || inputValue.length < 3
+                                        ? "Digita almeno 3 caratteri per cercare..."
+                                        : "Nessun risultato trovato"
+                                }
+                                loadingMessage={() => "Caricamento in corso..."}
                                 isClearable
                                 menuPortalTarget={document.body}
                                 menuPosition="fixed"
-                                noOptionsMessage={({ inputValue }) => {
-                                    if (!inputValue) return "Inizia a scrivere per cercare un cliente...";
-                                    if (inputValue.length < 3) return "Scrivi almeno 3 caratteri...";
-                                    return "Nessun cliente trovato.";
-                                }}
-                                loadingMessage={() => "Ricerca in corso..."}
                                 styles={{
                                     control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
                                     menuPortal: (base) => ({ ...base, zIndex: 9999 })
@@ -398,11 +398,11 @@ const ConfOrdineList = () => {
                                 }}
                                 value={selectedAgente}
                                 placeholder="Scegli agente..."
+                                noOptionsMessage={() => "Nessun risultato trovato"}
+                                loadingMessage={() => "Caricamento..."}
                                 isClearable
                                 menuPortalTarget={document.body}
                                 menuPosition="fixed"
-                                noOptionsMessage={() => "Nessun agente trovato."}
-                                loadingMessage={() => "Caricamento..."}
                                 styles={{
                                     control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
                                     menuPortal: (base) => ({ ...base, zIndex: 9999 })

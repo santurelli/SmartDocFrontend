@@ -579,6 +579,7 @@ const DDTDetail = () => {
         if (!formData.numDocumento) { Swal.fire('Errore', 'Inserire il numero documento', 'error'); return false; }
         if (!formData.dataDocumento) { Swal.fire('Errore', 'Inserire la data documento', 'error'); return false; }
         if (!formData.idCliente) { Swal.fire('Errore', 'Selezionare un cliente', 'error'); return false; }
+        if (!prodotti || prodotti.length === 0) { Swal.fire('Errore', 'Inserire almeno un articolo', 'error'); return false; }
         return true;
     };
 
@@ -600,7 +601,8 @@ const DDTDetail = () => {
             return res.data.payload?.id || res.data.payload || (isNew ? res.data : id);
         } catch (error) {
             console.error(error);
-            Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+            const msg = error.response?.data || 'Errore durante il salvataggio';
+            Swal.fire('Errore', msg, 'error');
             return null;
         }
     };
@@ -917,6 +919,7 @@ const DDTDetail = () => {
                                 addExtraProps={{ scarica: 1 }}
                                 combos={combos}
                                 isCeramica={isCeramica}
+                                idListino={formData.idListino}
                             />
                         </div>
 
@@ -1101,7 +1104,7 @@ const DDTDetail = () => {
                                             <FaSave /> Salva solo
                                         </button>
                                         <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { print: true })}>
-                                            <FaPrint /> Stampa Diretto
+                                            <FaPrint /> Stampa
                                         </button>
                                         <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { pdf: true })}>
                                             <FaFilePdf /> Esporta PDF

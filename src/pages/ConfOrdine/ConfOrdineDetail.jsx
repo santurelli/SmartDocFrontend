@@ -559,6 +559,7 @@ const ConfOrdineDetail = () => {
         if (!formData.numDocumento) { Swal.fire('Errore', 'Inserire il numero documento', 'error'); return false; }
         if (!formData.dataDocumento) { Swal.fire('Errore', 'Inserire la data documento', 'error'); return false; }
         if (!formData.idCliente) { Swal.fire('Errore', 'Selezionare un cliente', 'error'); return false; }
+        if (!prodotti || prodotti.length === 0) { Swal.fire('Errore', 'Inserire almeno un articolo', 'error'); return false; }
         return true;
     };
 
@@ -586,7 +587,8 @@ const ConfOrdineDetail = () => {
             return savedId;
         } catch (error) {
             console.error(error);
-            Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+            const msg = error.response?.data || 'Errore durante il salvataggio';
+            Swal.fire('Errore', msg, 'error');
             return null;
         } finally {
             setLoading(false);
@@ -1007,6 +1009,7 @@ const ConfOrdineDetail = () => {
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showDownloadColumn={false}
+                                idListino={formData.idListino}
                             />
                         </div>
 

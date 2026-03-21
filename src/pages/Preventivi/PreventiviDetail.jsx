@@ -508,6 +508,11 @@ const PreventiviDetail = () => {
             return null;
         }
 
+        if (!prodotti || prodotti.length === 0) {
+            Swal.fire('Attenzione', 'Inserire almeno un articolo', 'warning');
+            return null;
+        }
+
         try {
             const payload = {
                 ...formData,
@@ -539,7 +544,8 @@ const PreventiviDetail = () => {
             }
         } catch (error) {
             console.error("Error saving:", error);
-            Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+            const msg = error.response?.data || 'Errore durante il salvataggio';
+            Swal.fire('Errore', msg, 'error');
             return null;
         }
     };
@@ -957,6 +963,7 @@ const PreventiviDetail = () => {
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showDownloadColumn={false}
+                                idListino={formData.idListino}
                             />
                         </div>
 
@@ -990,7 +997,7 @@ const PreventiviDetail = () => {
                                         <FaSave /> Salva solo
                                     </button>
                                     <button type="button" className="split-btn-item" onClick={handlePrint}>
-                                        <FaPrint /> Stampa Diretto
+                                        <FaPrint /> Stampa
                                     </button>
                                     <button type="button" className="split-btn-item" onClick={handleExportPdf}>
                                         <FaFilePdf /> Esporta PDF

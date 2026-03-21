@@ -348,6 +348,12 @@ const DDTList = () => {
                                 }}
                                 value={selectedCliente}
                                 placeholder="Scegli cliente..."
+                                noOptionsMessage={({ inputValue }) => 
+                                    !inputValue || inputValue.length < 3 
+                                        ? "Digita almeno 3 caratteri per cercare..." 
+                                        : "Nessun risultato trovato"
+                                }
+                                loadingMessage={() => "Caricamento in corso..."}
                                 isClearable
                             />
                         </div>

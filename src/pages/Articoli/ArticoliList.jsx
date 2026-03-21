@@ -438,8 +438,10 @@ const ArticoliList = () => {
                                                 descFornitore: opt ? opt.label : ''
                                             }))}
                                             placeholder="Cerca fornitore..."
+                                            noOptionsMessage={({ inputValue }) => 
+                                                !inputValue ? "Inizia a scrivere per cercare..." : "Nessun risultato trovato"
+                                            }
                                             loadingMessage={() => "Caricamento..."}
-                                            noOptionsMessage={() => "Nessun risultato"}
                                             isClearable
                                             styles={{
                                                 control: (base) => ({ ...base, height: '34px', minHeight: '34px' }),
@@ -461,6 +463,7 @@ const ArticoliList = () => {
                                                 options={combos.formati.map(f => ({ value: f.id, label: f.descrizione }))}
                                                 value={advancedFilters.idFormato ? { value: advancedFilters.idFormato, label: combos.formati.find(f => f.id == advancedFilters.idFormato)?.descrizione } : null}
                                                 onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idFormato: opt ? opt.value : '' }))}
+                                                noOptionsMessage={() => "Nessun risultato trovato"}
                                                 styles={{
                                                     control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
                                                     menu: (base) => ({ ...base, zIndex: 9999 })
@@ -478,6 +481,7 @@ const ArticoliList = () => {
                                                 options={combos.scelte.map(s => ({ value: s.id, label: s.descrizione }))}
                                                 value={advancedFilters.idScelta ? { value: advancedFilters.idScelta, label: combos.scelte.find(s => s.id == advancedFilters.idScelta)?.descrizione } : null}
                                                 onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idScelta: opt ? opt.value : '' }))}
+                                                noOptionsMessage={() => "Nessun risultato trovato"}
                                                 styles={{
                                                     control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
                                                     menu: (base) => ({ ...base, zIndex: 9999 })
@@ -495,6 +499,7 @@ const ArticoliList = () => {
                                                 options={combos.toni.map(t => ({ value: t.id, label: t.descrizione }))}
                                                 value={advancedFilters.idTono ? { value: advancedFilters.idTono, label: combos.toni.find(t => t.id == advancedFilters.idTono)?.descrizione } : null}
                                                 onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idTono: opt ? opt.value : '' }))}
+                                                noOptionsMessage={() => "Nessun risultato trovato"}
                                                 styles={{
                                                     control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
                                                     menu: (base) => ({ ...base, zIndex: 9999 })
@@ -512,6 +517,7 @@ const ArticoliList = () => {
                                                 options={combos.calibri.map(c => ({ value: c.id, label: c.descrizione }))}
                                                 value={advancedFilters.idCalibro ? { value: advancedFilters.idCalibro, label: combos.calibri.find(c => c.id == advancedFilters.idCalibro)?.descrizione } : null}
                                                 onChange={(opt) => setAdvancedFilters(prev => ({ ...prev, idCalibro: opt ? opt.value : '' }))}
+                                                noOptionsMessage={() => "Nessun risultato trovato"}
                                                 styles={{
                                                     control: (base) => ({ ...base, minHeight: '34px', height: '34px' }),
                                                     menu: (base) => ({ ...base, zIndex: 9999 })

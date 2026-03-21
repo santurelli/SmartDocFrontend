@@ -321,6 +321,12 @@ const NoteCreditoList = () => {
                             onChange={(opt) => setFilters({ ...filters, idCliente: opt?.value, nomeCliente: opt?.label })}
                             value={filters.idCliente ? { value: filters.idCliente, label: filters.nomeCliente } : null}
                             placeholder="Cerca cliente..."
+                            noOptionsMessage={({ inputValue }) => 
+                                !inputValue || inputValue.length < 3 
+                                    ? "Digita almeno 3 caratteri per cercare..." 
+                                    : "Nessun risultato trovato"
+                            }
+                            loadingMessage={() => "Caricamento in corso..."}
                             styles={{
                                 control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
                                 menuPortal: (base) => ({ ...base, zIndex: 9999 })
@@ -336,6 +342,8 @@ const NoteCreditoList = () => {
                             onChange={(opt) => setFilters({ ...filters, idAgente: opt?.value, nomeAgente: opt?.label })}
                             value={filters.idAgente ? { value: filters.idAgente, label: filters.nomeAgente } : null}
                             placeholder="Tutti..."
+                            noOptionsMessage={() => "Nessun risultato trovato"}
+                            loadingMessage={() => "Caricamento..."}
                             styles={{
                                 control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
                                 menuPortal: (base) => ({ ...base, zIndex: 9999 })

@@ -58,6 +58,7 @@ const DocumentRows = (props) => {
         isCeramica,
         showRitenuta = false,
         readOnly = false,
+        idListino = null,
         children
     } = props;
 
@@ -206,6 +207,14 @@ const DocumentRows = (props) => {
                                                         descrTono: a.descrTono,
                                                         descrCalibro: a.descrCalibro
                                                     });
+                                                    
+                                                    if (opt?.value) {
+                                                        ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
+                                                            if (res.data && res.data.prezzo !== undefined) {
+                                                                onRowChange(idx, 'prezzo', res.data.prezzo);
+                                                            }
+                                                        }).catch(err => console.error("Error fetching dynamic price:", err));
+                                                    }
                                                 }}
                                                 isDisabled={readOnly}
                                             />
@@ -249,6 +258,14 @@ const DocumentRows = (props) => {
                                                                     idUnitaMisura: a.idUnitaMisura,
                                                                     idAliquotaIva: a.idAliquotaIva
                                                                 });
+
+                                                                if (opt.value) {
+                                                                    ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
+                                                                        if (res.data && res.data.prezzo !== undefined) {
+                                                                            onRowChange(idx, 'prezzo', res.data.prezzo);
+                                                                        }
+                                                                    }).catch(err => console.error("Error fetching dynamic price:", err));
+                                                                }
                                                             }
                                                         }}
                                                         isDisabled={readOnly}

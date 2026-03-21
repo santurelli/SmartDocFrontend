@@ -19,6 +19,10 @@ class ArticoliService {
         return api.get(`/articoli/${id}`);
     }
 
+    getArticlePrice(idProdotto, idListino) {
+        return api.post('/articoli/price', { idProdotto, idListino });
+    }
+
     checkCode(codice, id) {
         return api.post('/articoli/check-code', { codice, id });
     }

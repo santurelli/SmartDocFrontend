@@ -93,6 +93,40 @@ test.describe('Emissione Fattura Standard e Visibilità', () => {
             };
             await route.fulfill({ json });
         });
+
+        // Articoli search suggestion (getList)
+        await page.route(`${apiPattern}/articoli/list`, async route => {
+            if (route.request().method() === 'POST') {
+                const json = {
+                    esito: { code: 200 },
+                    payload: [
+                        { id: 500, codice: 'ART001', descrizione: 'Articolo Magazzino 1', unitaMisura: 'NR', idAliquotaIva: 1, prezzo: 100 },
+                        { id: 501, codice: 'ART002', descrizione: 'Articolo Magazzino 2', unitaMisura: 'NR', idAliquotaIva: 1, prezzo: 200 }
+                    ]
+                };
+                await route.fulfill({ json });
+            } else {
+                await route.continue();
+            }
+        });
+
+        // Articoli price engine
+        await page.route(`${apiPattern}/articoli/price`, async route => {
+            if (route.request().method() === 'POST') {
+                const { idProdotto, idListino } = route.request().postDataJSON();
+                let prezzo = 0;
+                if (idProdotto === 500) {
+                    prezzo = idListino === 2 ? 85.50 : 100.00;
+                }
+                const json = {
+                    esito: { code: 200 },
+                    payload: { prezzo: prezzo }
+                };
+                await route.fulfill({ json });
+            } else {
+                await route.continue();
+            }
+        });
     });
 
     test('salvataggio fattura standard (senza ritenuta attiva)', async ({ page }) => {
@@ -178,6 +212,63 @@ test.describe('Emissione Fattura Standard e Visibilità', () => {
         expect(savePayload).toBeTruthy();
         expect(Number(savePayload.flRitenutaAcconto)).toBe(0);
         expect(Number(savePayload.importoRitenutaAcconto)).toBe(0);
+        expect(Number(savePayload.prodotti[0].quantita)).toBe(1);
+        expect(Number(savePayload.prodotti[0].prezzo)).toBe(500);
+    });
+
+    test('salvataggio fattura con articolo da magazzino (test pricing dinamico)', async ({ page }) => {
+        const apiPattern = '**/api/**';
+        let savePayload = null;
+        await page.route(`${apiPattern}/fatture`, async route => {
+            if (route.request().method() === 'POST') {
+                savePayload = route.request().postDataJSON();
+                await route.fulfill({ json: { esito: { code: 200 }, payload: { id: 123 } } });
+            } else {
+                await route.continue();
+            }
+        });
+
+        await page.goto('/fatture/new');
+        
+        // Seleziona Cliente con listino 2 (immaginiamo che il cliente 100 abbia listino 2, o lo forziamo nel mock)
+        // Aggiorniamo il mock del cliente nel volo del test per includere idListino: 2
+        await page.route(`${apiPattern}/clienti/100`, async route => {
+            await route.fulfill({
+                json: {
+                    esito: { code: 200 },
+                    payload: { id: 100, denominazione: 'Cliente Listino 2', idListino: 2, idTipoPagamento: 1 }
+                }
+            });
+        });
+
+        const clienteInput = page.locator('.compact-col-xl', { hasText: 'Cliente' }).locator('input[type="text"]').first();
+        await clienteInput.fill('ClienteTest');
+        await page.waitForTimeout(500);
+        await clienteInput.press('Enter');
+
+        // Tab Articoli
+        await page.locator('.nav-tabs a', { hasText: /Articoli/i }).click();
+
+        // Aggiungi Articolo (da magazzino)
+        await page.locator('button', { hasText: /^ARTICOLO$/ }).click();
+
+        // Seleziona Articolo 500
+        const artInput = page.locator('table.table-items tbody tr').first().locator('.col-desc-articolo input');
+        await artInput.fill('ART001');
+        await page.waitForTimeout(500);
+        await page.getByText('Articolo Magazzino 1').click();
+
+        // Verifica che il prezzo sia stato caricato asincronamente per il listino 2 (85.50)
+        const prezzoInput = page.locator('table.table-items tbody tr').first().locator('input[type="number"]').nth(1);
+        await expect(prezzoInput).toHaveValue('85.5');
+
+        // Salva
+        await page.locator('button.btn-premium-save').click();
+        await page.waitForResponse(resp => resp.url().includes('/fatture') && resp.request().method() === 'POST');
+
+        expect(savePayload).toBeTruthy();
+        expect(savePayload.prodotti[0].idProdotto).toBe(500);
+        expect(Number(savePayload.prodotti[0].prezzo)).toBe(85.5);
     });
 
     test('checkbox ritenuta non visibile se disabilitato in configurazione', async ({ page }) => {

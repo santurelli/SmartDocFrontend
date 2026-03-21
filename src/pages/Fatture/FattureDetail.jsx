@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import FattureService from '../../services/FattureService';
 import DDTService from '../../services/DDTService';
@@ -596,8 +596,21 @@ const FattureDetail = () => {
     };
 
 
-    const calculateTotalDocument = (includeFees = true) => {
+    const calculateTotalDocument = (includeFees = true, forScadenze = false) => {
         const prodTotal = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
+        
+        // If it's for scadenze calculation, we need the "Collectible" part of products
+        let base = prodTotal;
+        if (forScadenze) {
+            const ritenuta = calculateRitenutaAcconto();
+            base = base - ritenuta;
+            if (formData.splitPayment === 1) {
+                const totalIva = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).iva || 0), 0);
+                base = base - totalIva;
+            }
+            return base;
+        }
+
         if (!includeFees) return prodTotal;
         
         const feesTotal = (formData.listaScadenzePagamentiDocumento || []).reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0);
@@ -617,7 +630,17 @@ const FattureDetail = () => {
     };
 
     const calculateNettoAPagare = () => {
-        return calculateTotalDocument(true) - calculateRitenutaAcconto();
+        let total = calculateTotalDocument(true);
+        const ritenuta = calculateRitenutaAcconto();
+        
+        if (formData.splitPayment === 1) {
+            const totalIva = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).iva || 0), 0);
+            // Consider also VAT of expenses stored in scadenze
+            const feesIva = (formData.listaScadenzePagamentiDocumento || []).reduce((acc, s) => acc + (s.ivaSpeseIncasso || 0), 0);
+            total = total - totalIva - feesIva;
+        }
+        
+        return total - ritenuta;
     };
 
     const loadClienti = (inputValue, callback) => {
@@ -700,6 +723,7 @@ const FattureDetail = () => {
         if (!formData.numDocumento) { Swal.fire('Errore', 'Inserire il numero documento', 'error'); return false; }
         if (!formData.dataDocumento) { Swal.fire('Errore', 'Inserire la data documento', 'error'); return false; }
         if (!formData.idCliente) { Swal.fire('Errore', 'Selezionare un cliente', 'error'); return false; }
+        if (!prodotti || prodotti.length === 0) { Swal.fire('Errore', 'Inserire almeno un articolo', 'error'); return false; }
         return true;
     };
 
@@ -721,7 +745,8 @@ const FattureDetail = () => {
             return res.data.payload?.id || res.data.payload || (isNew ? res.data : id);
         } catch (error) {
             console.error(error);
-            Swal.fire('Errore', 'Errore durante il salvataggio', 'error');
+            const msg = error.response?.data || 'Errore durante il salvataggio';
+            Swal.fire('Errore', msg, 'error');
             return null;
         }
     };
@@ -1155,6 +1180,8 @@ const FattureDetail = () => {
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showRitenuta={formData.flRitenutaAcconto === 1}
+                                readonly={isReadOnly}
+                                idListino={formData.idListino}
                             />
                         </div>
 
@@ -1249,9 +1276,9 @@ const FattureDetail = () => {
                                         <ScadenzeTable
                                             idTipoPagamento={formData.idTipoPagamento}
                                             dataDocumento={formData.dataDocumento}
-                                            totaleDocumento={calculateTotalDocument(false)}
+                                            totaleDocumento={calculateTotalDocument(false, true)}
                                             scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
-                                            onScadenzeChange={(newScadenze) => {
+                                            onScadenzeChange={useCallback((newScadenze) => {
                                                 const totalFees = newScadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0);
                                                 
                                                 // Map scadenze fees to listaSpeseIncassoFattura for backend persistence
@@ -1264,13 +1291,21 @@ const FattureDetail = () => {
                                                         tipo: 'I' // Assuming 'I' for Incasso
                                                     }));
 
-                                                setFormData(prev => ({ 
-                                                    ...prev, 
-                                                    listaScadenzePagamentiDocumento: newScadenze,
-                                                    listaSpeseIncassoFattura: newSpeseIncasso,
-                                                    totale: calculateTotalDocument(false) + totalFees
-                                                }));
-                                            }}
+                                                setFormData(prev => {
+                                                    // Evita aggiornamenti se i dati non sono cambiati (per prevenire loop infiniti)
+                                                    const isSameScadenze = JSON.stringify(prev.listaScadenzePagamentiDocumento) === JSON.stringify(newScadenze);
+                                                    const isSameSpese = JSON.stringify(prev.listaSpeseIncassoFattura) === JSON.stringify(newSpeseIncasso);
+                                                    
+                                                    if (isSameScadenze && isSameSpese) return prev;
+
+                                                    return { 
+                                                        ...prev, 
+                                                        listaScadenzePagamentiDocumento: newScadenze,
+                                                        listaSpeseIncassoFattura: newSpeseIncasso,
+                                                        totale: calculateTotalDocument(false) + totalFees
+                                                    };
+                                                });
+                                            }, [prodotti, combos.aliquoteIva])}
                                         />
                                     </div>
                                 </div>
@@ -1310,7 +1345,7 @@ const FattureDetail = () => {
                                             <FaSave /> Salva solo
                                         </button>
                                         <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { print: true })}>
-                                            <FaPrint /> Stampa Diretto
+                                            <FaPrint /> Stampa
                                         </button>
                                         <button type="button" className="split-btn-item" onClick={(e) => handleSave(e, { pdf: true })}>
                                             <FaFilePdf /> Esporta PDF

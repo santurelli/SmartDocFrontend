@@ -406,11 +406,11 @@ const PreventiviList = () => {
                                 isClearable
                                 menuPortalTarget={document.body}
                                 menuPosition="fixed"
-                                noOptionsMessage={({ inputValue }) => {
-                                    if (!inputValue) return "Inizia a scrivere per cercare un cliente...";
-                                    if (inputValue.length < 3) return "Scrivi almeno 3 caratteri...";
-                                    return "Nessun cliente trovato.";
-                                }}
+                                 noOptionsMessage={({ inputValue }) =>
+                                    !inputValue || inputValue.length < 3
+                                        ? "Digita almeno 3 caratteri per cercare..."
+                                        : "Nessun risultato trovato"
+                                }
                                 loadingMessage={() => "Ricerca in corso..."}
                                 styles={{
                                     control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
@@ -431,7 +431,7 @@ const PreventiviList = () => {
                                 isClearable
                                 menuPortalTarget={document.body}
                                 menuPosition="fixed"
-                                noOptionsMessage={() => "Nessun agente trovato."}
+                                 noOptionsMessage={() => "Nessun risultato trovato"}
                                 loadingMessage={() => "Caricamento..."}
                                 styles={{
                                     control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
