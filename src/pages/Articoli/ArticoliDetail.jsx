@@ -45,6 +45,8 @@ const ArticoliDetail = () => {
         prezzoFornitore: '',
         codicePerFornitore: ''
     });
+    const [prezzi, setPrezzi] = useState([]);
+    const [allListini, setAllListini] = useState([]);
 
     const [combos, setCombos] = useState({
         categorie: [],
@@ -57,6 +59,9 @@ const ArticoliDetail = () => {
         unitaMisura: [],
         aliquoteIva: []
     });
+
+    const [loadingPrezzi, setLoadingPrezzi] = useState(false);
+    const [saving, setSaving] = useState(false);
 
     const [config, setConfig] = useState({
         isCeramica: false,
@@ -74,8 +79,10 @@ const ArticoliDetail = () => {
             await loadCombos(currentConfig);
             if (!isNew && id && id !== 'undefined') {
                 loadArticolo();
+                loadPrezzi();
             } else if (isNew) {
                 handleGenerateCode();
+                loadListini(); // Need listini even for new article to show the tab structure
             }
         };
         init();
@@ -160,28 +167,53 @@ const ArticoliDetail = () => {
         }
     };
 
+    const loadListini = async () => {
+        try {
+            const ListiniService = (await import('../../services/ListiniService')).default;
+            const res = await ListiniService.getAll();
+            setAllListini(res.payload || res || []);
+        } catch (error) {
+            console.error("Errore caricamento listini", error);
+        }
+    };
+
+    const loadPrezzi = async () => {
+        setLoadingPrezzi(true);
+        try {
+            await loadListini();
+            const res = await ArticoliService.getPrezzi(id);
+            setPrezzi(res.data?.payload || []);
+        } catch (error) {
+            console.error("Errore caricamento prezzi", error);
+        } finally {
+            setLoadingPrezzi(false);
+        }
+    };
+
     const loadArticolo = async () => {
         try {
             const res = await ArticoliService.getArticolo(id);
-            if (res.data && res.data.payload) {
-                const data = res.data.payload;
-                if (data.prezzoFornitore !== null && data.prezzoFornitore !== undefined) {
-                    data.prezzoFornitore = parseFloat(data.prezzoFornitore).toFixed(2);
+            if (res.data) {
+                const rawData = res.data.payload || res.data;
+                const sanitizedData = { ...rawData };
+                
+                // List of fields that are collections on the backend
+                const collectionFields = ['tokens', 'prezzi', 'codiciBarre', 'scelteColori', 'tonitaglie'];
+                
+                // Ensure no null values for controlled inputs, but preserve nulls for collections
+                Object.keys(sanitizedData).forEach(key => {
+                    if (sanitizedData[key] === null && !collectionFields.includes(key)) {
+                        sanitizedData[key] = '';
+                    }
+                });
+
+                if (sanitizedData.prezzoFornitore !== '') {
+                    sanitizedData.prezzoFornitore = parseFloat(sanitizedData.prezzoFornitore).toFixed(2);
                 }
-                setFormData(data);
-                if (data.idCategoria) {
-                    // Populate sottocategorie based on loaded category
-                    loadSottoCategorie(data.idCategoria);
-                }
-            } else if (res.data) {
-                // Fallback if not wrapped
-                const data = res.data;
-                if (data.prezzoFornitore !== null && data.prezzoFornitore !== undefined) {
-                    data.prezzoFornitore = parseFloat(data.prezzoFornitore).toFixed(2);
-                }
-                setFormData(data);
-                if (data.idCategoria) {
-                    loadSottoCategorie(data.idCategoria);
+                
+                setFormData(sanitizedData);
+                if (sanitizedData.idCategoria) {
+                    loadSottoCategorie(sanitizedData.idCategoria);
                 }
             }
         } catch (error) {
@@ -208,16 +240,58 @@ const ArticoliDetail = () => {
     };
 
     const handleSave = async () => {
+        setSaving(true);
+        let res;
         try {
+            // Final sanitization: ensure collection fields are NOT empty strings
+            const dataToSave = { ...formData };
+            const collectionFields = ['tokens', 'prezzi', 'codiciBarre', 'scelteColori', 'tonitaglie'];
+            collectionFields.forEach(field => {
+                if (dataToSave[field] === '') {
+                    dataToSave[field] = null;
+                }
+            });
+
             if (isNew) {
-                await ArticoliService.createArticolo(formData);
+                res = await ArticoliService.createArticolo(dataToSave);
+                const newId = res.data?.id || id; // If backend returns id
+                await ArticoliService.savePrezzi(newId, prezzi);
             } else {
-                await ArticoliService.updateArticolo(id, formData);
+                const results = await Promise.all([
+                    ArticoliService.updateArticolo(id, dataToSave),
+                    ArticoliService.savePrezzi(id, prezzi)
+                ]);
+                res = results[0]; // The response from updateArticolo
             }
-            navigate('/articoli');
+
+            if (res.data.errorNum === '0' || res.data.payload) {
+                const Swal = (await import('sweetalert2')).default;
+                await Swal.fire({
+                    title: 'Successo!',
+                    text: 'Articolo salvato con successo',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                navigate('/articoli');
+            } else {
+                const Swal = (await import('sweetalert2')).default;
+                Swal.fire({
+                    title: 'Errore',
+                    text: res.data.errorText || 'Errore durante il salvataggio',
+                    icon: 'error'
+                });
+            }
         } catch (error) {
             console.error("Errore salvataggio", error);
-            alert("Errore durante il salvataggio");
+            const Swal = (await import('sweetalert2')).default;
+            Swal.fire({
+                title: 'Errore',
+                text: isNew ? "Errore durante la creazione dell'articolo" : "Errore durante l'aggiornamento dell'articolo",
+                icon: 'error'
+            });
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -292,6 +366,11 @@ const ArticoliDetail = () => {
                     <li className={activeTab === 'other' ? 'active' : ''}>
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('other'); }}>
                             Altre informazioni
+                        </a>
+                    </li>
+                    <li className={activeTab === 'prices' ? 'active' : ''}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('prices'); }}>
+                            Prezzi di vendita
                         </a>
                     </li>
                 </ul>
@@ -581,11 +660,96 @@ const ArticoliDetail = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* TAB PREZZI DI VENDITA */}
+                    <div className={`tab-pane ${activeTab === 'prices' ? 'active' : ''}`} style={{ display: activeTab === 'prices' ? 'block' : 'none' }}>
+                        <div className="row">
+                            <div className="col-xs-12">
+                                <p className="text-muted" style={{ marginBottom: '20px' }}>
+                                    In questa sezione puoi gestire i prezzi manuali per i vari listini. 
+                                    I listini con regole automatiche verranno calcolati dinamicamente nei documenti.
+                                </p>
+                                <div className="table-responsive">
+                                    <table className="table table-hover table-premium">
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: '40%' }}>Listino</th>
+                                                <th style={{ width: '30%' }}>Regola</th>
+                                                <th style={{ width: '30%' }}>Prezzo Manuale (€)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {allListini.map(listino => {
+                                                const currentPrezzo = prezzi.find(p => p.idListino === listino.id);
+                                                const isManual = listino.derivationType === 'NONE';
+                                                
+                                                return (
+                                                    <tr key={listino.id} className={!isManual ? 'text-muted' : ''}>
+                                                        <td style={{ verticalAlign: 'middle' }}>
+                                                            <strong>{listino.descrizione}</strong>
+                                                            {listino.flDefault === 1 && <span className="label label-primary" style={{ marginLeft: '10px' }}>Predefinito</span>}
+                                                        </td>
+                                                        <td style={{ verticalAlign: 'middle' }}>
+                                                            {listino.derivationType === 'NONE' ? 'Manuale' : 
+                                                             listino.derivationType === 'PERCENTAGE' ? `Ricarico ${listino.derivationValue}%` : 
+                                                             `Ricarico fisso €${listino.derivationValue}`}
+                                                        </td>
+                                                        <td style={{ verticalAlign: 'middle' }}>
+                                                            <div className="input-group" style={{ maxWidth: '200px' }}>
+                                                                <span className="input-group-addon">€</span>
+                                                                <input 
+                                                                    type="number" 
+                                                                    step="0.01"
+                                                                    className="form-control"
+                                                                    placeholder="0.00"
+                                                                    value={(currentPrezzo?.prezzo !== null && currentPrezzo?.prezzo !== undefined) ? currentPrezzo.prezzo : ''}
+                                                                    onChange={(e) => {
+                                                                        const val = e.target.value;
+                                                                        const newVal = val === '' ? null : parseFloat(val);
+                                                                        setPrezzi(prev => {
+                                                                            const index = prev.findIndex(p => p.idListino === listino.id);
+                                                                            if (index > -1) {
+                                                                                const newPrezzi = [...prev];
+                                                                                newPrezzi[index] = { ...newPrezzi[index], prezzo: newVal };
+                                                                                return newPrezzi;
+                                                                            } else {
+                                                                                return [...prev, { idListino: listino.id, prezzo: newVal, idProdotto: id }];
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                    disabled={!isManual}
+                                                                />
+                                                            </div>
+                                                            {!isManual && <small className="help-block">Calcolato automaticamente</small>}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                            {allListini.length === 0 && (
+                                                <tr>
+                                                    <td colSpan="3" className="text-center">Nessun listino configurato</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="form-actions">
-                    <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/articoli')}>Annulla</button>
-                    <button type="button" className="btn btn-premium-save" onClick={handleSave}>Salva</button>
+                    <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/articoli')} disabled={saving}>Annulla</button>
+                    <button type="button" className="btn btn-premium-save" onClick={handleSave} disabled={saving}>
+                        {saving ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ marginRight: '5px' }}></span>
+                                Salvataggio...
+                            </>
+                        ) : (
+                            'Salva'
+                        )}
+                    </button>
                 </div>
             </form>
 

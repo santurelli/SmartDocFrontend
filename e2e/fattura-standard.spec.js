@@ -362,6 +362,8 @@ test.describe('Emissione Fattura Standard e Visibilità', () => {
             const rowRitLocator = rows.nth(i).locator('.ritenuta-inline-box');
             await expect(rowRitLocator).toBeVisible();
         }
+    });
+
     test('salvataggio fattura con più scadenze (30/60/90)', async ({ page }) => {
         const apiPattern = '**/api/**';
 

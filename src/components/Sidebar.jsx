@@ -135,6 +135,7 @@ const Sidebar = ({ user }) => {
                                     <li><NavLink to="/clienti">Clienti</NavLink></li>
                                     <li><NavLink to="/fornitori">Fornitori</NavLink></li>
                                     <li><NavLink to="/dipendenti">Dipendenti</NavLink></li>
+                                    <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
                                 </ul>
                             </li>
 

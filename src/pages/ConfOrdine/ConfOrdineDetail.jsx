@@ -23,6 +23,7 @@ import UnitaMisuraManagementModal from '../../components/modals/UnitaMisuraManag
 import AliquoteIvaManagementModal from '../../components/modals/AliquoteIvaManagementModal';
 import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
+import ListiniManagementModal from '../../components/modals/ListiniManagementModal';
 import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -930,18 +931,17 @@ const ConfOrdineDetail = () => {
                                     />
                                 </div>
                                 <div className="col-md-4">
-                                    <div className="form-group">
-                                        <label>Listino</label>
-                                        <div className="input-group input-group-premium">
-                                            <select className="form-control" name="idListino" value={formData.idListino || ''} onChange={handleHeaderChange} style={{ height: '38px', borderTopRightRadius: 0, borderBottomRightRadius: 0, borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' }}>
-                                                <option value="">Predefinito</option>
-                                                {combos.listini.map(l => <option key={l.id} value={l.id}>{l.descrizione}</option>)}
-                                            </select>
-                                            <button type="button" className="premium-wrench-btn" onClick={() => navigate('/configurazione/listini')} title="Gestione Listini">
-                                                <FaWrench />
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <EntitySelectGroup
+                                        label="Listino"
+                                        isAsync={false}
+                                        options={(combos.listini || []).map(l => ({ value: l.id, label: l.descrizione }))}
+                                        value={formData.idListino ? { value: formData.idListino, label: combos.listini.find(l => l.id === formData.idListino)?.descrizione } : null}
+                                        onChange={(opt) => setFormData(prev => ({ ...prev, idListino: opt?.value || '' }))}
+                                        ModalComponent={ListiniManagementModal}
+                                        title="Gestione Listini"
+                                        placeholder="Predefinito"
+                                        onModalClose={fetchCombos}
+                                    />
                                 </div>
                                 <div className="col-md-4">
                                     <EntitySelectGroup

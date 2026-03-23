@@ -43,6 +43,14 @@ class ArticoliService {
         return api.delete(`/articoli/${id}`);
     }
 
+    getPrezzi(id) {
+        return api.get(`/articoli/${id}/prezzi`);
+    }
+
+    savePrezzi(id, prezzi) {
+        return api.post(`/articoli/${id}/prezzi`, prezzi);
+    }
+
     // Alias for getById to match component usage
     getArticolo(id) {
         return this.getById(id);
