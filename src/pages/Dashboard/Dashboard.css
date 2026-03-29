@@ -188,6 +188,14 @@
     background-color: #3498db;
 }
 
+.label-info {
+    background-color: #03a9f4;
+}
+
+.label-default {
+    background-color: #95a5a6;
+}
+
 /* Filter Block - Button in Table Header */
 .filter-block {
     margin: 0;

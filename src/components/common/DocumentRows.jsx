@@ -1,6 +1,7 @@
 import React from 'react';
 import AsyncSelect from 'react-select/async';
 import { FaTrash, FaPlus } from 'react-icons/fa';
+import Swal from 'sweetalert2';
 import ArticoliService from '../../services/ArticoliService';
 import { getRowValues } from '../../utils/documentUtils';
 
@@ -153,6 +154,23 @@ const DocumentRows = (props) => {
         if (onAddRow) onAddRow(newRow);
     };
 
+    const handleDelete = (index) => {
+        Swal.fire({
+            title: 'Sei sicuro?',
+            text: "Vuoi eliminare questo articolo dal documento?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sì, elimina',
+            cancelButtonText: 'Annulla'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                onDeleteRow(index);
+            }
+        });
+    };
+
     return (
         <div className="table-responsive">
             <table className="table table-hover table-items">
@@ -234,50 +252,11 @@ const DocumentRows = (props) => {
                                         </>
                                     ) : row.tipo === 'F' ? (
                                         <div className="flex-column gap-1">
-                                            {isCeramica && (
-                                                <div style={{ marginBottom: '5px' }}>
-                                                    <AsyncSelect
-                                                        isClearable
-                                                        cacheOptions
-                                                        loadOptions={loadArticoli}
-                                                        formatOptionLabel={formatArticleOptionLabel}
-                                                        styles={tableSelectStyles}
-                                                        placeholder="Usa art. come base..."
-                                                        noOptionsMessage={() => "Nessun risultato"}
-                                                        loadingMessage={() => "Caricamento..."}
-                                                        menuPortalTarget={document.body}
-                                                        onChange={(opt) => {
-                                                            if (opt) {
-                                                                const a = opt.data;
-                                                                onRowUpdate(idx, {
-                                                                    fmDescrizione: a.descProdotto || '',
-                                                                    fmScelta: a.descrScelta || '',
-                                                                    fmTono: a.descrTono || '',
-                                                                    fmTaglia: a.descrCalibro || '',
-                                                                    prezzo: a.prezzo || 0,
-                                                                    idUnitaMisura: a.idUnitaMisura,
-                                                                    idAliquotaIva: a.idAliquotaIva
-                                                                });
-
-                                                                if (opt.value) {
-                                                                    ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
-                                                                        if (res.data && res.data.prezzo !== undefined) {
-                                                                            onRowChange(idx, 'prezzo', res.data.prezzo);
-                                                                        }
-                                                                    }).catch(err => console.error("Error fetching dynamic price:", err));
-                                                                }
-                                                            }
-                                                        }}
-                                                        isDisabled={readOnly}
-                                                    />
-                                                </div>
-                                            )}
                                             <input type="text" className="form-control" value={row.fmDescrizione || ''} onChange={(e) => onRowChange(idx, 'fmDescrizione', e.target.value)} placeholder="Descrizione libera..." disabled={readOnly} />
                                             {isCeramica && (
                                                 <div className="d-flex gap-2 mt-1">
-                                                    <input type="text" className="form-control form-control-xs" value={row.fmScelta || ''} onChange={(e) => onRowChange(idx, 'fmScelta', e.target.value)} placeholder="Scelta" style={{ width: '33%' }} disabled={readOnly} />
-                                                    <input type="text" className="form-control form-control-xs" value={row.fmTono || ''} onChange={(e) => onRowChange(idx, 'fmTono', e.target.value)} placeholder="Tono" style={{ width: '33%' }} disabled={readOnly} />
-                                                    <input type="text" className="form-control form-control-xs" value={row.fmTaglia || ''} onChange={(e) => onRowChange(idx, 'fmTaglia', e.target.value)} placeholder="Cal." style={{ width: '33%' }} disabled={readOnly} />
+                                                    <input type="text" className="form-control form-control-xs" value={row.fmScelta || ''} onChange={(e) => onRowChange(idx, 'fmScelta', e.target.value)} placeholder="Scelta" style={{ width: '50%' }} disabled={readOnly} />
+                                                    <input type="text" className="form-control form-control-xs" value={row.fmTono || ''} onChange={(e) => onRowChange(idx, 'fmTono', e.target.value)} placeholder="Tono" style={{ width: '50%' }} disabled={readOnly} />
                                                 </div>
                                             )}
                                             {showRitenuta && (
@@ -329,7 +308,7 @@ const DocumentRows = (props) => {
                                 }
                                 <td>
                                     {!readOnly && (
-                                        <button className="btn-delete-row" onClick={() => onDeleteRow(idx)} tabIndex="-1">
+                                        <button type="button" className="btn-delete-row" onClick={() => handleDelete(idx)} tabIndex="-1">
                                             <FaTrash />
                                         </button>
                                     )}

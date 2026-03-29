@@ -145,6 +145,7 @@ const PreventiviDetail = () => {
 
     const [activeTab, setActiveTab] = useState('generale');
     const [loading, setLoading] = useState(false);
+    const [saving, setSaving] = useState(false); // New state to prevent double-saves
     const [showProgettoModal, setShowProgettoModal] = useState(false);
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [showParticelleModal, setShowParticelleModal] = useState(false);
@@ -213,45 +214,86 @@ const PreventiviDetail = () => {
     }, []);
 
     useEffect(() => {
-        if (!isNew) {
-            loadPreventivo();
-        } else {
-            // Reset form for new entry
-            setFormData({
-                numDocumento: '',
-                dataDocumento: new Date().toISOString().split('T')[0],
-                particella: '',
-                idCliente: null,
-                denominazione: '',
-                idAgente: null,
-                nomeAgente: '',
-                idProgetto: null,
-                nomeProgetto: '',
-                idTipoPagamento: null,
-                idListino: null,
-                idNsBanca: null,
-                annotazioneEstesa: '',
-                indirizzoIntestazione: '',
-                capIntestazione: '',
-                cittaIntestazione: '',
-                provinciaIntestazione: '',
-                nazioneIntestazione: '',
-                partitaIva: '',
-                codiceFiscale: '',
-                indirizzoDestinazione: '',
-                capDestinazione: '',
-                cittaDestinazione: '',
-                provinciaDestinazione: '',
-                nazioneDestinazione: '',
-            });
-            setProdotti([]);
-            setTotals({ imponibile: 0, iva: 0, totale: 0 });
-            setClientIndirizzi([]);
+        let isCurrent = true; // Flag to ignore stale async results
 
-            // Then fetch next number
-            fetchNextNum(new Date().toISOString().split('T')[0]);
-        }
-    }, [id]);
+        const loadData = async () => {
+            if (!isNew) {
+                try {
+                    setLoading(true);
+                    const res = await PreventiviService.getById(id);
+                    if (!isCurrent) return; // Ignore if we navigated away
+
+                    const data = res.data.payload;
+                    setFormData({
+                        ...data,
+                        dataDocumento: data.dataDocumento ? data.dataDocumento.split('/').reverse().join('-') : '',
+                        denominazione: data.denominazioneCliente || '',
+                        nomeAgente: data.agente || '',
+                        nomeProgetto: data.progetto || '',
+                    });
+
+                    const mappedProdotti = (data.prodotti || []).map(p => ({
+                        ...p,
+                        tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
+                        rowTotal: calculateRowTotal(p)
+                    }));
+                    setProdotti(mappedProdotti);
+                    
+                    if (data.idCliente) {
+                        fetchClientIndirizzi(data.idCliente, false);
+                    }
+                } catch (error) {
+                    if (isCurrent) {
+                        console.error("Error loading preventivo:", error);
+                        Swal.fire('Errore', 'Impossibile caricare il preventivo', 'error');
+                    }
+                } finally {
+                    if (isCurrent) setLoading(false);
+                }
+            } else {
+                // Reset form for new entry
+                setFormData({
+                    numDocumento: '',
+                    dataDocumento: new Date().toISOString().split('T')[0],
+                    particella: '',
+                    idCliente: null,
+                    denominazione: '',
+                    idAgente: null,
+                    nomeAgente: '',
+                    idProgetto: null,
+                    nomeProgetto: '',
+                    idTipoPagamento: null,
+                    idListino: null,
+                    idNsBanca: null,
+                    annotazioneEstesa: '',
+                    indirizzoIntestazione: '',
+                    capIntestazione: '',
+                    cittaIntestazione: '',
+                    provinciaIntestazione: '',
+                    nazioneIntestazione: '',
+                    partitaIva: '',
+                    codiceFiscale: '',
+                    indirizzoDestinazione: '',
+                    capDestinazione: '',
+                    cittaDestinazione: '',
+                    provinciaDestinazione: '',
+                    nazioneDestinazione: '',
+                });
+                setProdotti([]);
+                setTotals({ imponibile: 0, iva: 0, totale: 0 });
+                setClientIndirizzi([]);
+
+                // Then fetch next number
+                fetchNextNum(new Date().toISOString().split('T')[0]);
+            }
+        };
+
+        loadData();
+
+        return () => {
+            isCurrent = false; // Cleanup on unmount or id change
+        };
+    }, [id, isNew]);
 
     const fetchCombos = async () => {
         try {
@@ -553,9 +595,16 @@ const PreventiviDetail = () => {
 
     const handleSave = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
-        const savedId = await savePreventivo();
-        if (savedId) {
-            Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
+        if (saving) return; // Prevent concurrent calls
+
+        setSaving(true);
+        try {
+            const savedId = await savePreventivo();
+            if (savedId) {
+                Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
+            }
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -653,24 +702,32 @@ const PreventiviDetail = () => {
 
             <div className="main-box detail-box">
                 <header className="main-box-header">
-                    <ul className="nav nav-tabs nav-tabs-custom">
-                        <li className={activeTab === 'generale' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('generale'); }}>Generale</a>
+                    <ul className="nav nav-tabs premium-nav-tabs">
+                        <li className={`nav-item ${activeTab === 'generale' ? 'active' : ''}`}>
+                            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); setActiveTab('generale'); }}>
+                                <i className="fa fa-info-circle"></i> Generale
+                            </a>
                         </li>
-                        <li className={activeTab === 'articoli' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('articoli'); }}>Articoli ({prodotti.length})</a>
+                        <li className={`nav-item ${activeTab === 'articoli' ? 'active' : ''}`}>
+                            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); setActiveTab('articoli'); }}>
+                                <i className="fa fa-list"></i> Articoli ({prodotti.length})
+                            </a>
                         </li>
-                        <li className={activeTab === 'pagamento' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('pagamento'); }}>Pagamento</a>
+                        <li className={`nav-item ${activeTab === 'scadenze' ? 'active' : ''}`}>
+                            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); setActiveTab('scadenze'); }}>
+                                <i className="fa fa-calendar"></i> Scadenze
+                            </a>
                         </li>
-                        <li className={activeTab === 'note' ? 'active' : ''}>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('note'); }}>Annotazioni</a>
+                        <li className={`nav-item ${activeTab === 'note' ? 'active' : ''}`}>
+                            <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); setActiveTab('note'); }}>
+                                <i className="fa fa-sticky-note"></i> Annotazioni
+                            </a>
                         </li>
                     </ul>
                 </header>
 
-                <div className="main-box-body">
-                    <div className="tab-content">
+                <form className="preventivi-detail-form" autoComplete="off">
+                    <div className="tab-content premium-tab-content">
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
@@ -679,13 +736,14 @@ const PreventiviDetail = () => {
                                         <div className="form-group">
                                             <label>Numero</label>
                                             <div className="flex-input-group w-md">
-                                                <input
-                                                    type="text"
-                                                    className="form-control premium-input"
-                                                    name="numDocumento"
-                                                    value={formData.numDocumento}
-                                                    onChange={handleHeaderChange}
-                                                />
+                                                    <input
+                                                        type="text"
+                                                        className="form-control premium-input"
+                                                        name="numDocumento"
+                                                        value={formData.numDocumento}
+                                                        onChange={handleHeaderChange}
+                                                        autoComplete="nope"
+                                                    />
                                                 <span className="input-group-addon">/</span>
                                                 <div style={{ flex: '0 0 130px' }}>
                                                     <CreatableSelect
@@ -813,11 +871,11 @@ const PreventiviDetail = () => {
                                                 <div className="row">
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Partita IVA</label>
-                                                        <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} />
+                                                        <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Codice Fiscale</label>
-                                                        <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} />
+                                                        <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="nope" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -861,7 +919,7 @@ const PreventiviDetail = () => {
                                                 <div className="row">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Note Consegna</label>
-                                                        <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." />
+                                                        <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="nope" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -889,8 +947,8 @@ const PreventiviDetail = () => {
                             </div>
                         </div>
 
-                        {/* Tab Pagamento */}
-                        <div className={`tab-pane ${activeTab === 'pagamento' ? 'active' : ''}`}>
+                        {/* Tab Pagamento/Scadenze */}
+                        <div className={`tab-pane ${activeTab === 'scadenze' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
                                 <div className="row mb-4">
                                     <div className="col-md-4">
@@ -939,7 +997,7 @@ const PreventiviDetail = () => {
                                         <ScadenzeTable
                                             idTipoPagamento={formData.idTipoPagamento}
                                             dataDocumento={formData.dataDocumento}
-                                            totaleDocumento={calculateTotalDocument()}
+                                            totaleDocumento={totals.totale}
                                             scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
                                             onScadenzeChange={(newScadenze) => {
                                                 setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
@@ -978,18 +1036,32 @@ const PreventiviDetail = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </form>
 
                 <footer className="main-box-footer detail-footer">
-                    <button className="btn btn-premium-cancel" onClick={() => navigate('/preventivi')}>
-                        <FaArrowLeft /> Annulla
+                    <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/preventivi')}>
+                        <FaArrowLeft /> Torna ai preventivi
                     </button>
                     <div className="footer-right">
                         <div className="split-btn-container">
-                            <button type="button" className="btn-premium-save split-btn-main" onClick={handleSave}>
-                                <FaSave /> Salva
+                            <button
+                                type="button"
+                                className={`btn-premium-save split-btn-main ${saving ? 'is-saving' : ''}`}
+                                onClick={handleSave}
+                                disabled={saving || loading}
+                                style={{ minWidth: '130px' }}
+                            >
+                                {saving ? (
+                                    <>
+                                        <i className="fa fa-spinner fa-spin mr-2"></i> Salvataggio...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaSave /> Salva
+                                    </>
+                                )}
                             </button>
-                            <button type="button" className="split-btn-toggle" onClick={() => setShowActionsMenu(!showActionsMenu)}>
+                            <button type="button" className="split-btn-toggle" onClick={() => !saving && setShowActionsMenu(!showActionsMenu)} disabled={saving || loading}>
                                 <FaCaretDown />
                             </button>
                             {showActionsMenu && (

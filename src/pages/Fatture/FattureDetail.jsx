@@ -152,6 +152,7 @@ const FattureDetail = () => {
     const [showSaveMenu, setShowSaveMenu] = useState(false);
     const [showParticelleModal, setShowParticelleModal] = useState(false);
     const saveMenuRef = useRef(null);
+    const isReadOnly = !isNew && ['IN', 'AC', 'RC', 'MC'].includes(formData.statoFatturaElettronica);
 
     const getDocTitle = () => {
         let prefix = isNew ? 'Nuova ' : 'Modifica ';
@@ -1181,7 +1182,7 @@ const FattureDetail = () => {
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showRitenuta={formData.flRitenutaAcconto === 1}
-                                readonly={isReadOnly}
+                                readOnly={isReadOnly}
                                 idListino={formData.idListino}
                             />
                         </div>

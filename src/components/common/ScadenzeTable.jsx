@@ -32,7 +32,11 @@ const ScadenzeTable = ({
 
     useEffect(() => {
         if (!initialScadenzeLoaded.current && scadenzeIniziali && scadenzeIniziali.length > 0) {
-            setScadenze(scadenzeIniziali);
+            const roundedScadenze = scadenzeIniziali.map(s => ({
+                ...s,
+                importo: Math.round((s.importo + Number.EPSILON) * 100) / 100
+            }));
+            setScadenze(roundedScadenze);
             initialScadenzeLoaded.current = true;
             prevDeps.current = { id: idTipoPagamento, tot: totaleDocumento, data: dataDocumento };
         }
@@ -73,7 +77,8 @@ const ScadenzeTable = ({
 
     const handleImportoChange = (index, value) => {
         const newScadenze = [...scadenze];
-        newScadenze[index].importo = parseFloat(value) || 0;
+        const val = parseFloat(value) || 0;
+        newScadenze[index].importo = Math.round((val + Number.EPSILON) * 100) / 100;
         setScadenze(newScadenze);
     };
 
@@ -113,7 +118,11 @@ const ScadenzeTable = ({
         try {
             const response = await TipiPagamentoService.getScadenzeDocumento(idTipoPagamento, dataDocumento, totaleDocumento);
             if (response.data) {
-                setScadenze(response.data);
+                const rounded = response.data.map(s => ({
+                    ...s,
+                    importo: Math.round((s.importo + Number.EPSILON) * 100) / 100
+                }));
+                setScadenze(rounded);
             }
         } catch (error) {
             console.error("Errore nel calcolo delle scadenze", error);
@@ -221,7 +230,7 @@ const ScadenzeTable = ({
                                                 step="0.01" 
                                                 className="form-control form-control-sm text-right font-weight-bold" 
                                                 style={{ color: '#17a2b8' }}
-                                                value={s.importo} 
+                                                value={s.importo != null ? Math.round((s.importo + Number.EPSILON) * 100) / 100 : ''} 
                                                 onChange={(e) => handleImportoChange(index, e.target.value)}
                                             />
                                         )}

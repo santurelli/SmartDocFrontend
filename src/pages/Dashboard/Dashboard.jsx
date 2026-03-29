@@ -40,6 +40,20 @@ const Dashboard = () => {
         return new Intl.NumberFormat('it-IT').format(value || 0);
     };
 
+    const getStatusFELabel = (status) => {
+        switch (status) {
+            case 'BO': return { label: 'Bozza', className: 'label-default' };
+            case 'DI': return { label: 'Da inviare', className: 'label-warning' };
+            case 'IN': return { label: 'Inviata', className: 'label-info' };
+            case 'AC': return { label: 'Accettata', className: 'label-success' };
+            case 'NS': return { label: 'Scartata', className: 'label-danger' };
+            case 'RC': return { label: 'Consegnata', className: 'label-success' };
+            case 'MC': return { label: 'Mancata cons.', className: 'label-warning' };
+            case 'RF': return { label: 'Rifiutata', className: 'label-danger' };
+            default: return { label: status, className: 'label-default' };
+        }
+    };
+
     if (loading) {
         return <div className="dashboard-loading">Caricamento dashboard in corso...</div>;
     }
@@ -212,6 +226,7 @@ const Dashboard = () => {
                                             <th>Data</th>
                                             <th>Cliente</th>
                                             <th className="text-center">Stato</th>
+                                            <th className="text-center">Stato FE</th>
                                             <th className="text-right">Totale</th>
                                             <th className="text-center">Azioni</th>
                                         </tr>
@@ -235,13 +250,17 @@ const Dashboard = () => {
                                                         <span className="label label-success">Pagata</span>
                                                     )}
                                                 </td>
+                                                <td className="text-center">
+                                                    {fattura.flFatturaElettronica === 1 && fattura.statoFatturaElettronica && (
+                                                        <span className={`label ${getStatusFELabel(fattura.statoFatturaElettronica).className}`}>
+                                                            {getStatusFELabel(fattura.statoFatturaElettronica).label}
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="text-right"><strong>{formatCurrency(fattura.totale)}</strong></td>
                                                 <td className="text-center">
-                                                    <NavLink to={`/fatture/${fattura.idDocumento}`} className="table-link">
-                                                        <span className="fa-stack">
-                                                            <i className="fa fa-square fa-stack-2x"></i>
-                                                            <i className="fa fa-search-plus fa-stack-1x fa-inverse"></i>
-                                                        </span>
+                                                    <NavLink to={`/fatture/${fattura.idDocumento}`} className="table-link" title="Visualizza">
+                                                        <FaEye size={20} style={{ color: '#03a9f4' }} />
                                                     </NavLink>
                                                 </td>
                                             </tr>
