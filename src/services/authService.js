@@ -2,7 +2,7 @@ import axios from 'axios';
 import api from './api';
 import authStorage from './authStorage';
 
-const AUTH_URL = 'http://localhost:8080/api/auth/';
+const AUTH_URL = '/api/auth/';
 
 const login = async (username, password, ente) => {
   const response = await axios.post(AUTH_URL + 'login', {

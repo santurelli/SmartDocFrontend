@@ -39,7 +39,7 @@ const Sidebar = ({ user }) => {
         navigate('/login');
     };
 
-    const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
+    const isEnabled = (key) => !docConfigs || docConfigs[key] === '1' || docConfigs[key] === undefined;
 
     const userName = user ? `${user.nome} ${user.cognome ? user.cognome.charAt(0) + '.' : ''}` : 'Utente';
 

@@ -1,0 +1,23 @@
+app.smart-doc.it {
+    # 1. Rotta per l'API: usiamo 'handle' per MANTENERE il prefisso /api richiesto dal Backend
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    # 2. Rotta per il sito React
+    handle {
+        root * /srv
+        # Fallback all'index.html solo per i percorsi che NON sono l'API
+        try_files {path} /index.html
+        file_server
+    }
+
+    # Ottimizzazioni e Sicurezza
+    encode gzip zstd
+    header {
+        Strict-Transport-Security max-age=31536000;
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer-when-downgrade
+    }
+}
