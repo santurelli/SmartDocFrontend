@@ -321,3 +321,158 @@ hr {
     color: #555;
     font-weight: 600;
 }
+
+/* SDI Error Banner */
+.sdi-error-banner {
+    background: #fff5f5;
+    border-left: 4px solid #f56565;
+    padding: 15px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(245, 101, 101, 0.1);
+    animation: slideInDown 0.3s ease-out;
+}
+
+.sdi-error-banner svg {
+    color: #f56565;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.sdi-error-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.sdi-error-text strong {
+    color: #c53030;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sdi-error-text span {
+    color: #742a2a;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+@keyframes slideInDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Status Workflow Bar */
+.status-workflow-bar {
+    background: #f8f9fa;
+    border: 1px solid #dfe4e7;
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.status-workflow-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.status-workflow-field label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #546e7a;
+    margin-bottom: 0;
+}
+
+.status-dropdown-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.status-select {
+    max-width: 300px !important;
+    height: 42px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    border: 2px solid #ddd !important;
+    transition: all 0.2s !important;
+    cursor: pointer !important;
+}
+
+.status-select:focus {
+    box-shadow: 0 0 0 3px rgba(3, 169, 244, 0.2) !important;
+    border-color: #03a9f4 !important;
+}
+
+/* Status colors */
+.status-select.status-bo {
+    border-color: #90a4ae !important;
+    color: #455a64 !important;
+    background-color: #eceff1 !important;
+}
+
+.status-select.status-di {
+    border-color: #4caf50 !important;
+    color: #1b5e20 !important;
+    background-color: #e8f5e9 !important;
+}
+
+.status-select.status-in,
+.status-select.status-ac {
+    border-color: #5c6bc0 !important;
+    color: #1a237e !important;
+    background-color: #e8eaf6 !important;
+}
+
+.status-select.status-rc,
+.status-select.status-mc {
+    border-color: #f44336 !important;
+    color: #b71c1c !important;
+    background-color: #ffebee !important;
+}
+
+.btn-unlock-document {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #ffa726;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-transform: uppercase;
+}
+
+.btn-unlock-document:hover {
+    background-color: #fb8c00;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(251, 140, 0, 0.2);
+    color: white;
+}
+
+.btn-unlock-document:active {
+    transform: translateY(0);
+}
+
+.premium-input:disabled {
+    background-color: #f8f9fa !important;
+    color: #607d8b !important;
+    cursor: not-allowed;
+    border-color: #e0e0e0 !important;
+    opacity: 0.8;
+}

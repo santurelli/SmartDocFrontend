@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import Select from 'react-select';
@@ -7,7 +7,7 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import NoteCreditoService from '../../services/NoteCreditoService';
@@ -20,6 +20,7 @@ const MODULE_NAME = 'fatture';
 
 const FattureList = () => {
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
 
     // Load initial state
     const initialState = storageHelper.loadState(MODULE_NAME, {
@@ -303,14 +304,99 @@ const FattureList = () => {
         }
     };
 
+    const handleSendSdi = async (id) => {
+        try {
+            Swal.fire({
+                title: 'Invio a SDI...',
+                text: 'Attendere prego',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            await FattureService.sendSdi(id);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Successo',
+                text: 'Fattura accodata per l\'invio allo SDI. L\'esito sarà disponibile a breve.',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                handleSearch(); // Refresh list
+            });
+            setActiveActionMenu(null);
+        } catch (err) {
+            console.error('Errore durante l\'invio a SDI:', err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore',
+                text: 'Si è verificato un errore durante l\'invio a SDI.'
+            });
+        }
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current.click();
+    };
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Reset input to allow selecting the same file again if needed
+        e.target.value = '';
+
+        try {
+            Swal.fire({
+                title: 'Importazione in corso...',
+                text: 'Attendere prego',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            const res = await FattureService.importXml(file);
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Importazione completata',
+                text: 'La fattura è stata importata correttamente.',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                handleSearch(); // Refresh list
+            });
+        } catch (err) {
+            console.error('Errore durante l\'importazione XML:', err);
+            const msg = err.response?.data?.message || err.message || 'Si è verificato un errore durante l\'importazione.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore Importazione',
+                text: msg
+            });
+        }
+    };
+
     const formatMoney = (amount) => {
         return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount || 0);
     };
 
     const renderSdiStatus = (f) => {
-        if (!f.flFatturaElettronica) return null;
-
+        const isElettronica = f.flFatturaElettronica === 1;
         const status = f.statoFatturaElettronica;
+        
+        if (!isElettronica) {
+            if (status === 'BO' || !status) {
+                return <span className="sdi-badge sdi-badge-bo">Bozza</span>;
+            } else if (status === 'DI') {
+                return <span className="sdi-badge sdi-badge-di">Definitiva</span>;
+            }
+            return null;
+        }
+
         const descr = f.descrizioneStatoFatturaElettronica || status;
         const error = f.erroreConsegna || f.erroreXml;
 
@@ -402,7 +488,21 @@ const FattureList = () => {
                         </div>
                     )}
                 </div>
-                <div className="toolbar-right">
+                <div className="toolbar-right" style={{ display: 'flex', gap: '10px' }}>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept=".xml"
+                        style={{ display: 'none' }}
+                    />
+                    <button
+                        className="btn-premium-outline"
+                        onClick={handleImportClick}
+                        style={{ color: '#27ae60', borderColor: '#27ae60' }}
+                    >
+                        <FaFileImport /> Importa XML
+                    </button>
                     <div className="split-btn-container blue-theme" ref={activeActionMenu === 'new-menu' ? null : null /* Ref not needed here as we use state */}>
                         <button
                             className="split-btn-main btn-premium-blue"
@@ -528,20 +628,6 @@ const FattureList = () => {
                     <button type="button" className="btn-paginate" style={{ height: '38px' }} onClick={handleReset}>
                         <FaSync />
                     </button>
-                    {selectedIds.length > 0 && (
-                        <div className="vibrant-bulk-toolbar">
-                            <div className="toolbar-divider"></div>
-                            <span className="selected-count-vibrant">{selectedIds.length} selezionat{selectedIds.length === 1 ? 'o' : 'i'}</span>
-                            {isEnabled('ABILITA_NOTE_CREDITO') && (
-                                <button className="btn-bulk-vibrant btn-bulk-generate" onClick={handleBulkGenerateNoteCredito}>
-                                    <FaArrowRight /> Genera Nota Credito ({selectedIds.length})
-                                </button>
-                            )}
-                            <button className="btn-bulk-vibrant btn-bulk-delete" onClick={handleBulkDelete}>
-                                <FaTrash /> Elimina ({selectedIds.length})
-                            </button>
-                        </div>
-                    )}
                 </div>
             </div>
 
@@ -571,8 +657,8 @@ const FattureList = () => {
                                         Cliente {getSortIcon('d_e_clienti.denominazione')}
                                     </th>
                                     <th>Agente</th>
+                                    <th>Doc. Collegati</th>
                                     <th>Stato</th>
-                                    <th>Esito SDI</th>
                                     <th className="text-right">Totale</th>
                                     <th style={{ width: '1%' }}></th>
                                 </tr>
@@ -610,7 +696,7 @@ const FattureList = () => {
                                                 <td>{renderSdiStatus(f)}</td>
                                                 <td className="text-right">{formatMoney(f.totaleDocumento || f.totale)}</td>
                                                 <td className="text-right">
-                                                    <div className="action-menu-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
+                                                    <div className={`action-menu-container${activeActionMenu === docId ? ' is-open' : ''}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
                                                         <button
                                                             className="btn-action btn-action-ellipsis"
                                                             onClick={(e) => {
@@ -637,6 +723,11 @@ const FattureList = () => {
                                                                 <button className="action-dropdown-item" onClick={() => handleExportPdfItem(docId, f.numDocumento)}>
                                                                     <FaFilePdf /> Esporta PDF
                                                                 </button>
+                                                                {f.flFatturaElettronica === 1 && f.statoFatturaElettronica === 'NS' && (
+                                                                    <button className="action-dropdown-item" onClick={() => handleSendSdi(docId)}>
+                                                                        <FaPaperPlane /> Reinvia a SDI
+                                                                    </button>
+                                                                )}
                                                                 <div className="action-dropdown-divider"></div>
                                                                 <button className="action-dropdown-item text-danger" onClick={() => handleDelete(docId)}>
                                                                     <FaTrash /> Elimina

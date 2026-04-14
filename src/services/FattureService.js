@@ -33,6 +33,20 @@ const FattureService = {
 
     getUltimeFatture: () => {
         return api.get('/fatture/ultime');
+    },
+
+    sendSdi: (id) => {
+        return api.put(`/fatture/${id}/send-sdi`);
+    },
+
+    importXml: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return api.post('/fatture/import-xml', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
     }
 };
 

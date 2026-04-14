@@ -8,7 +8,7 @@ import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
 import ConfOrdineService from '../../services/ConfOrdineService';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaPaperPlane, FaExclamationTriangle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -126,7 +126,9 @@ const FattureDetail = () => {
         percRitenutaAcconto: 20,
         importoRitenutaAcconto: 0,
         tipoRitenuta: '',
-        listaScadenzePagamentiDocumento: []
+        sconto: 0,
+        listaScadenzePagamentiDocumento: [],
+        statoFatturaElettronica: 'BO'
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -147,12 +149,37 @@ const FattureDetail = () => {
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [addressTarget, setAddressTarget] = useState('intestazione');
+    const [isLocked, setIsLocked] = useState(false);
     const [showProgettoModal, setShowProgettoModal] = useState(false);
     const [showCausaleEsigibilitaModal, setShowCausaleEsigibilitaModal] = useState(false);
     const [showSaveMenu, setShowSaveMenu] = useState(false);
     const [showParticelleModal, setShowParticelleModal] = useState(false);
     const saveMenuRef = useRef(null);
-    const isReadOnly = !isNew && ['IN', 'AC', 'RC', 'MC'].includes(formData.statoFatturaElettronica);
+    const isReadOnly = !isNew && ['IN', 'AC', 'RC', 'MC', 'RF'].includes(formData.statoFatturaElettronica);
+
+    // Derived locking state
+    useEffect(() => {
+        const lockedStatuses = ['DI', 'IN', 'AC', 'RC', 'NS', 'MC', 'RF'];
+        setIsLocked(!isNew && lockedStatuses.includes(formData.statoFatturaElettronica));
+    }, [formData.statoFatturaElettronica, isNew]);
+
+    const handleUnlock = () => {
+        Swal.fire({
+            title: 'Sbloccare il documento?',
+            text: "Il documento verrà riportato in stato 'Bozza' per consentire le modifiche. Se è una fattura elettronica già inviata, assicurati di sapere cosa stai facendo.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#03a9f4',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Sì, sblocca',
+            cancelButtonText: 'Annulla'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setFormData(prev => ({ ...prev, statoFatturaElettronica: 'BO' }));
+                setIsLocked(false);
+            }
+        });
+    };
 
     const getDocTitle = () => {
         let prefix = isNew ? 'Nuova ' : 'Modifica ';
@@ -600,9 +627,10 @@ const FattureDetail = () => {
 
     const calculateTotalDocument = (includeFees = true, forScadenze = false) => {
         const prodTotal = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
+        const globalDiscount = parseFloat(formData.sconto) || 0;
         
         // If it's for scadenze calculation, we need the "Collectible" part of products
-        let base = prodTotal;
+        let base = prodTotal - globalDiscount;
         if (forScadenze) {
             const ritenuta = calculateRitenutaAcconto();
             base = base - ritenuta;
@@ -613,10 +641,10 @@ const FattureDetail = () => {
             return base;
         }
 
-        if (!includeFees) return prodTotal;
+        if (!includeFees) return base;
         
         const feesTotal = (formData.listaScadenzePagamentiDocumento || []).reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0);
-        return prodTotal + feesTotal;
+        return base + feesTotal;
     };
 
     const calculateTotalImponibile = () => {
@@ -726,6 +754,19 @@ const FattureDetail = () => {
         if (!formData.dataDocumento) { Swal.fire('Errore', 'Inserire la data documento', 'error'); return false; }
         if (!formData.idCliente) { Swal.fire('Errore', 'Selezionare un cliente', 'error'); return false; }
         if (!prodotti || prodotti.length === 0) { Swal.fire('Errore', 'Inserire almeno un articolo', 'error'); return false; }
+
+        // Validazione SDI per fatture non Pro Forma
+        if (formData.tipoFattura !== 'FATTURA_PROFORMA' && formData.flFatturaElettronica === 1) {
+            if (!formData.indirizzoIntestazione?.trim()) { Swal.fire('Errore SDI', 'L\'indirizzo del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
+            if (!formData.cittaIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il comune del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
+            if (!formData.capIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il CAP del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
+            if (!formData.provinciaIntestazione?.trim()) { Swal.fire('Errore SDI', 'La provincia del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
+            if (!formData.partitaIva?.trim() && !formData.codiceFiscale?.trim()) { 
+                Swal.fire('Errore SDI', 'È necessario inserire la Partita IVA o il Codice Fiscale del cliente per la fatturazione elettronica.', 'error'); 
+                return false; 
+            }
+        }
+
         return true;
     };
 
@@ -735,10 +776,28 @@ const FattureDetail = () => {
         const parts = formData.dataDocumento.split('-');
         const dtFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
+        // Forzo la sincronizzazione delle scadenze con il totale calcolato (al netto di sconti) 
+        // per evitare discrepanze nel batch SDI.
+        const targetTotal = calculateTotalDocument(false, true);
+        let scadenzeSync = [...(formData.listaScadenzePagamentiDocumento || [])];
+        if (scadenzeSync.length > 0) {
+            const sumScadenze = scadenzeSync.reduce((acc, s) => acc + (s.importo || 0), 0);
+            const diff = Math.round((targetTotal - sumScadenze + Number.EPSILON) * 100) / 100;
+            if (Math.abs(diff) > 0) {
+                // Ribilancio l'ultima rata
+                const lastIdx = scadenzeSync.length - 1;
+                scadenzeSync[lastIdx] = {
+                    ...scadenzeSync[lastIdx],
+                    importo: Math.round((scadenzeSync[lastIdx].importo + diff + Number.EPSILON) * 100) / 100
+                };
+            }
+        }
+
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
             prodotti: prodotti,
+            listaScadenzePagamentiDocumento: scadenzeSync,
             importoRitenutaAcconto: calculateRitenutaAcconto()
         };
 
@@ -750,6 +809,38 @@ const FattureDetail = () => {
             const msg = error.response?.data || 'Errore durante il salvataggio';
             Swal.fire('Errore', msg, 'error');
             return null;
+        }
+    };
+
+    const handleSendSdi = async () => {
+        try {
+            Swal.fire({
+                title: 'Invio a SDI...',
+                text: 'Attendere prego',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            await FattureService.sendSdi(id);
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Successo',
+                text: 'Fattura accodata per l\'invio allo SDI. L\'esito sarà disponibile a breve.',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                fetchData(); // Refresh UI
+            });
+        } catch (err) {
+            console.error('Errore durante l\'invio a SDI:', err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore',
+                text: 'Impossibile inviare la fattura allo SDI.'
+            });
         }
     };
 
@@ -810,11 +901,26 @@ const FattureDetail = () => {
                         <span onClick={() => navigate('/fatture')}>Elenco Fatture</span> / <span>{isNew ? 'Nuova' : formData.numDocumento}</span>
                     </div>
                 </div>
+                {(formData.erroreValidazioneXml || formData.erroreConsegna) && (
+                    <div className="sdi-error-banner" style={{ marginTop: '10px' }}>
+                        <FaExclamationTriangle />
+                        <div className="sdi-error-text">
+                            <strong>Dettaglio Errore SDI / XML</strong>
+                            <span>{formData.erroreValidazioneXml || formData.erroreConsegna}</span>
+                        </div>
+                    </div>
+                )}
                 <div className="header-totals">
                     <div className="total-box">
                         <span className="label">Imponibile</span>
                         <span className="value">{formatCurrency(calculateTotalImponibile())}</span>
                     </div>
+                    {parseFloat(formData.sconto) > 0 && (
+                        <div className="total-box warning">
+                            <span className="label">Sconto Glob.</span>
+                            <span className="value">-{formatCurrency(formData.sconto)}</span>
+                        </div>
+                    )}
                     <div className="total-box highlight">
                         <span className="label">Totale Doc.</span>
                         <span className="value">{formatCurrency(calculateTotalDocument())}</span>
@@ -852,9 +958,42 @@ const FattureDetail = () => {
 
                 <div className="main-box-body">
                     <form className="tab-content" onSubmit={handleSave} autoComplete="off">
+                        <input type="text" style={{ display: 'none' }} autoComplete="off" />
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
+                                <div className="status-workflow-bar">
+                                    <div className="status-workflow-field">
+                                        <label>Stato Documento</label>
+                                        <div className="status-dropdown-wrapper">
+                                            <select
+                                                className={`form-control status-select status-${(formData.statoFatturaElettronica || '').toLowerCase()}`}
+                                                value={formData.statoFatturaElettronica || 'BO'}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, statoFatturaElettronica: e.target.value }))}
+                                                disabled={isLocked || isReadOnly}
+                                            >
+                                                <option value="BO">Bozza</option>
+                                                <option value="DI">{formData.tipoFattura === 'FATTURA_PROFORMA' ? 'Definitiva' : 'Versione Finale (Da inviare)'}</option>
+                                                {['IN', 'AC', 'RC', 'NS', 'MC', 'RF'].includes(formData.statoFatturaElettronica) && (
+                                                    <option value={formData.statoFatturaElettronica}>
+                                                        {formData.descrizioneStatoFatturaElettronica || formData.statoFatturaElettronica}
+                                                    </option>
+                                                )}
+                                            </select>
+                                            {isLocked && !isReadOnly && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-unlock-document"
+                                                    onClick={handleUnlock}
+                                                    title="Sblocca per modifiche"
+                                                >
+                                                    <FaWrench /> Sblocca Modifiche
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="compact-row">
                                     <div className="compact-col compact-col-sm">
                                         <div className="form-group">
@@ -864,6 +1003,7 @@ const FattureDetail = () => {
                                                 name="tipoFattura"
                                                 value={formData.tipoFattura}
                                                 onChange={handleHeaderChange}
+                                                disabled={isLocked}
                                             >
                                                 <option value="FATTURA">Fattura</option>
                                                 <option value="FATTURA_ACCOMPAGNATORIA">Fattura Accompagnatoria</option>
@@ -882,6 +1022,7 @@ const FattureDetail = () => {
                                                     name="numDocumento"
                                                     value={formData.numDocumento}
                                                     onChange={handleHeaderChange}
+                                                    disabled={isLocked}
                                                 />
                                                 <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
                                                 <div style={{ flex: '0 0 130px' }}>
@@ -892,6 +1033,7 @@ const FattureDetail = () => {
                                                         onChange={(opt) => setFormData(prev => ({ ...prev, particella: opt?.value || '' }))}
                                                         styles={particellaSelectStyles}
                                                         placeholder="-"
+                                                        isDisabled={isLocked}
                                                         noOptionsMessage={() => "Nuovo..."}
                                                         formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
                                                     />
@@ -901,6 +1043,7 @@ const FattureDetail = () => {
                                                     className="premium-wrench-btn"
                                                     onClick={() => setShowParticelleModal(true)}
                                                     title="Configura suffissi"
+                                                    disabled={isLocked}
                                                 >
                                                     <FaWrench />
                                                 </button>
@@ -918,6 +1061,7 @@ const FattureDetail = () => {
                                                     value={formData.dataDocumento}
                                                     onChange={handleHeaderChange}
                                                     required
+                                                    disabled={isLocked}
                                                 />
                                             </div>
                                         </div>
@@ -933,6 +1077,7 @@ const FattureDetail = () => {
                                             title="Gestione Clienti"
                                             placeholder="Cerca cliente..."
                                             widthClass="w-lg"
+                                            disabled={isLocked}
                                         />
                                     </div>
                                     <div className="compact-col compact-col-md">
@@ -946,6 +1091,7 @@ const FattureDetail = () => {
                                             title="Gestione Agenti"
                                             placeholder="Seleziona agente..."
                                             widthClass="w-md"
+                                            disabled={isLocked}
                                         />
                                     </div>
                                 </div>
@@ -967,6 +1113,7 @@ const FattureDetail = () => {
                                                     onChange={handleHeaderChange}
                                                     placeholder="XXXXXXX"
                                                     maxLength={7}
+                                                    disabled={isLocked}
                                                 />
                                             </div>
                                         </div>
@@ -1003,31 +1150,31 @@ const FattureDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Cit<span>tà</span></label>
-                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Pr<span>ov</span>.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row">
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Partita IVA</label>
-                                                    <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Codice Fiscale</label>
-                                                    <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1043,27 +1190,27 @@ const FattureDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Cit<span>tà</span></label>
-                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Pr<span>ov</span>.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Note Consegna</label>
-                                                    <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." />
+                                                    <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="off" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1149,7 +1296,7 @@ const FattureDetail = () => {
                                                         type="number"
                                                         className="form-control premium-input text-right"
                                                         name="percRitenutaAcconto"
-                                                        value={formData.percRitenutaAcconto}
+                                                        value={formData.percRitenutaAcconto ?? ''}
                                                         onChange={handleHeaderChange}
                                                         min="0"
                                                         max="100"
@@ -1167,6 +1314,7 @@ const FattureDetail = () => {
                             <DocumentRows
                                 rows={prodotti}
                                 onRowChange={handleRowChange}
+                                isDisabled={isLocked}
                                 onRowUpdate={(idx, update) => {
                                     const newP = [...prodotti];
                                     newP[idx] = { ...newP[idx], ...update };
@@ -1191,7 +1339,7 @@ const FattureDetail = () => {
                         <div className={`tab-pane ${activeTab === 'pagamento' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
                                 <div className="row mb-4">
-                                    <div className="col-md-4">
+                                    <div className="col-md-5">
                                         <EntitySelectGroup
                                             label="Tipo Pagamento"
                                             isAsync={false}
@@ -1201,19 +1349,6 @@ const FattureDetail = () => {
                                             ModalComponent={TipiPagamentoManagementModal}
                                             title="Gestione Tipi Pagamento"
                                             placeholder="Seleziona..."
-                                            onModalClose={fetchCombos}
-                                        />
-                                    </div>
-                                    <div className="col-md-4">
-                                        <EntitySelectGroup
-                                            label="Listino"
-                                            isAsync={false}
-                                            options={(combos.listini || []).map(l => ({ value: l.id, label: l.descrizione }))}
-                                            value={formData.idListino ? { value: formData.idListino, label: (combos.listini || []).find(l => l.id === formData.idListino)?.descrizione } : null}
-                                            onChange={(opt) => setFormData(prev => ({ ...prev, idListino: opt?.value || '' }))}
-                                            ModalComponent={ListiniManagementModal}
-                                            title="Gestione Listini"
-                                            placeholder="Predefinito"
                                             onModalClose={fetchCombos}
                                         />
                                     </div>
@@ -1231,8 +1366,21 @@ const FattureDetail = () => {
                                             onModalClose={fetchCombos}
                                         />
                                     </div>
+                                    <div className="col-md-3">
+                                        <EntitySelectGroup
+                                            label="Listino"
+                                            isAsync={false}
+                                            options={(combos.listini || []).map(l => ({ value: l.id, label: l.descrizione }))}
+                                            value={formData.idListino ? { value: formData.idListino, label: (combos.listini || []).find(l => l.id === formData.idListino)?.descrizione } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idListino: opt?.value || '' }))}
+                                            ModalComponent={ListiniManagementModal}
+                                            title="Gestione Listini"
+                                            placeholder="Predefinito"
+                                            onModalClose={fetchCombos}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="row mt-3" style={{ alignItems: 'flex-end' }}>
+                                <div className="row mt-2" style={{ alignItems: 'flex-end' }}>
                                     <div className="col-md-2">
                                         <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
                                             <input
@@ -1245,7 +1393,7 @@ const FattureDetail = () => {
                                             <label htmlFor="splitPayment">Split Payment</label>
                                         </div>
                                     </div>
-                                    <div className="col-md-2">
+                                    <div className="col-md-3">
                                         <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
                                             <input
                                                 type="checkbox"
@@ -1257,7 +1405,7 @@ const FattureDetail = () => {
                                             <label htmlFor="esigibilitaDifferita" title="Iva ad esigibilità differita">Esigibilità Differita</label>
                                         </div>
                                     </div>
-                                    <div className="col-md-8">
+                                    <div className="col-md-7">
                                         <EntitySelectGroup
                                             label="Causale Esigibilità"
                                             isAsync={false}
@@ -1272,6 +1420,31 @@ const FattureDetail = () => {
                                         />
                                     </div>
                                 </div>
+
+                                <div className="row">
+                                    <div className="col-md-3">
+                                        <div className="form-group">
+                                            <label className="premium-label">Sconto Globale (€)</label>
+                                            <input
+                                                type="number"
+                                                className="form-control premium-input text-right"
+                                                name="sconto"
+                                                value={formData.sconto ?? ''}
+                                                onChange={handleHeaderChange}
+                                                disabled={isLocked}
+                                                onBlur={(e) => {
+                                                    const val = parseFloat(e.target.value);
+                                                    if (!isNaN(val)) {
+                                                        setFormData(prev => ({ ...prev, sconto: val.toFixed(2) }));
+                                                    }
+                                                }}
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="0.00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="row mt-4">
                                     <div className="col-12">
                                         <ScadenzeTable
@@ -1279,6 +1452,7 @@ const FattureDetail = () => {
                                             dataDocumento={formData.dataDocumento}
                                             totaleDocumento={calculateTotalDocument(false, true)}
                                             scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
+                                            isDisabled={isLocked}
                                             onScadenzeChange={useCallback((newScadenze) => {
                                                 const totalFees = newScadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0);
                                                 
@@ -1324,6 +1498,7 @@ const FattureDetail = () => {
                                         name="annotazioneEstesa"
                                         value={formData.annotazioneEstesa || ''}
                                         onChange={handleHeaderChange}
+                                        disabled={isLocked}
                                     ></textarea>
                                 </div>
                             </div>
@@ -1357,6 +1532,14 @@ const FattureDetail = () => {
                                             if (savedId) navigate(`/note-credito/new?fromFatture=${savedId}`);
                                         }}>
                                             <FaArrowRight /> Genera nota credito
+                                        </button>
+                                        <button type="button" 
+                                            className="split-btn-item" 
+                                            onClick={handleSendSdi}
+                                            disabled={!(formData.flElettronica === 1 && (formData.statoFatturaElettronica === 'NS' || formData.statoFatturaElettronica === 'BO'))}
+                                            title={formData.flElettronica === 1 && (formData.statoFatturaElettronica === 'NS' || formData.statoFatturaElettronica === 'BO') ? 'Reinvia la fattura allo SDI (rigenera XML)' : 'Disponibile solo per fatture scartate o in bozza'}
+                                        >
+                                            <FaPaperPlane /> Reinvia a SDI
                                         </button>
                                     </div>
                                 </div>

@@ -727,6 +727,7 @@ const PreventiviDetail = () => {
                 </header>
 
                 <form className="preventivi-detail-form" autoComplete="off">
+                    <input type="text" style={{ display: 'none' }} autoComplete="off" />
                     <div className="tab-content premium-tab-content">
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
@@ -742,7 +743,7 @@ const PreventiviDetail = () => {
                                                         name="numDocumento"
                                                         value={formData.numDocumento}
                                                         onChange={handleHeaderChange}
-                                                        autoComplete="nope"
+                                                        autoComplete="off"
                                                     />
                                                 <span className="input-group-addon">/</span>
                                                 <div style={{ flex: '0 0 130px' }}>
@@ -851,31 +852,31 @@ const PreventiviDetail = () => {
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
                                                         <label className="premium-label">Cit<span>tà</span></label>
-                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-2">
                                                         <label className="premium-label">Pr<span>ov</span>.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
-                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row">
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Partita IVA</label>
-                                                        <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Codice Fiscale</label>
-                                                        <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -899,27 +900,27 @@ const PreventiviDetail = () => {
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
                                                         <label className="premium-label">Cit<span>tà</span></label>
-                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-2">
                                                         <label className="premium-label">Pr<span>ov</span>.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
-                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Note Consegna</label>
-                                                        <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="off" />
                                                     </div>
                                                 </div>
                                             </div>

@@ -138,7 +138,8 @@ const NoteCreditoDetail = () => {
         percRitenutaAcconto: 20,
         importoRitenutaAcconto: 0,
         tipoRitenuta: '',
-        listaScadenzePagamentiDocumento: []
+        listaScadenzePagamentiDocumento: [],
+        statoFatturaElettronica: 'BO'
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -159,11 +160,38 @@ const NoteCreditoDetail = () => {
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [addressTarget, setAddressTarget] = useState('intestazione');
+    const [isLocked, setIsLocked] = useState(false);
     const [showProgettoModal, setShowProgettoModal] = useState(false);
     const [showCausaleEsigibilitaModal, setShowCausaleEsigibilitaModal] = useState(false);
     const [showActionsMenu, setShowActionsMenu] = useState(false);
     const [showParticelleModal, setShowParticelleModal] = useState(false);
     const actionsMenuRef = useRef(null);
+
+    const isReadOnly = !isNew && ['IN', 'AC', 'RC', 'MC', 'RF'].includes(formData.statoFatturaElettronica);
+
+    // Derived locking state
+    useEffect(() => {
+        const lockedStatuses = ['DI', 'IN', 'AC', 'RC', 'NS', 'MC', 'RF'];
+        setIsLocked(!isNew && lockedStatuses.includes(formData.statoFatturaElettronica));
+    }, [formData.statoFatturaElettronica, isNew]);
+
+    const handleUnlock = () => {
+        Swal.fire({
+            title: 'Sbloccare il documento?',
+            text: "Il documento verrà riportato in stato 'Bozza' per consentire le modifiche.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#03a9f4',
+            cancelButtonColor: '#95a5a6',
+            confirmButtonText: 'Sì, sblocca',
+            cancelButtonText: 'Annulla'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                setFormData(prev => ({ ...prev, statoFatturaElettronica: 'BO' }));
+                setIsLocked(false);
+            }
+        });
+    };
 
     useEffect(() => {
         checkCeramica();
@@ -607,9 +635,42 @@ const NoteCreditoDetail = () => {
 
                 <div className="main-box-body">
                     <form className="tab-content" onSubmit={handleSave} autoComplete="off">
+                        <input type="text" style={{ display: 'none' }} autoComplete="off" />
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
-                            <div className="compact-row">
+                                <div className="status-workflow-bar">
+                                    <div className="status-workflow-field">
+                                        <label>Stato Documento</label>
+                                        <div className="status-dropdown-wrapper">
+                                            <select
+                                                className={`form-control status-select status-${(formData.statoFatturaElettronica || '').toLowerCase()}`}
+                                                value={formData.statoFatturaElettronica || 'BO'}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, statoFatturaElettronica: e.target.value }))}
+                                                disabled={isLocked || isReadOnly}
+                                            >
+                                                <option value="BO">Bozza</option>
+                                                <option value="DI">Versione Finale (Da inviare)</option>
+                                                {['IN', 'AC', 'RC', 'NS', 'MC', 'RF'].includes(formData.statoFatturaElettronica) && (
+                                                    <option value={formData.statoFatturaElettronica}>
+                                                        {formData.descrizioneStatoFatturaElettronica || formData.statoFatturaElettronica}
+                                                    </option>
+                                                )}
+                                            </select>
+                                            {isLocked && !isReadOnly && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-unlock-document"
+                                                    onClick={handleUnlock}
+                                                    title="Sblocca per modifiche"
+                                                >
+                                                    <FaWrench /> Sblocca Modifiche
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="compact-row">
                                 <div className="compact-col compact-col-md">
                                     <div className="form-group">
                                         <label>Numero</label>
@@ -620,6 +681,8 @@ const NoteCreditoDetail = () => {
                                                 name="numDocumento"
                                                 value={formData.numDocumento}
                                                 onChange={handleHeaderChange}
+                                                autoComplete="off"
+                                                disabled={isLocked}
                                             />
                                             <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
                                             <div style={{ flex: '0 0 130px' }}>
@@ -630,6 +693,7 @@ const NoteCreditoDetail = () => {
                                                     onChange={(opt) => setFormData(prev => ({ ...prev, particella: opt?.value || '' }))}
                                                     styles={particellaSelectStyles}
                                                     placeholder="-"
+                                                    isDisabled={isLocked}
                                                     noOptionsMessage={() => "Nuovo..."}
                                                     formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
                                                 />
@@ -639,6 +703,7 @@ const NoteCreditoDetail = () => {
                                                 className="premium-wrench-btn"
                                                 onClick={() => setShowParticelleModal(true)}
                                                 title="Configura suffissi"
+                                                disabled={isLocked}
                                             >
                                                 <FaWrench />
                                             </button>
@@ -656,6 +721,7 @@ const NoteCreditoDetail = () => {
                                                 value={formData.dataDocumento}
                                                 onChange={handleHeaderChange}
                                                 required
+                                                disabled={isLocked}
                                             />
                                         </div>
                                     </div>
@@ -671,6 +737,7 @@ const NoteCreditoDetail = () => {
                                         title="Gestione Clienti"
                                         placeholder="Cerca cliente..."
                                         widthClass="w-lg"
+                                        disabled={isLocked}
                                     />
                                 </div>
                                 <div className="compact-col compact-col-md">
@@ -684,6 +751,7 @@ const NoteCreditoDetail = () => {
                                         title="Gestione Agenti"
                                         placeholder="Seleziona agente..."
                                         widthClass="w-md"
+                                        disabled={isLocked}
                                     />
                                 </div>
                                 <div className="compact-col compact-col-md">
@@ -694,6 +762,7 @@ const NoteCreditoDetail = () => {
                                                 name="flFatturaElettronica"
                                                 checked={formData.flFatturaElettronica === 1}
                                                 onChange={handleHeaderChange}
+                                                disabled={isLocked}
                                             /> Fattura Elettronica
                                         </label>
                                     </div>
@@ -714,6 +783,7 @@ const NoteCreditoDetail = () => {
                                                     onChange={handleHeaderChange}
                                                     placeholder="Codice Univoco..."
                                                     style={{ flex: '2' }}
+                                                    autoComplete="off"
                                                 />
                                                 <input
                                                     type="text"
@@ -723,6 +793,7 @@ const NoteCreditoDetail = () => {
                                                     onChange={handleHeaderChange}
                                                     placeholder="PEC..."
                                                     style={{ flex: '3', marginLeft: '5px' }}
+                                                    autoComplete="off"
                                                 />
                                             </div>
                                         </div>
@@ -737,6 +808,7 @@ const NoteCreditoDetail = () => {
                                                 value={formData.causale || ''}
                                                 onChange={handleHeaderChange}
                                                 placeholder="Causale per fatturazione elettronica..."
+                                                autoComplete="off"
                                             />
                                         </div>
                                     </div>
@@ -756,31 +828,31 @@ const NoteCreditoDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Cit<span>tà</span></label>
-                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Pr<span>ov</span>.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row">
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Partita IVA</label>
-                                                    <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Codice Fiscale</label>
-                                                    <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} />
+                                                    <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                         </div>
@@ -796,27 +868,27 @@ const NoteCreditoDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Cit<span>tà</span></label>
-                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Pr<span>ov</span>.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
                                             <div className="row">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Note Consegna</label>
-                                                    <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." />
+                                                    <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="off" />
                                                 </div>
                                             </div>
                                         </div>
@@ -837,6 +909,7 @@ const NoteCreditoDetail = () => {
                                             modalProps={{ isOpen: showProgettoModal }}
                                             placeholder="Senza progetto"
                                             title="Nuovo Progetto"
+                                            disabled={isLocked}
                                         />
                                     </div>
                                 )}
@@ -863,6 +936,7 @@ const NoteCreditoDetail = () => {
                             <DocumentRows
                                 rows={prodotti}
                                 onRowChange={handleRecalculate}
+                                isDisabled={isLocked}
                                 onRowUpdate={(idx, update) => {
                                     const newP = [...prodotti];
                                     newP[idx] = { ...newP[idx], ...update };
@@ -882,12 +956,12 @@ const NoteCreditoDetail = () => {
                         {/* Tab Pagamento */}
                         <div className={`tab-pane ${activeTab === 'pagamento' ? 'active' : ''}`}>
                             <div className="row mb-4">
-                                <div className="col-md-4">
+                                <div className="col-md-5">
                                     <EntitySelectGroup
                                         label="Tipo Pagamento"
                                         isAsync={false}
                                         options={(combos.tipiPagamento || []).map(tp => ({ value: tp.id, label: tp.descrizione }))}
-                                        value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: combos.tipiPagamento.find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
+                                        value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: (combos.tipiPagamento || []).find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
                                         ModalComponent={TipiPagamentoManagementModal}
                                         title="Gestione Tipi Pagamento"
@@ -897,23 +971,10 @@ const NoteCreditoDetail = () => {
                                 </div>
                                 <div className="col-md-4">
                                     <EntitySelectGroup
-                                        label="Listino"
-                                        isAsync={false}
-                                        options={(combos.listini || []).map(l => ({ value: l.id, label: l.descrizione }))}
-                                        value={formData.idListino ? { value: formData.idListino, label: combos.listini.find(l => l.id === formData.idListino)?.descrizione } : null}
-                                        onChange={(opt) => setFormData(prev => ({ ...prev, idListino: opt?.value || '' }))}
-                                        ModalComponent={ListiniManagementModal}
-                                        title="Gestione Listini"
-                                        placeholder="Predefinito"
-                                        onModalClose={fetchCombos}
-                                    />
-                                </div>
-                                <div className="col-md-4">
-                                    <EntitySelectGroup
                                         label="Nostra Banca"
                                         isAsync={false}
                                         options={(combos.risorse || []).map(r => ({ value: r.id, label: r.descrizione }))}
-                                        value={formData.idNsBanca ? { value: formData.idNsBanca, label: combos.risorse.find(r => r.id === formData.idNsBanca)?.descrizione } : null}
+                                        value={formData.idNsBanca ? { value: formData.idNsBanca, label: (combos.risorse || []).find(r => r.id === formData.idNsBanca)?.descrizione } : null}
                                         onChange={(opt) => setFormData(prev => ({ ...prev, idNsBanca: opt?.value }))}
                                         ModalComponent={RisorseManagementModal}
                                         modalProps={{ initialTipologia: 'BA' }}
@@ -922,8 +983,21 @@ const NoteCreditoDetail = () => {
                                         onModalClose={fetchCombos}
                                     />
                                 </div>
+                                <div className="col-md-3">
+                                    <EntitySelectGroup
+                                        label="Listino"
+                                        isAsync={false}
+                                        options={(combos.listini || []).map(l => ({ value: l.id, label: l.descrizione }))}
+                                        value={formData.idListino ? { value: formData.idListino, label: (combos.listini || []).find(l => l.id === formData.idListino)?.descrizione } : null}
+                                        onChange={(opt) => setFormData(prev => ({ ...prev, idListino: opt?.value || '' }))}
+                                        ModalComponent={ListiniManagementModal}
+                                        title="Gestione Listini"
+                                        placeholder="Predefinito"
+                                        onModalClose={fetchCombos}
+                                    />
+                                </div>
                             </div>
-                            <div className="row mt-3" style={{ alignItems: 'flex-end' }}>
+                            <div className="row mt-2" style={{ alignItems: 'flex-end' }}>
                                 <div className="col-md-2">
                                     <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
                                         <input
@@ -936,7 +1010,7 @@ const NoteCreditoDetail = () => {
                                         <label htmlFor="splitPayment">Split Payment</label>
                                     </div>
                                 </div>
-                                <div className="col-md-2">
+                                <div className="col-md-3">
                                     <div className="premium-checkbox-group" style={{ marginBottom: '10px' }}>
                                         <input
                                             type="checkbox"
@@ -948,7 +1022,7 @@ const NoteCreditoDetail = () => {
                                         <label htmlFor="esigibilitaDifferita" title="Iva ad esigibilità differita">Esigibilità Differita</label>
                                     </div>
                                 </div>
-                                <div className="col-md-8">
+                                <div className="col-md-7">
                                     <EntitySelectGroup
                                         label="Causale Esigibilità"
                                         isAsync={true}
@@ -969,6 +1043,7 @@ const NoteCreditoDetail = () => {
                                         dataDocumento={formData.dataDocumento}
                                         totaleDocumento={calculateTotalDocument()}
                                         scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
+                                        isDisabled={isLocked}
                                         onScadenzeChange={(newScadenze) => {
                                             setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
                                         }}
@@ -989,6 +1064,7 @@ const NoteCreditoDetail = () => {
                                             name="annotazioneEstesa"
                                             value={formData.annotazioneEstesa || ''}
                                             onChange={handleHeaderChange}
+                                            disabled={isLocked}
                                         ></textarea>
                                     </div>
                                 </div>

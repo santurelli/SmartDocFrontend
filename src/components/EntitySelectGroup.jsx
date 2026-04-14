@@ -86,7 +86,7 @@ const EntitySelectGroup = ({
                     <SelectComponent
                         {...selectProps}
                         inputId="entity-select-input"
-                        autoComplete="nope" // Prevent browser address modals
+                        autoComplete="off" // Prevent browser address modals
                         onChange={onChange}
                         onCreateOption={onCreateOption}
                         value={value}

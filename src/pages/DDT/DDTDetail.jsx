@@ -723,6 +723,7 @@ const DDTDetail = () => {
 
                 <div className="main-box-body">
                     <form className="tab-content" onSubmit={handleSave} autoComplete="off">
+                        <input type="text" style={{ display: 'none' }} autoComplete="off" />
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
@@ -737,6 +738,7 @@ const DDTDetail = () => {
                                                     name="numDocumento"
                                                     value={formData.numDocumento}
                                                     onChange={handleHeaderChange}
+                                                    autoComplete="off"
                                                 />
                                                 <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
                                                 <div style={{ flex: '0 0 130px' }}>
@@ -818,31 +820,31 @@ const DDTDetail = () => {
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
                                                         <label className="premium-label">Cit<span>tà</span></label>
-                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-2">
                                                         <label className="premium-label">Pr<span>ov</span>.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
-                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row">
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Partita IVA</label>
-                                                        <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} />
+                                                        <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Codice Fiscale</label>
-                                                        <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} />
+                                                        <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -858,27 +860,27 @@ const DDTDetail = () => {
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
                                                         <label className="premium-label">Cit<span>tà</span></label>
-                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-2">
                                                         <label className="premium-label">Pr<span>ov</span>.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
                                                     </div>
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
-                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="nope" />
+                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
                                                 <div className="row">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Note Consegna</label>
-                                                        <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." />
+                                                        <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="off" />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1028,12 +1030,12 @@ const DDTDetail = () => {
                         <div className={`tab-pane ${activeTab === 'pagamento' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
                                 <div className="row mb-4">
-                                    <div className="col-md-4">
+                                    <div className="col-md-5">
                                         <EntitySelectGroup
                                             label="Tipo Pagamento"
                                             isAsync={false}
                                             options={(combos.tipiPagamento || []).map(tp => ({ value: tp.id, label: tp.descrizione }))}
-                                            value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: combos.tipiPagamento.find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
+                                            value={formData.idTipoPagamento ? { value: formData.idTipoPagamento, label: (combos.tipiPagamento || []).find(tp => tp.id === formData.idTipoPagamento)?.descrizione } : null}
                                             onChange={(opt) => setFormData(prev => ({ ...prev, idTipoPagamento: opt?.value }))}
                                             ModalComponent={TipiPagamentoManagementModal}
                                             title="Gestione Tipi Pagamento"
@@ -1042,6 +1044,19 @@ const DDTDetail = () => {
                                         />
                                     </div>
                                     <div className="col-md-4">
+                                        <EntitySelectGroup
+                                            label="Nostra Banca"
+                                            isAsync={false}
+                                            options={(combos.risorse || []).map(r => ({ value: r.id, label: r.descrizione }))}
+                                            value={formData.idNsBanca ? { value: formData.idNsBanca, label: (combos.risorse || []).find(r => r.id === formData.idNsBanca)?.descrizione } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idNsBanca: opt?.value }))}
+                                            ModalComponent={RisorseManagementModal}
+                                            modalProps={{ initialTipologia: 'BA' }}
+                                            title="Gestione Banche"
+                                            placeholder="Seleziona banca..."
+                                        />
+                                    </div>
+                                    <div className="col-md-3">
                                         <EntitySelectGroup
                                             label="Listino"
                                             isAsync={false}

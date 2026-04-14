@@ -250,6 +250,14 @@
     background: #f9fafb;
 }
 
+.table tbody tr {
+    position: relative;
+}
+
+.table tbody tr:has(.action-menu-container.is-open) {
+    z-index: 9999;
+}
+
 .table tbody td {
     padding: 12px 10px;
     color: #444;
@@ -343,8 +351,12 @@
     z-index: 10;
 }
 
+.action-menu-container.is-open {
+    z-index: 9999;
+}
+
 .action-menu-container:hover {
-    z-index: 1001;
+    z-index: 9999;
 }
 
 /* Ensure table container doesn't clip dropdowns */

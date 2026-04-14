@@ -256,6 +256,30 @@ const NoteCreditoList = () => {
         return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount || 0);
     };
 
+    const renderStatus = (f) => {
+        const status = f.statoFatturaElettronica || 'BO';
+        let label = status;
+        let className = 'badge-sdi-';
+
+        switch (status) {
+            case 'BO': label = 'Bozza'; className += 'bo'; break;
+            case 'DI': label = 'Definitiva'; className += 'di'; break;
+            case 'IN': label = 'Inviata'; className += 'in'; break;
+            case 'AC': label = 'Accettata'; className += 'ac'; break;
+            case 'RC': label = 'Rifiutata'; className += 'rc'; break;
+            case 'NS': label = 'Scartata'; className += 'rc'; break;
+            case 'MC': label = 'Mancata Cons.'; className += 'mc'; break;
+            case 'RF': label = 'Ref. SDI'; className += 'rc'; break;
+            default: label = status; className += 'default';
+        }
+
+        return (
+            <div className="sdi-status-container">
+                <span className={`badge-sdi ${className}`}>{label}</span>
+            </div>
+        );
+    };
+
     const totalAmount = note.reduce((sum, item) => sum + (item.totale || 0), 0);
 
 
@@ -428,12 +452,7 @@ const NoteCreditoList = () => {
                                                 <td>{f.denominazioneCliente}</td>
                                                 <td>{f.agente || '-'}</td>
                                                 <td style={{ whiteSpace: 'nowrap' }}>
-                                                    {formatStato(f.statoFatturaElettronica).split('\n').map((line, i) => (
-                                                        <React.Fragment key={i}>
-                                                            {line}
-                                                            {i < formatStato(f.statoFatturaElettronica).split('\n').length - 1 && <br />}
-                                                        </React.Fragment>
-                                                    ))}
+                                                    {renderStatus(f)}
                                                 </td>
                                                 <td className="text-right">{formatMoney(f.totale)}</td>
                                                 <td className="text-right">

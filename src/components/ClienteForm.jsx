@@ -204,7 +204,8 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                 <div className="form-group">
                                     <label className="required">Codice</label>
                                     <div className="flex-input-group">
-                                        <input type="text" className="form-control" name="codice" value={data.codice} onChange={handleFormChange} required />
+                                        <input type="text" style={{ display: 'none' }} autoComplete="off" />
+                                        <input type="text" className="form-control" name="codice" value={data.codice} onChange={handleFormChange} required autoComplete="off" />
                                         <button className="btn btn-default" type="button" onClick={generateCodice} title="Genera codice automatico">Genera</button>
                                     </div>
                                 </div>
@@ -235,19 +236,19 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                             <div className="col-md-4">
                                 <div className="form-group">
                                     <label>Codice Fiscale</label>
-                                    <input type="text" className="form-control" name="codiceFiscale" value={data.codiceFiscale} onChange={handleFormChange} />
+                                    <input type="text" className="form-control" name="codiceFiscale" value={data.codiceFiscale} onChange={handleFormChange} autoComplete="off" />
                                 </div>
                             </div>
                             <div className="col-md-4">
                                 <div className="form-group">
                                     <label>Partita IVA</label>
-                                    <input type="text" className="form-control" name="partitaIva" value={data.partitaIva} onChange={handleFormChange} />
+                                    <input type="text" className="form-control" name="partitaIva" value={data.partitaIva} onChange={handleFormChange} autoComplete="off" />
                                 </div>
                             </div>
                             <div className="col-md-4">
                                 <div className="form-group">
                                     <label>Referente Principale</label>
-                                    <input type="text" className="form-control" name="referente" value={data.referente} onChange={handleFormChange} />
+                                    <input type="text" className="form-control" name="referente" value={data.referente} onChange={handleFormChange} autoComplete="off" />
                                 </div>
                             </div>
                         </div>
@@ -282,7 +283,7 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                 <div className="col-md-6">
                                     <div className="form-group">
                                         <label>Indirizzo</label>
-                                        <input type="text" className="form-control" name="indirizzo" value={currentAddress.indirizzo || ''} onChange={handleAddressChange} />
+                                        <input type="text" className="form-control" name="indirizzo" value={currentAddress.indirizzo || ''} onChange={handleAddressChange} autoComplete="off" />
                                     </div>
                                 </div>
                                 <div className="col-md-3">
@@ -303,13 +304,13 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                             </div>
                             <div className="row">
                                 <div className="col-md-3">
-                                    <div className="form-group"><label>Cap</label><input type="text" className="form-control" name="cap" value={currentAddress.cap || ''} onChange={handleAddressChange} /></div>
+                                    <div className="form-group"><label>Cap</label><input type="text" className="form-control" name="cap" value={currentAddress.cap || ''} onChange={handleAddressChange} autoComplete="off" /></div>
                                 </div>
                                 <div className="col-md-3">
-                                    <div className="form-group"><label>Provincia</label><input type="text" className="form-control" name="provincia" value={currentAddress.provincia || ''} onChange={handleAddressChange} maxLength="2" /></div>
+                                    <div className="form-group"><label>Provincia</label><input type="text" className="form-control" name="provincia" value={currentAddress.provincia || ''} onChange={handleAddressChange} maxLength="2" autoComplete="off" /></div>
                                 </div>
                                 <div className="col-md-3">
-                                    <div className="form-group"><label>Nazione</label><input type="text" className="form-control" name="nazione" value={currentAddress.nazione || ''} onChange={handleAddressChange} /></div>
+                                    <div className="form-group"><label>Nazione</label><input type="text" className="form-control" name="nazione" value={currentAddress.nazione || ''} onChange={handleAddressChange} autoComplete="off" /></div>
                                 </div>
                             </div>
                         </div>
@@ -332,19 +333,19 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                 <div className="col-md-4">
                                     <div className="form-group">
                                         <label>Referente Contatto</label>
-                                        <input type="text" className="form-control" name="referente" value={currentContact.referente || ''} onChange={handleContactChange} />
+                                        <input type="text" className="form-control" name="referente" value={currentContact.referente || ''} onChange={handleContactChange} autoComplete="off" />
                                     </div>
                                 </div>
                                 <div className="col-md-4">
                                     <div className="form-group">
                                         <label>Email</label>
-                                        <input type="email" className="form-control" name="email" value={currentContact.email || ''} onChange={handleContactChange} />
+                                        <input type="email" className="form-control" name="email" value={currentContact.email || ''} onChange={handleContactChange} autoComplete="off" />
                                     </div>
                                 </div>
                                 <div className="col-md-4">
                                     <div className="form-group">
                                         <label>Telefono</label>
-                                        <input type="text" className="form-control" name="telefono" value={currentContact.telefono || ''} onChange={handleContactChange} />
+                                        <input type="text" className="form-control" name="telefono" value={currentContact.telefono || ''} onChange={handleContactChange} autoComplete="off" />
                                     </div>
                                 </div>
                             </div>
@@ -358,13 +359,13 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                             <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>IBAN</label>
-                                    <input type="text" className="form-control" name="iban" value={data.iban || ''} onChange={handleIbanChange} />
+                                    <input type="text" className="form-control" name="iban" value={data.iban || ''} onChange={handleIbanChange} autoComplete="off" />
                                 </div>
                             </div>
                             <div className="compact-col compact-col-lg">
                                 <div className="form-group">
                                     <label>Banca Cliente</label>
-                                    <input type="text" className="form-control" name="banca" value={data.banca || ''} onChange={handleFormChange} />
+                                    <input type="text" className="form-control" name="banca" value={data.banca || ''} onChange={handleFormChange} autoComplete="off" />
                                 </div>
                             </div>
                         </div>
