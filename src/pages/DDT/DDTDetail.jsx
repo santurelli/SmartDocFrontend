@@ -7,7 +7,7 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaGlobe } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -28,6 +28,7 @@ import ListiniManagementModal from '../../components/modals/ListiniManagementMod
 import AspettoBeniManagementModal from '../../components/modals/AspettoBeniManagementModal';
 import CausaliTrasportoManagementModal from '../../components/modals/CausaliTrasportoManagementModal';
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
+import NazioneSelect from '../../components/common/NazioneSelect';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -123,12 +124,14 @@ const DDTDetail = () => {
         indirizzoIntestazione: '',
         capIntestazione: '',
         provinciaIntestazione: '',
+        nazioneIntestazione: 'Italia',
         codiceFiscale: '',
         partitaIva: '',
         cittaDestinazione: '',
         indirizzoDestinazione: '',
         capDestinazione: '',
         provinciaDestinazione: '',
+        nazioneDestinazione: 'Italia',
         noteConsegna: '',
         colli: '',
         pesoNetto: '',
@@ -303,12 +306,14 @@ const DDTDetail = () => {
                     indirizzoIntestazione: firstConfData.indirizzoIntestazione,
                     capIntestazione: firstConfData.capIntestazione,
                     provinciaIntestazione: firstConfData.provinciaIntestazione,
+                    nazioneIntestazione: firstConfData.nazioneIntestazione || 'Italia',
                     codiceFiscale: firstConfData.codiceFiscale,
                     partitaIva: firstConfData.partitaIva,
                     cittaDestinazione: firstConfData.cittaDestinazione,
                     indirizzoDestinazione: firstConfData.indirizzoDestinazione,
                     capDestinazione: firstConfData.capDestinazione,
-                    provinciaDestinazione: firstConfData.provinciaDestinazione
+                    provinciaDestinazione: firstConfData.provinciaDestinazione,
+                    nazioneDestinazione: firstConfData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstConfData.idCliente);
             }
@@ -382,12 +387,14 @@ const DDTDetail = () => {
                     indirizzoIntestazione: firstPrevData.indirizzoIntestazione,
                     capIntestazione: firstPrevData.capIntestazione,
                     provinciaIntestazione: firstPrevData.provinciaIntestazione,
+                    nazioneIntestazione: firstPrevData.nazioneIntestazione || 'Italia',
                     codiceFiscale: firstPrevData.codiceFiscale,
                     partitaIva: firstPrevData.partitaIva,
                     cittaDestinazione: firstPrevData.cittaDestinazione,
                     indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
                     capDestinazione: firstPrevData.capDestinazione,
-                    provinciaDestinazione: firstPrevData.provinciaDestinazione
+                    provinciaDestinazione: firstPrevData.provinciaDestinazione,
+                    nazioneDestinazione: firstPrevData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstPrevData.idCliente);
             }
@@ -448,12 +455,14 @@ const DDTDetail = () => {
                         cittaIntestazione: header.citta || '',
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
+                        nazioneIntestazione: header.nazione || 'Italia',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
                         cittaDestinazione: shipping.citta || '',
                         capDestinazione: shipping.cap || '',
                         provinciaDestinazione: shipping.provincia || '',
+                        nazioneDestinazione: shipping.nazione || 'Italia',
                     } : {}),
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
@@ -537,7 +546,9 @@ const DDTDetail = () => {
                 cittaDestinazione: c.citta,
                 indirizzoDestinazione: c.indirizzo,
                 capDestinazione: c.cap,
-                provinciaDestinazione: c.provincia
+                provinciaDestinazione: c.provincia,
+                nazioneIntestazione: c.nazione || 'Italia',
+                nazioneDestinazione: c.nazione || 'Italia'
             }));
             loadClientAddresses(c.id);
         } else {
@@ -562,7 +573,8 @@ const DDTDetail = () => {
                 indirizzoIntestazione: addr.indirizzo,
                 cittaIntestazione: addr.citta,
                 capIntestazione: addr.cap,
-                provinciaIntestazione: addr.provincia
+                provinciaIntestazione: addr.provincia,
+                nazioneIntestazione: addr.nazione || 'Italia'
             }));
         } else {
             setFormData(prev => ({
@@ -570,7 +582,8 @@ const DDTDetail = () => {
                 indirizzoDestinazione: addr.indirizzo,
                 cittaDestinazione: addr.citta,
                 capDestinazione: addr.cap,
-                provinciaDestinazione: addr.provincia
+                provinciaDestinazione: addr.provincia,
+                nazioneDestinazione: addr.nazione || 'Italia'
             }));
         }
         setShowAddressModal(false);
@@ -837,6 +850,15 @@ const DDTDetail = () => {
                                                         <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
+                                                <div className="row mb-4">
+                                                    <div className="col-md-12">
+                                                        <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                        <NazioneSelect
+                                                            value={formData.nazioneIntestazione}
+                                                            onChange={(val) => setFormData(prev => ({ ...prev, nazioneIntestazione: val }))}
+                                                        />
+                                                    </div>
+                                                </div>
                                                 <div className="row">
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Partita IVA</label>
@@ -875,6 +897,15 @@ const DDTDetail = () => {
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
                                                         <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    </div>
+                                                </div>
+                                                <div className="row mb-4">
+                                                    <div className="col-md-12">
+                                                        <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                        <NazioneSelect
+                                                            value={formData.nazioneDestinazione}
+                                                            onChange={(val) => setFormData(prev => ({ ...prev, nazioneDestinazione: val }))}
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="row">

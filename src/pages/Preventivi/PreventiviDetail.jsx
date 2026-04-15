@@ -24,10 +24,11 @@ import EntitySelectGroup from '../../components/EntitySelectGroup';
 import IndirizziSelectionModal from '../../components/modals/IndirizziSelectionModal';
 import ListiniManagementModal from '../../components/modals/ListiniManagementModal';
 import Swal from 'sweetalert2';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaCalculator, FaHome, FaAngleRight, FaWrench, FaCogs, FaMapMarkerAlt, FaTruck, FaPrint, FaCaretDown, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
 import CreatableSelect from 'react-select/creatable';
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
+import NazioneSelect from '../../components/common/NazioneSelect';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaCalculator, FaHome, FaAngleRight, FaWrench, FaCogs, FaMapMarkerAlt, FaTruck, FaPrint, FaCaretDown, FaFilePdf, FaArrowRight, FaGlobe } from 'react-icons/fa';
 import './PreventiviDetail.css';
 import '../../components/EntityForms.css';
 
@@ -190,14 +191,14 @@ const PreventiviDetail = () => {
         capIntestazione: '',
         cittaIntestazione: '',
         provinciaIntestazione: '',
-        nazioneIntestazione: '',
         partitaIva: '',
         codiceFiscale: '',
         indirizzoDestinazione: '',
         capDestinazione: '',
         cittaDestinazione: '',
         provinciaDestinazione: '',
-        nazioneDestinazione: '',
+        nazioneIntestazione: 'Italia',
+        nazioneDestinazione: 'Italia',
     });
 
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
@@ -270,14 +271,14 @@ const PreventiviDetail = () => {
                     capIntestazione: '',
                     cittaIntestazione: '',
                     provinciaIntestazione: '',
-                    nazioneIntestazione: '',
                     partitaIva: '',
                     codiceFiscale: '',
                     indirizzoDestinazione: '',
                     capDestinazione: '',
                     cittaDestinazione: '',
                     provinciaDestinazione: '',
-                    nazioneDestinazione: '',
+                    nazioneIntestazione: 'Italia',
+                    nazioneDestinazione: 'Italia',
                 });
                 setProdotti([]);
                 setTotals({ imponibile: 0, iva: 0, totale: 0 });
@@ -429,14 +430,14 @@ const PreventiviDetail = () => {
                         cittaIntestazione: header.citta || '',
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
-                        nazioneIntestazione: header.nazione || '',
+                        nazioneIntestazione: header.nazione || 'Italia',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
                         cittaDestinazione: shipping.citta || '',
                         capDestinazione: shipping.cap || '',
                         provinciaDestinazione: shipping.provincia || '',
-                        nazioneDestinazione: shipping.nazione || '',
+                        nazioneDestinazione: shipping.nazione || 'Italia',
                     } : {}),
                     // Ensure core fields are populated if missing from suggestion
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
@@ -458,7 +459,7 @@ const PreventiviDetail = () => {
                 cittaIntestazione: ind.citta || '',
                 capIntestazione: ind.cap || '',
                 provinciaIntestazione: ind.provincia || '',
-                nazioneIntestazione: ind.nazione || '',
+                nazioneIntestazione: ind.nazione || 'Italia',
             }));
         } else {
             setFormData(prev => ({
@@ -467,7 +468,7 @@ const PreventiviDetail = () => {
                 cittaDestinazione: ind.citta || '',
                 capDestinazione: ind.cap || '',
                 provinciaDestinazione: ind.provincia || '',
-                nazioneDestinazione: ind.nazione || '',
+                nazioneDestinazione: ind.nazione || 'Italia',
             }));
         }
     };
@@ -801,11 +802,16 @@ const PreventiviDetail = () => {
                                                     cittaIntestazione: c.citta || '',
                                                     capIntestazione: c.cap || '',
                                                     provinciaIntestazione: c.provincia || '',
-                                                    nazioneIntestazione: c.nazione || '',
+                                                    nazioneIntestazione: c.nazione || 'Italia',
                                                     partitaIva: c.partitaIva || '',
                                                     codiceFiscale: c.codiceFiscale || '',
                                                     idAgente: c.idAgente || prev.idAgente,
-                                                    idListino: c.idListino || ''
+                                                    idListino: c.idListino || '',
+                                                    indirizzoDestinazione: c.indirizzo || '',
+                                                    cittaDestinazione: c.citta || '',
+                                                    capDestinazione: c.cap || '',
+                                                    provinciaDestinazione: c.provincia || '',
+                                                    nazioneDestinazione: c.nazione || 'Italia',
                                                 }));
                                                 if (opt?.value) {
                                                     fetchClientIndirizzi(opt.value);
@@ -869,6 +875,15 @@ const PreventiviDetail = () => {
                                                         <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} autoComplete="off" />
                                                     </div>
                                                 </div>
+                                                <div className="row mb-4">
+                                                    <div className="col-md-12">
+                                                        <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                        <NazioneSelect
+                                                            value={formData.nazioneIntestazione}
+                                                            onChange={(val) => setFormData(prev => ({ ...prev, nazioneIntestazione: val }))}
+                                                        />
+                                                    </div>
+                                                </div>
                                                 <div className="row">
                                                     <div className="col-md-6">
                                                         <label className="premium-label">Partita IVA</label>
@@ -915,6 +930,15 @@ const PreventiviDetail = () => {
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
                                                         <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} autoComplete="off" />
+                                                    </div>
+                                                </div>
+                                                <div className="row mb-4">
+                                                    <div className="col-md-12">
+                                                        <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                        <NazioneSelect
+                                                            value={formData.nazioneDestinazione}
+                                                            onChange={(val) => setFormData(prev => ({ ...prev, nazioneDestinazione: val }))}
+                                                        />
                                                     </div>
                                                 </div>
                                                 <div className="row">

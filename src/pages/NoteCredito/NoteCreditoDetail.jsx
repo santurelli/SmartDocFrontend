@@ -1,12 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import NoteCreditoService from '../../services/NoteCreditoService';
-import FattureService from '../../services/FattureService';
-import ClientiService from '../../services/ClientiService';
-import AgentiService from '../../services/AgentiService';
-import ConfigurazioneService from '../../services/ConfigurazioneService';
-import ArticoliService from '../../services/ArticoliService';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaGlobe } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -25,6 +17,7 @@ import CausaliEsigibilitaDifferitaManagementModal from '../../components/modals/
 import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
 import ListiniManagementModal from '../../components/modals/ListiniManagementModal';
+import NazioneSelect from '../../components/common/NazioneSelect';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -119,12 +112,14 @@ const NoteCreditoDetail = () => {
         indirizzoIntestazione: '',
         capIntestazione: '',
         provinciaIntestazione: '',
+        nazioneIntestazione: 'Italia',
         codiceFiscale: '',
         partitaIva: '',
         cittaDestinazione: '',
         indirizzoDestinazione: '',
         capDestinazione: '',
         provinciaDestinazione: '',
+        nazioneDestinazione: 'Italia',
         flFatturaElettronica: 0,
         pec: '',
         codiceUfficioDestinazione: '',
@@ -307,12 +302,14 @@ const NoteCreditoDetail = () => {
                     indirizzoIntestazione: firstFattData.indirizzoIntestazione,
                     capIntestazione: firstFattData.capIntestazione,
                     provinciaIntestazione: firstFattData.provinciaIntestazione,
+                    nazioneIntestazione: firstFattData.nazioneIntestazione || 'Italia',
                     codiceFiscale: firstFattData.codiceFiscale,
                     partitaIva: firstFattData.partitaIva,
                     cittaDestinazione: firstFattData.cittaDestinazione,
                     indirizzoDestinazione: firstFattData.indirizzoDestinazione,
                     capDestinazione: firstFattData.capDestinazione,
-                    provinciaDestinazione: firstFattData.provinciaDestinazione
+                    provinciaDestinazione: firstFattData.provinciaDestinazione,
+                    nazioneDestinazione: firstFattData.nazioneDestinazione || 'Italia'
                 }));
                 setProdotti(allProdotti);
                 if (firstFattData.idCliente) {
@@ -401,12 +398,14 @@ const NoteCreditoDetail = () => {
                         cittaIntestazione: header.citta || '',
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
+                        nazioneIntestazione: header.nazione || 'Italia',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
                         cittaDestinazione: shipping.citta || '',
                         capDestinazione: shipping.cap || '',
                         provinciaDestinazione: shipping.provincia || '',
+                        nazioneDestinazione: shipping.nazione || 'Italia',
                     } : {}),
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
@@ -479,7 +478,9 @@ const NoteCreditoDetail = () => {
                 cittaDestinazione: c.citta,
                 indirizzoDestinazione: c.indirizzo,
                 capDestinazione: c.cap,
-                provinciaDestinazione: c.provincia
+                provinciaDestinazione: c.provincia,
+                nazioneIntestazione: c.nazione || 'Italia',
+                nazioneDestinazione: c.nazione || 'Italia'
             }));
             loadClientAddresses(c.id);
         } else {
@@ -504,7 +505,8 @@ const NoteCreditoDetail = () => {
                 indirizzoIntestazione: addr.indirizzo,
                 cittaIntestazione: addr.citta,
                 capIntestazione: addr.cap,
-                provinciaIntestazione: addr.provincia
+                provinciaIntestazione: addr.provincia,
+                nazioneIntestazione: addr.nazione || 'Italia'
             }));
         } else {
             setFormData(prev => ({
@@ -512,7 +514,8 @@ const NoteCreditoDetail = () => {
                 indirizzoDestinazione: addr.indirizzo,
                 cittaDestinazione: addr.citta,
                 capDestinazione: addr.cap,
-                provinciaDestinazione: addr.provincia
+                provinciaDestinazione: addr.provincia,
+                nazioneDestinazione: addr.nazione || 'Italia'
             }));
         }
         setShowAddressModal(false);
@@ -842,7 +845,17 @@ const NoteCreditoDetail = () => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" disabled={isLocked} />
+                                                </div>
+                                            </div>
+                                            <div className="row mb-4">
+                                                <div className="col-md-12">
+                                                    <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                    <NazioneSelect
+                                                        value={formData.nazioneIntestazione}
+                                                        onChange={(val) => setFormData(prev => ({ ...prev, nazioneIntestazione: val }))}
+                                                        disabled={isLocked}
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -882,7 +895,17 @@ const NoteCreditoDetail = () => {
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" disabled={isLocked} />
+                                                </div>
+                                            </div>
+                                            <div className="row mb-4">
+                                                <div className="col-md-12">
+                                                    <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                    <NazioneSelect
+                                                        value={formData.nazioneDestinazione}
+                                                        onChange={(val) => setFormData(prev => ({ ...prev, nazioneDestinazione: val }))}
+                                                        disabled={isLocked}
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="row">

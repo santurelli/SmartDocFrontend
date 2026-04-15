@@ -167,13 +167,7 @@
 }
 
 /* Table */
-.main-box {
-    background: #fff;
-    border-radius: 3px;
-    border: 1px solid #e7ebee;
-    padding: 20px;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
-}
+/* main-box now handled globally in index.css */
 
 .table thead th {
     text-transform: uppercase;

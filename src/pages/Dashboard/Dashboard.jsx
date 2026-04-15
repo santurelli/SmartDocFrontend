@@ -89,7 +89,7 @@ const Dashboard = () => {
             {/* Infoboxes - KPI */}
             <div className="row">
                 <div className="col-lg-3 col-sm-6 col-xs-12">
-                    <div className="main-box infographic-box colored emerald-bg">
+                    <div className="infographic-box colored emerald-bg">
                         <span className="icon-wrapper"><FaFrownOpen /></span>
                         <div className="info-content">
                             <span className="headline">Fatture insolute</span>
@@ -99,7 +99,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="col-lg-3 col-sm-6 col-xs-12">
-                    <div className="main-box infographic-box colored green-bg">
+                    <div className="infographic-box colored green-bg">
                         <span className="icon-wrapper"><FaPaperPlane /></span>
                         <div className="info-content">
                             <span className="headline">Fatture nel mese</span>
@@ -109,7 +109,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="col-lg-3 col-sm-6 col-xs-12">
-                    <div className="main-box infographic-box colored red-bg">
+                    <div className="infographic-box colored red-bg">
                         <span className="icon-wrapper"><FaMoneyBillWave /></span>
                         <div className="info-content">
                             <span className="headline">Crediti da riscuotere</span>
@@ -119,7 +119,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="col-lg-3 col-sm-6 col-xs-12">
-                    <div className="main-box infographic-box colored purple-bg">
+                    <div className="infographic-box colored purple-bg">
                         <span className="icon-wrapper"><FaInbox /></span>
                         <div className="info-content">
                             <span className="headline">Pagamenti da fare</span>
@@ -133,15 +133,15 @@ const Dashboard = () => {
                 {/* Main Graph */}
                 <div className="col-md-9">
                     <div className="main-box">
-                        <header className="main-box-header clearfix">
+                        <header className="main-box-header">
                             <h2>Fatture & Incassi</h2>
                         </header>
-                        <div className="main-box-body clearfix" style={{ height: '350px', padding: '20px' }}>
+                        <div className="main-box-body" style={{ height: '350px', padding: '20px' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                                    <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `€${val / 1000}k`} />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                    <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `€${val / 1000}k`} tick={{ fill: '#64748b', fontSize: 12 }} />
                                     <Tooltip
                                         formatter={(value) => formatCurrency(value)}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}

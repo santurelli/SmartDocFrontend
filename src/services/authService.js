@@ -12,11 +12,11 @@ const login = async (username, password, ente) => {
   });
 
   if (response.data.token) {
-    localStorage.setItem('user', JSON.stringify(response.data));
+    sessionStorage.setItem('user', JSON.stringify(response.data));
     const token = response.data.token;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      localStorage.setItem('appConfig', JSON.stringify(payload));
+      sessionStorage.setItem('appConfig', JSON.stringify(payload));
     } catch (e) {
       console.error("Error decoding token for config", e);
     }
@@ -26,12 +26,12 @@ const login = async (username, password, ente) => {
 };
 
 const getConfig = () => {
-  const cfg = localStorage.getItem('appConfig');
+  const cfg = sessionStorage.getItem('appConfig');
   return cfg ? JSON.parse(cfg) : {};
 }
 
 const updateConfig = (newConfig) => {
-  localStorage.setItem('appConfig', JSON.stringify(newConfig));
+  sessionStorage.setItem('appConfig', JSON.stringify(newConfig));
 }
 
 const logout = () => {

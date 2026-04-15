@@ -20,6 +20,7 @@ import NoteDocumentiManagementModal from './modals/NoteDocumentiManagementModal'
 import TipiPortoManagementModal from './modals/TipiPortoManagementModal';
 import VettoriManagementModal from './modals/VettoriManagementModal';
 import RisorseManagementModal from './modals/RisorseManagementModal';
+import NazioneSelect from './common/NazioneSelect';
 
 const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const [activeTab, setActiveTab] = useState('general');
@@ -81,6 +82,12 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
         const { name, value } = e.target;
         const updatedIndirizzi = [...data.elencoIndirizzi];
         updatedIndirizzi[activeAddressIndex] = { ...updatedIndirizzi[activeAddressIndex], [name]: value };
+        onChange({ ...data, elencoIndirizzi: updatedIndirizzi });
+    };
+
+    const handleNazioneChange = (value) => {
+        const updatedIndirizzi = [...data.elencoIndirizzi];
+        updatedIndirizzi[activeAddressIndex] = { ...updatedIndirizzi[activeAddressIndex], nazione: value };
         onChange({ ...data, elencoIndirizzi: updatedIndirizzi });
     };
 
@@ -310,7 +317,13 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                     <div className="form-group"><label>Provincia</label><input type="text" className="form-control" name="provincia" value={currentAddress.provincia || ''} onChange={handleAddressChange} maxLength="2" autoComplete="off" /></div>
                                 </div>
                                 <div className="col-md-3">
-                                    <div className="form-group"><label>Nazione</label><input type="text" className="form-control" name="nazione" value={currentAddress.nazione || ''} onChange={handleAddressChange} autoComplete="off" /></div>
+                                    <div className="form-group">
+                                        <label>Nazione</label>
+                                        <NazioneSelect 
+                                            value={currentAddress.nazione || ''} 
+                                            onChange={handleNazioneChange} 
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

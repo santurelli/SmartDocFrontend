@@ -8,7 +8,7 @@ import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
 import ConfOrdineService from '../../services/ConfOrdineService';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaPaperPlane, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaPaperPlane, FaExclamationTriangle, FaGlobe } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -26,6 +26,7 @@ import CausaliEsigibilitaDifferitaManagementModal from '../../components/modals/
 import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
 import ListiniManagementModal from '../../components/modals/ListiniManagementModal';
+import NazioneSelect from '../../components/common/NazioneSelect';
 
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -107,12 +108,14 @@ const FattureDetail = () => {
         indirizzoIntestazione: '',
         capIntestazione: '',
         provinciaIntestazione: '',
+        nazioneIntestazione: 'Italia',
         codiceFiscale: '',
         partitaIva: '',
         cittaDestinazione: '',
         indirizzoDestinazione: '',
         capDestinazione: '',
         provinciaDestinazione: '',
+        nazioneDestinazione: 'Italia',
         noteConsegna: '',
         annotazioneEstesa: '',
         tipoFattura: 'FATTURA',
@@ -155,11 +158,11 @@ const FattureDetail = () => {
     const [showSaveMenu, setShowSaveMenu] = useState(false);
     const [showParticelleModal, setShowParticelleModal] = useState(false);
     const saveMenuRef = useRef(null);
-    const isReadOnly = !isNew && ['IN', 'AC', 'RC', 'MC', 'RF'].includes(formData.statoFatturaElettronica);
+    const isReadOnly = !isNew && ['IN', 'AC', 'MC', 'RF'].includes(formData.statoFatturaElettronica);
 
     // Derived locking state
     useEffect(() => {
-        const lockedStatuses = ['DI', 'IN', 'AC', 'RC', 'NS', 'MC', 'RF'];
+        const lockedStatuses = ['DI', 'IN', 'AC', 'NS', 'MC', 'RF'];
         setIsLocked(!isNew && lockedStatuses.includes(formData.statoFatturaElettronica));
     }, [formData.statoFatturaElettronica, isNew]);
 
@@ -411,12 +414,14 @@ const FattureDetail = () => {
                     indirizzoIntestazione: firstPrevData.indirizzoIntestazione,
                     capIntestazione: firstPrevData.capIntestazione,
                     provinciaIntestazione: firstPrevData.provinciaIntestazione,
+                    nazioneIntestazione: firstPrevData.nazioneIntestazione || 'Italia',
                     codiceFiscale: firstPrevData.codiceFiscale,
                     partitaIva: firstPrevData.partitaIva,
                     cittaDestinazione: firstPrevData.cittaDestinazione,
                     indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
                     capDestinazione: firstPrevData.capDestinazione,
-                    provinciaDestinazione: firstPrevData.provinciaDestinazione
+                    provinciaDestinazione: firstPrevData.provinciaDestinazione,
+                    nazioneDestinazione: firstPrevData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstPrevData.idCliente, false);
             }
@@ -489,12 +494,14 @@ const FattureDetail = () => {
                     indirizzoIntestazione: firstConfData.indirizzoIntestazione,
                     capIntestazione: firstConfData.capIntestazione,
                     provinciaIntestazione: firstConfData.provinciaIntestazione,
+                    nazioneIntestazione: firstConfData.nazioneIntestazione || 'Italia',
                     codiceFiscale: firstConfData.codiceFiscale,
                     partitaIva: firstConfData.partitaIva,
                     cittaDestinazione: firstConfData.cittaDestinazione,
                     indirizzoDestinazione: firstConfData.indirizzoDestinazione,
                     capDestinazione: firstConfData.capDestinazione,
-                    provinciaDestinazione: firstConfData.provinciaDestinazione
+                    provinciaDestinazione: firstConfData.provinciaDestinazione,
+                    nazioneDestinazione: firstConfData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstConfData.idCliente, false);
             }
@@ -582,12 +589,14 @@ const FattureDetail = () => {
                         cittaIntestazione: header.citta || '',
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
+                        nazioneIntestazione: header.nazione || 'Italia',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
                         cittaDestinazione: shipping.citta || '',
                         capDestinazione: shipping.cap || '',
                         provinciaDestinazione: shipping.provincia || '',
+                        nazioneDestinazione: shipping.nazione || 'Italia',
                     } : {}),
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
@@ -711,7 +720,9 @@ const FattureDetail = () => {
                 cittaDestinazione: c.citta,
                 indirizzoDestinazione: c.indirizzo,
                 capDestinazione: c.cap,
-                provinciaDestinazione: c.provincia
+                provinciaDestinazione: c.provincia,
+                nazioneIntestazione: c.nazione || 'Italia',
+                nazioneDestinazione: c.nazione || 'Italia'
             }));
             loadClientAddresses(c.id);
         } else {
@@ -736,7 +747,8 @@ const FattureDetail = () => {
                 indirizzoIntestazione: addr.indirizzo,
                 cittaIntestazione: addr.citta,
                 capIntestazione: addr.cap,
-                provinciaIntestazione: addr.provincia
+                provinciaIntestazione: addr.provincia,
+                nazioneIntestazione: addr.nazione || 'Italia'
             }));
         } else {
             setFormData(prev => ({
@@ -744,7 +756,8 @@ const FattureDetail = () => {
                 indirizzoDestinazione: addr.indirizzo,
                 cittaDestinazione: addr.citta,
                 capDestinazione: addr.cap,
-                provinciaDestinazione: addr.provincia
+                provinciaDestinazione: addr.provincia,
+                nazioneDestinazione: addr.nazione || 'Italia'
             }));
         }
         setShowAddressModal(false);
@@ -1017,7 +1030,7 @@ const FattureDetail = () => {
                                                 name="tipoFattura"
                                                 value={formData.tipoFattura}
                                                 onChange={handleHeaderChange}
-                                                disabled={isLocked}
+                                                disabled={isLocked || formData.statoFatturaElettronica === 'RC'}
                                             >
                                                 <option value="FATTURA">Fattura</option>
                                                 <option value="FATTURA_ACCOMPAGNATORIA">Fattura Accompagnatoria</option>
@@ -1037,7 +1050,7 @@ const FattureDetail = () => {
                                                     name="numDocumento"
                                                     value={formData.numDocumento}
                                                     onChange={handleHeaderChange}
-                                                    disabled={isLocked}
+                                                    disabled={isLocked || formData.statoFatturaElettronica === 'RC'}
                                                 />
                                                 <span className="input-group-addon" style={{ display: 'flex', alignItems: 'center', padding: '0 10px', background: '#eee', borderTop: '1px solid #dfe4e7', borderBottom: '1px solid #dfe4e7' }}>/</span>
                                                 <div style={{ flex: '0 0 130px' }}>
@@ -1048,7 +1061,7 @@ const FattureDetail = () => {
                                                         onChange={(opt) => setFormData(prev => ({ ...prev, particella: opt?.value || '' }))}
                                                         styles={particellaSelectStyles}
                                                         placeholder="-"
-                                                        isDisabled={isLocked}
+                                                        isDisabled={isLocked || formData.statoFatturaElettronica === 'RC'}
                                                         noOptionsMessage={() => "Nuovo..."}
                                                         formatCreateLabel={(inputValue) => `Usa "${inputValue}"`}
                                                     />
@@ -1058,7 +1071,7 @@ const FattureDetail = () => {
                                                     className="premium-wrench-btn"
                                                     onClick={() => setShowParticelleModal(true)}
                                                     title="Configura suffissi"
-                                                    disabled={isLocked}
+                                                    disabled={isLocked || formData.statoFatturaElettronica === 'RC'}
                                                 >
                                                     <FaWrench />
                                                 </button>
@@ -1076,7 +1089,7 @@ const FattureDetail = () => {
                                                     value={formData.dataDocumento}
                                                     onChange={handleHeaderChange}
                                                     required
-                                                    disabled={isLocked}
+                                                    disabled={isLocked || formData.statoFatturaElettronica === 'RC'}
                                                 />
                                             </div>
                                         </div>
@@ -1182,6 +1195,16 @@ const FattureDetail = () => {
                                                     <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
+                                            <div className="row mb-4">
+                                                <div className="col-md-12">
+                                                    <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                    <NazioneSelect
+                                                        value={formData.nazioneIntestazione}
+                                                        onChange={(val) => setFormData(prev => ({ ...prev, nazioneIntestazione: val }))}
+                                                        disabled={isLocked}
+                                                    />
+                                                </div>
+                                            </div>
                                             <div className="row">
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Partita IVA</label>
@@ -1220,6 +1243,16 @@ const FattureDetail = () => {
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
                                                     <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                </div>
+                                            </div>
+                                            <div className="row mb-4">
+                                                <div className="col-md-12">
+                                                    <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                    <NazioneSelect
+                                                        value={formData.nazioneDestinazione}
+                                                        onChange={(val) => setFormData(prev => ({ ...prev, nazioneDestinazione: val }))}
+                                                        disabled={isLocked}
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="row">
@@ -1551,8 +1584,8 @@ const FattureDetail = () => {
                                         <button type="button" 
                                             className="split-btn-item" 
                                             onClick={handleSendSdi}
-                                            disabled={!(formData.flElettronica === 1 && (formData.statoFatturaElettronica === 'NS' || formData.statoFatturaElettronica === 'BO'))}
-                                            title={formData.flElettronica === 1 && (formData.statoFatturaElettronica === 'NS' || formData.statoFatturaElettronica === 'BO') ? 'Reinvia la fattura allo SDI (rigenera XML)' : 'Disponibile solo per fatture scartate o in bozza'}
+                                            disabled={!(formData.flElettronica === 1 && (formData.statoFatturaElettronica === 'NS' || formData.statoFatturaElettronica === 'BO' || formData.statoFatturaElettronica === 'RC'))}
+                                            title={formData.flElettronica === 1 && (formData.statoFatturaElettronica === 'NS' || formData.statoFatturaElettronica === 'BO' || formData.statoFatturaElettronica === 'RC') ? 'Reinvia la fattura allo SDI (rigenera XML)' : 'Disponibile solo per fatture scartate, in bozza o consegnate'}
                                         >
                                             <FaPaperPlane /> Reinvia a SDI
                                         </button>

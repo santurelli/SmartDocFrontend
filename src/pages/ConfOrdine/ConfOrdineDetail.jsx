@@ -6,7 +6,7 @@ import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
 import PreventiviService from '../../services/PreventiviService';
-import { FaSave, FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaArrowRight, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaGlobe } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -25,6 +25,7 @@ import RisorseManagementModal from '../../components/modals/RisorseManagementMod
 import ParticelleManagementModal from '../../components/modals/ParticelleManagementModal';
 import ListiniManagementModal from '../../components/modals/ListiniManagementModal';
 import ProgettoQuickModal from '../../components/modals/ProgettoQuickModal';
+import NazioneSelect from '../../components/common/NazioneSelect';
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
 import ScadenzeTable from '../../components/common/ScadenzeTable';
@@ -148,12 +149,14 @@ const ConfOrdineDetail = () => {
         indirizzoIntestazione: '',
         capIntestazione: '',
         provinciaIntestazione: '',
+        nazioneIntestazione: 'Italia',
         codiceFiscale: '',
         partitaIva: '',
         cittaDestinazione: '',
         indirizzoDestinazione: '',
         capDestinazione: '',
         provinciaDestinazione: '',
+        nazioneDestinazione: 'Italia',
         noteConsegna: '',
         colli: '',
         pesoNetto: '',
@@ -334,12 +337,14 @@ const ConfOrdineDetail = () => {
                     indirizzoIntestazione: firstPrevData.indirizzoIntestazione,
                     capIntestazione: firstPrevData.capIntestazione,
                     provinciaIntestazione: firstPrevData.provinciaIntestazione,
+                    nazioneIntestazione: firstPrevData.nazioneIntestazione || 'Italia',
                     codiceFiscale: firstPrevData.codiceFiscale,
                     partitaIva: firstPrevData.partitaIva,
                     cittaDestinazione: firstPrevData.cittaDestinazione,
                     indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
                     capDestinazione: firstPrevData.capDestinazione,
                     provinciaDestinazione: firstPrevData.provinciaDestinazione,
+                    nazioneDestinazione: firstPrevData.nazioneDestinazione || 'Italia',
                     annotazioneEstesa: firstPrevData.annotazioneEstesa
                 }));
 
@@ -413,12 +418,14 @@ const ConfOrdineDetail = () => {
                         cittaIntestazione: header.citta || '',
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
+                        nazioneIntestazione: header.nazione || 'Italia',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
                         cittaDestinazione: shipping.citta || '',
                         capDestinazione: shipping.cap || '',
                         provinciaDestinazione: shipping.provincia || '',
+                        nazioneDestinazione: shipping.nazione || 'Italia',
                     } : {}),
                     // Ensure core fields are populated
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
@@ -517,7 +524,9 @@ const ConfOrdineDetail = () => {
                 cittaDestinazione: c.citta,
                 indirizzoDestinazione: c.indirizzo,
                 capDestinazione: c.cap,
-                provinciaDestinazione: c.provincia
+                provinciaDestinazione: c.provincia,
+                nazioneIntestazione: c.nazione || 'Italia',
+                nazioneDestinazione: c.nazione || 'Italia'
             }));
             loadClientAddresses(c.id);
         } else {
@@ -542,7 +551,8 @@ const ConfOrdineDetail = () => {
                 indirizzoIntestazione: addr.indirizzo,
                 cittaIntestazione: addr.citta,
                 capIntestazione: addr.cap,
-                provinciaIntestazione: addr.provincia
+                provinciaIntestazione: addr.provincia,
+                nazioneIntestazione: addr.nazione || 'Italia'
             }));
         } else {
             setFormData(prev => ({
@@ -550,7 +560,8 @@ const ConfOrdineDetail = () => {
                 indirizzoDestinazione: addr.indirizzo,
                 cittaDestinazione: addr.citta,
                 capDestinazione: addr.cap,
-                provinciaDestinazione: addr.provincia
+                provinciaDestinazione: addr.provincia,
+                nazioneDestinazione: addr.nazione || 'Italia'
             }));
         }
         setShowAddressModal(false);
@@ -838,6 +849,15 @@ const ConfOrdineDetail = () => {
                                                     <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
                                                 </div>
                                             </div>
+                                            <div className="row mb-4">
+                                                <div className="col-md-12">
+                                                    <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                    <NazioneSelect
+                                                        value={formData.nazioneIntestazione}
+                                                        onChange={(val) => setFormData(prev => ({ ...prev, nazioneIntestazione: val }))}
+                                                    />
+                                                </div>
+                                            </div>
                                             <div className="row">
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Partita IVA</label>
@@ -884,6 +904,15 @@ const ConfOrdineDetail = () => {
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
                                                     <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                </div>
+                                            </div>
+                                            <div className="row mb-4">
+                                                <div className="col-md-12">
+                                                    <label className="premium-label"><FaGlobe style={{marginRight: '5px'}}/> Na<span>zio</span>ne</label>
+                                                    <NazioneSelect
+                                                        value={formData.nazioneDestinazione}
+                                                        onChange={(val) => setFormData(prev => ({ ...prev, nazioneDestinazione: val }))}
+                                                    />
                                                 </div>
                                             </div>
                                             <div className="row">
