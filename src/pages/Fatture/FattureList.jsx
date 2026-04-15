@@ -545,6 +545,11 @@ const FattureList = () => {
                                         <FaPlus /> Nuova Nota di Debito
                                     </button>
                                 )}
+                                {isEnabled('ABILITA_FATTURE_SEMPLIFICATE') && (
+                                    <button className="split-btn-item" onClick={() => navigate('/fatture/new?tipo=FATTURA_SEMPLIFICATA&elet=1')}>
+                                        <FaPlus /> Nuova Fattura Semplificata
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>

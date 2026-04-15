@@ -187,6 +187,7 @@ const FattureDetail = () => {
         if (formData.tipoFattura === 'FATTURA_ACCOMPAGNATORIA') type = 'Fattura Accompagnatoria';
         if (formData.tipoFattura === 'FATTURA_PROFORMA') type = 'Fattura Pro Forma';
         if (formData.tipoFattura === 'NOTA_DEBITO') type = 'Nota di Debito';
+        if (formData.tipoFattura === 'FATTURA_SEMPLIFICATA') type = 'Fattura Semplificata (TD07)';
         return prefix + type;
     };
 
@@ -756,13 +757,26 @@ const FattureDetail = () => {
         if (!prodotti || prodotti.length === 0) { Swal.fire('Errore', 'Inserire almeno un articolo', 'error'); return false; }
 
         // Validazione SDI per fatture non Pro Forma
-        if (formData.tipoFattura !== 'FATTURA_PROFORMA' && formData.flFatturaElettronica === 1) {
-            if (!formData.indirizzoIntestazione?.trim()) { Swal.fire('Errore SDI', 'L\'indirizzo del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
-            if (!formData.cittaIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il comune del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
-            if (!formData.capIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il CAP del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
-            if (!formData.provinciaIntestazione?.trim()) { Swal.fire('Errore SDI', 'La provincia del cliente è obbligatorio per la fatturazione elettronica.', 'error'); return false; }
+        if (formData.tipoFattura !== 'FATTURA_PROFORMA' && formData.tipoFattura !== 'FATTURA_SEMPLIFICATA' && formData.flFatturaElettronica === 1) {
+            if (!formData.indirizzoIntestazione?.trim()) { Swal.fire('Errore SDI', 'L\'indirizzo del cliente è obbligatorio per la fatturazione elettronica ordinaria.', 'error'); return false; }
+            if (!formData.cittaIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il comune del cliente è obbligatorio per la fatturazione elettronica ordinaria.', 'error'); return false; }
+            if (!formData.capIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il CAP del cliente è obbligatorio per la fatturazione elettronica ordinaria.', 'error'); return false; }
+            if (!formData.provinciaIntestazione?.trim()) { Swal.fire('Errore SDI', 'La provincia del cliente è obbligatorio per la fatturazione elettronica ordinaria.', 'error'); return false; }
             if (!formData.partitaIva?.trim() && !formData.codiceFiscale?.trim()) { 
-                Swal.fire('Errore SDI', 'È necessario inserire la Partita IVA o il Codice Fiscale del cliente per la fatturazione elettronica.', 'error'); 
+                Swal.fire('Errore SDI', 'È necessario inserire la Partita IVA o il Codice Fiscale del cliente per la fatturazione elettronica ordinaria.', 'error'); 
+                return false; 
+            }
+        }
+
+        // Validazione specifica per Fattura Semplificata
+        if (formData.tipoFattura === 'FATTURA_SEMPLIFICATA') {
+            const total = calculateTotalDocument(true);
+            if (total > 400) {
+                Swal.fire('Errore SDI', 'La fattura semplificata non può superare i 400€ (IVA inclusa)', 'error');
+                return false;
+            }
+            if (!formData.partitaIva?.trim() && !formData.codiceFiscale?.trim()) { 
+                Swal.fire('Errore SDI', 'È necessario inserire la Partita IVA o il Codice Fiscale del cliente per la fattura semplificata.', 'error'); 
                 return false; 
             }
         }
@@ -1009,6 +1023,7 @@ const FattureDetail = () => {
                                                 <option value="FATTURA_ACCOMPAGNATORIA">Fattura Accompagnatoria</option>
                                                 <option value="FATTURA_PROFORMA">Fattura Pro Forma</option>
                                                 <option value="NOTA_DEBITO">Nota di Debito</option>
+                                                <option value="FATTURA_SEMPLIFICATA">Fattura Semplificata (TD07)</option>
                                             </select>
                                         </div>
                                     </div>

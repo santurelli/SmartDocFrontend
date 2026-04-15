@@ -15,6 +15,7 @@ const ImpostazioniDocumentiPage = () => {
         ABILITA_FATTURE: { chiave: 'ABILITA_FATTURE', valore: '1', dominio: 'DOCUMENTI' },
         ABILITA_NOTE_DEBITO: { chiave: 'ABILITA_NOTE_DEBITO', valore: '1', dominio: 'DOCUMENTI' },
         ABILITA_NOTE_CREDITO: { chiave: 'ABILITA_NOTE_CREDITO', valore: '1', dominio: 'DOCUMENTI' },
+        ABILITA_FATTURE_SEMPLIFICATE: { chiave: 'ABILITA_FATTURE_SEMPLIFICATE', valore: '0', dominio: 'DOCUMENTI' },
         // Ciclo Passivo
         ABILITA_FATTURE_FORNITORE: { chiave: 'ABILITA_FATTURE_FORNITORE', valore: '1', dominio: 'DOCUMENTI' },
         ABILITA_NOTE_CREDITO_FORNITORE: { chiave: 'ABILITA_NOTE_CREDITO_FORNITORE', valore: '1', dominio: 'DOCUMENTI' }
@@ -119,6 +120,7 @@ const ImpostazioniDocumentiPage = () => {
                             {renderToggle('ABILITA_FATTURE', 'Fatture')}
                             {renderToggle('ABILITA_NOTE_DEBITO', 'Note di Debito')}
                             {renderToggle('ABILITA_NOTE_CREDITO', 'Note di Credito')}
+                            {renderToggle('ABILITA_FATTURE_SEMPLIFICATE', 'Fatture Semplificate (TD07)')}
                         </div>
                     </div>
 

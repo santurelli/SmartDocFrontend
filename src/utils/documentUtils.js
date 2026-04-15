@@ -109,7 +109,8 @@ export const formatTipoFattura = (tipo) => {
         'FATTURA_ACCOMPAGNATORIA': 'Accompagnatoria',
         'FATTURA_ACCONTO': 'Acconto',
         'FATTURA_PROFORMA': 'Pro Forma',
-        'NOTA_DEBITO': 'Nota di Debito'
+        'NOTA_DEBITO': 'Nota di Debito',
+        'FATTURA_SEMPLIFICATA': 'Semplificata (TD07)'
     };
     return map[tipo] || tipo.replace(/_/g, ' ');
 };
