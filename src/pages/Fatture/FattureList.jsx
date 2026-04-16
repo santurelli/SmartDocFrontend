@@ -45,6 +45,7 @@ const FattureList = () => {
     const [selectedIds, setSelectedIds] = useState([]);
     const [activeActionMenu, setActiveActionMenu] = useState(null);
     const [docConfigs, setDocConfigs] = useState(null);
+    const [globalConfigs, setGlobalConfigs] = useState(null);
 
     // Filters
     const [filters, setFilters] = useState({
@@ -101,12 +102,16 @@ const FattureList = () => {
         try {
             const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
             if (res.data) setDocConfigs(res.data);
+
+            const resGlobal = await ConfigurazioneService.getByDomain('GLOBAL');
+            if (resGlobal.data) setGlobalConfigs(resGlobal.data);
         } catch (err) {
             console.error("Error loading fatture configurations:", err);
         }
     };
 
     const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const fetchAgenti = async () => {
         try {
@@ -384,18 +389,57 @@ const FattureList = () => {
         return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount || 0);
     };
 
+    const renderInternalBadge = (f) => {
+        const status = f.statoFatturaElettronica;
+        if (status === 'BO' || !status) {
+            return <span className="internal-status-badge badge-bozza">Bozza</span>;
+        } else if (status === 'DI') {
+            return <span className="internal-status-badge badge-definitiva">Definitiva</span>;
+        }
+        return null;
+    };
+
+    const renderPaymentProgress = (f) => {
+        const hasScadenze = f.scadenzeCount > 0;
+        let perc = 0;
+        let label = '';
+
+        if (hasScadenze) {
+            perc = (f.scadenzePagateCount / f.scadenzeCount) * 100;
+            label = `Pagate ${f.scadenzePagateCount} di ${f.scadenzeCount} scadenze`;
+        } else {
+            const totale = f.totaleDocumento || f.totale || 0;
+            const pagato = f.totalePagato || 0;
+            perc = totale > 0 ? Math.min(100, Math.max(0, (pagato / totale) * 100)) : 0;
+            label = `Pagato: ${formatMoney(pagato)} su ${formatMoney(totale)}`;
+        }
+        
+        // Colore dinamico basato sullo stato
+        let barClass = 'bg-danger';
+        if (perc >= 100) barClass = 'bg-success';
+        else if (perc > 0) barClass = 'bg-warning';
+
+        return (
+            <div className="payment-progress-wrapper" title={label}>
+                <div className="payment-progress-bar-container">
+                    <div 
+                        className={`payment-progress-bar ${barClass}`} 
+                        style={{ width: `${perc}%` }}
+                    ></div>
+                </div>
+            </div>
+        );
+    };
+
     const renderSdiStatus = (f) => {
         const isElettronica = f.flFatturaElettronica === 1;
         const status = f.statoFatturaElettronica;
         
-        if (!isElettronica) {
-            if (status === 'BO' || !status) {
-                return <span className="sdi-badge sdi-badge-bo">Bozza</span>;
-            } else if (status === 'DI') {
-                return <span className="sdi-badge sdi-badge-di">Definitiva</span>;
-            }
-            return null;
-        }
+        // Se non è elettronica, lo stato interno è già gestito dal badge
+        if (!isElettronica) return null;
+        
+        // Se è Bozza o Definitiva (stati interni), non mostriamo nulla nella colonna SDI
+        if (status === 'BO' || status === 'DI' || !status) return null;
 
         const descr = f.descrizioneStatoFatturaElettronica || status;
         const error = f.erroreConsegna || f.erroreXml;
@@ -592,23 +636,27 @@ const FattureList = () => {
                             menuPortalTarget={document.body}
                         />
                     </div>
-                    <div className="filter-field" style={{ minWidth: '200px' }}>
-                        <label>Agente:</label>
-                        <Select
-                            isClearable
-                            options={agenti.map(a => ({ value: a.id, label: a.denominazione }))}
-                            onChange={(opt) => setFilters({ ...filters, idAgente: opt?.value, nomeAgente: opt?.label })}
-                            value={filters.idAgente ? { value: filters.idAgente, label: filters.nomeAgente } : null}
-                            placeholder="Tutti..."
-                            noOptionsMessage={() => "Nessun risultato trovato"}
-                            loadingMessage={() => "Caricamento..."}
-                            styles={{
-                                control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
-                                menuPortal: (base) => ({ ...base, zIndex: 9999 })
-                            }}
-                            menuPortalTarget={document.body}
-                        />
-                    </div>
+
+                    {isEnabledGlobal('AGENTI') && (
+                        <div className="filter-field" style={{ minWidth: '200px' }}>
+                            <label>Agente:</label>
+                            <Select
+                                isClearable
+                                options={agenti.map(a => ({ value: a.id, label: a.denominazione }))}
+                                onChange={(opt) => setFilters({ ...filters, idAgente: opt?.value, nomeAgente: opt?.label })}
+                                value={filters.idAgente ? { value: filters.idAgente, label: filters.nomeAgente } : null}
+                                placeholder="Tutti..."
+                                noOptionsMessage={() => "Nessun risultato trovato"}
+                                loadingMessage={() => "Caricamento..."}
+                                styles={{
+                                    control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
+                                    menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                                }}
+                                menuPortalTarget={document.body}
+                            />
+                        </div>
+                    )}
+
                     <div className="filter-field">
                         <label>Da Data:</label>
                         <input
@@ -661,7 +709,7 @@ const FattureList = () => {
                                     <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>
                                         Cliente {getSortIcon('d_e_clienti.denominazione')}
                                     </th>
-                                    <th>Agente</th>
+                                    {isEnabledGlobal('AGENTI') && <th>Agente</th>}
                                     <th>Doc. Collegati</th>
                                     <th>Stato</th>
                                     <th className="text-right">Totale</th>
@@ -687,9 +735,14 @@ const FattureList = () => {
                                                 </td>
                                                 <td>{f.dataDocumento}</td>
                                                 <td className="column-tipo">{formatTipoFattura(f.tipoFattura)}</td>
-                                                <td><strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}</td>
+                                                <td>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}
+                                                        {renderInternalBadge(f)}
+                                                    </div>
+                                                </td>
                                                 <td>{f.denominazioneCliente}</td>
-                                                <td>{f.agente || '-'}</td>
+                                                {isEnabledGlobal('AGENTI') && <td>{f.agente || '-'}</td>}
                                                 <td style={{ whiteSpace: 'nowrap' }}>
                                                     {formatStato(f.stato).split('\n').map((line, i) => (
                                                         <React.Fragment key={i}>
@@ -699,7 +752,12 @@ const FattureList = () => {
                                                     ))}
                                                 </td>
                                                 <td>{renderSdiStatus(f)}</td>
-                                                <td className="text-right">{formatMoney(f.totaleDocumento || f.totale)}</td>
+                                                <td className="text-right">
+                                                    <div className="money-cell">
+                                                        {formatMoney(f.totaleDocumento || f.totale)}
+                                                        {renderPaymentProgress(f)}
+                                                    </div>
+                                                </td>
                                                 <td className="text-right">
                                                     <div className={`action-menu-container${activeActionMenu === docId ? ' is-open' : ''}`} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', whiteSpace: 'nowrap' }}>
                                                         <button

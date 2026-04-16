@@ -30,6 +30,7 @@ import NoteCreditoList from './pages/NoteCredito/NoteCreditoList';
 import NoteCreditoDetail from './pages/NoteCredito/NoteCreditoDetail';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ListiniList from './pages/Configurazione/ListiniList';
+import DatiGeneraliPage from './pages/Configurazione/DatiGeneraliPage';
 
 const ProtectedRoute = () => {
   const user = authService.getCurrentUser();
@@ -70,6 +71,7 @@ function App() {
         <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
         <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
         <Route path="/configurazione/listini" element={<ListiniList />} />
+        <Route path="/configurazione/generali" element={<DatiGeneraliPage />} />
         <Route path="/fornitori" element={<FornitoriList />} />
         <Route path="/fornitori/:id" element={<FornitoriDetail />} />
         <Route path="/ddt" element={<DDTList />} />

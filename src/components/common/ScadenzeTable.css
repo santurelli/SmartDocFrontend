@@ -112,3 +112,34 @@
     border-radius: 6px;
     color: #d11212;
 }
+
+.scadenze-table-wrapper th.col-saldato {
+    width: 80px;
+    text-align: center;
+}
+
+.scadenze-table-wrapper .custom-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Fix for native date input icon being too close to the edge */
+.scadenze-table-wrapper input[type="date"] {
+    padding-right: 5px;
+}
+
+/* Premium row style for settled payments */
+.row-saldato {
+    background-color: #f0fdf4 !important; /* Very light green */
+}
+
+.scadenze-row td {
+    padding: 12px 8px !important;
+}
+
+.payment-inputs-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}

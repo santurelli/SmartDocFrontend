@@ -29,7 +29,13 @@ const Dashboard = () => {
                 setLoading(false);
             }
         };
+
         fetchData();
+
+        // 5-minute auto-refresh interval
+        const intervalId = setInterval(fetchData, 5 * 60 * 1000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     const formatCurrency = (value) => {
@@ -86,7 +92,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Infoboxes - KPI */}
+            {/* Infoboxes - KPI REDESIGNED */}
             <div className="row">
                 <div className="col-lg-3 col-sm-6 col-xs-12">
                     <div className="infographic-box colored emerald-bg">
@@ -251,7 +257,7 @@ const Dashboard = () => {
                                                     )}
                                                 </td>
                                                 <td className="text-center">
-                                                    {fattura.flFatturaElettronica === 1 && fattura.statoFatturaElettronica && (
+                                                    {(fattura.flFatturaElettronica == 1 || fattura.flFatturaElettronica === true) && fattura.statoFatturaElettronica && (
                                                         <span className={`label ${getStatusFELabel(fattura.statoFatturaElettronica).className}`}>
                                                             {getStatusFELabel(fattura.statoFatturaElettronica).label}
                                                         </span>

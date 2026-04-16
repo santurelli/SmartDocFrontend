@@ -1067,6 +1067,7 @@ const NoteCreditoDetail = () => {
                                         totaleDocumento={calculateTotalDocument()}
                                         scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
                                         isDisabled={isLocked}
+                                        conti={combos.risorse || []}
                                         onScadenzeChange={(newScadenze) => {
                                             setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
                                         }}

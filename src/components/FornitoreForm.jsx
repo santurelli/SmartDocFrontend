@@ -415,7 +415,7 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                             {bancheList.map(b => <option key={b.id} value={b.id}>{b.descrizione}</option>)}
                                         </select>
                                         <span className="input-group-btn">
-                                            <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)} title="Gestisci risorse/banche"><FaWrench /></button>
+                                            <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)} title="Gestisci conti/banche"><FaWrench /></button>
                                         </span>
                                     </div>
                                 </div>

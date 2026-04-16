@@ -37,6 +37,7 @@ const DDTList = () => {
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
     const [docConfigs, setDocConfigs] = useState(null);
+    const [globalConfigs, setGlobalConfigs] = useState(null);
 
     // Filters
     const [filters, setFilters] = useState({
@@ -117,12 +118,16 @@ const DDTList = () => {
         try {
             const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
             if (res.data) setDocConfigs(res.data);
+
+            const resGlobal = await ConfigurazioneService.getByDomain('GLOBAL');
+            if (resGlobal.data) setGlobalConfigs(resGlobal.data);
         } catch (err) {
             console.error("Error loading ddts configurations:", err);
         }
     };
 
     const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const loadAgenti = async () => {
         try {
@@ -375,6 +380,23 @@ const DDTList = () => {
                                 onChange={(e) => setFilters({ ...filters, dataA: e.target.value })}
                             />
                         </div>
+                        {isEnabledGlobal('AGENTI') && (
+                            <div className="filter-field" style={{ minWidth: '200px' }}>
+                                <label>Agente:</label>
+                                <Select
+                                    isClearable
+                                    options={agentiOptions}
+                                    onChange={(opt) => {
+                                        setSelectedAgente(opt);
+                                        setFilters({ ...filters, idAgente: opt ? opt.value : '' });
+                                    }}
+                                    value={selectedAgente}
+                                    placeholder="Tutti..."
+                                    noOptionsMessage={() => "Nessun risultato trovato"}
+                                    loadingMessage={() => "Caricamento..."}
+                                />
+                            </div>
+                        )}
                         <button type="button" className="btn-search-vibrant" onClick={handleSearch}>
                             <FaSearch /> Cerca
                         </button>
@@ -407,7 +429,7 @@ const DDTList = () => {
                                     <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>
                                         Cliente {renderSortIcon('d_e_clienti.denominazione')}
                                     </th>
-                                    <th>Agente</th>
+                                    {isEnabledGlobal('AGENTI') && <th>Agente</th>}
                                     <th>Stato</th>
                                     <th className="text-right">Totale</th>
                                     <th style={{ width: '1%' }}></th>
@@ -433,7 +455,7 @@ const DDTList = () => {
                                                 <td>{f.dataDocumento}</td>
                                                 <td><strong>{f.numeroDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}</td>
                                                 <td>{f.soggetto}</td>
-                                                <td>{f.agente || '-'}</td>
+                                                {isEnabledGlobal('AGENTI') && <td>{f.agente || '-'}</td>}
                                                 <td style={{ whiteSpace: 'nowrap' }}>
                                                     {formatStato(f.stato).split('\n').map((line, i) => (
                                                         <React.Fragment key={i}>

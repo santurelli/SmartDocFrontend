@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaSyncAlt, FaExclamationTriangle, FaCalendarAlt, FaPlus, FaTrash, FaInfoCircle } from 'react-icons/fa';
+import { FaSyncAlt, FaExclamationTriangle, FaCalendarAlt, FaPlus, FaTrash, FaInfoCircle, FaWrench } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import TipiPagamentoService from '../../services/TipiPagamentoService';
+import WrenchModalButton from '../WrenchModalButton';
+import RisorseManagementModal from '../modals/RisorseManagementModal';
 import './ScadenzeTable.css';
 
 const MODALITA_PAGAMENTO = [
@@ -22,8 +24,12 @@ const ScadenzeTable = ({
     totaleDocumento, 
     scadenzeIniziali, 
     onScadenzeChange, 
-    readOnly = false 
+    readOnly = false,
+    isDisabled = false,
+    conti = [],
+    onRefreshConti = () => {}
 }) => {
+    const isActuallyReadOnly = readOnly || isDisabled;
     const [scadenze, setScadenze] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     
@@ -85,6 +91,41 @@ const ScadenzeTable = ({
     const handleModalitaChange = (index, value) => {
         const newScadenze = [...scadenze];
         newScadenze[index].modalitaPagamento = value;
+        setScadenze(newScadenze);
+    };
+    
+    const handleSaldatoChange = (index, value) => {
+        const newScadenze = [...scadenze];
+        const isSaldato = value === 1;
+        newScadenze[index].saldato = value;
+        
+        if (isSaldato) {
+            // Default to today if not set
+            if (!newScadenze[index].dtPagamento) {
+                newScadenze[index].dtPagamento = new Date().toISOString().split('T')[0];
+            }
+            // Default to first resource or predefinita if not set
+            if (!newScadenze[index].idRisorsa && conti.length > 0) {
+                const predefinita = conti.find(c => c.predefinita === 1);
+                newScadenze[index].idRisorsa = predefinita ? predefinita.id : conti[0].id;
+            }
+        } else {
+            // Clear payment data if not settled
+            newScadenze[index].dtPagamento = null;
+            newScadenze[index].idRisorsa = null;
+        }
+        setScadenze(newScadenze);
+    };
+
+    const handleDataPagamentoChange = (index, value) => {
+        const newScadenze = [...scadenze];
+        newScadenze[index].dtPagamento = value;
+        setScadenze(newScadenze);
+    };
+
+    const handleContoChange = (index, value) => {
+        const newScadenze = [...scadenze];
+        newScadenze[index].idRisorsa = parseInt(value) || null;
         setScadenze(newScadenze);
     };
 
@@ -169,7 +210,7 @@ const ScadenzeTable = ({
                     Piano di Pagamento
                 </h6>
                 <div className="d-flex align-items-center">
-                    {!readOnly && (
+                    {!isActuallyReadOnly && (
                         <>
                             <button 
                                 type="button" 
@@ -198,19 +239,29 @@ const ScadenzeTable = ({
                 <table className="table mb-0 table-hover" style={{ backgroundColor: '#fff', fontSize: '14px' }}>
                     <thead style={{ backgroundColor: '#f9f9fa', color: '#6c757d', fontSize: '12px', textTransform: 'uppercase' }}>
                         <tr>
+                            <th className="col-saldato font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Saldato</th>
                             <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Data Scadenza</th>
                             <th className="text-right font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Importo Rata</th>
-                            <th className="text-right font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Spese Incasso</th>
                             <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Mod. Pag.</th>
-                            {!readOnly && <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px', width: '50px' }}></th>}
+                            <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Data Pag. / Conto</th>
+                            {!isActuallyReadOnly && <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px', width: '50px' }}></th>}
                         </tr>
                     </thead>
                     <tbody>
                         {scadenze.length > 0 ? (
                             scadenze.map((s, index) => (
-                                <tr key={s.id || index} className="scadenze-row">
+                                <tr key={s.id || index} className={`scadenze-row ${s.saldato === 1 ? 'row-saldato' : ''}`}>
                                     <td className="text-center align-middle">
-                                        {readOnly ? (
+                                        <input 
+                                            type="checkbox" 
+                                            className="custom-checkbox"
+                                            checked={s.saldato === 1}
+                                            onChange={(e) => handleSaldatoChange(index, e.target.checked ? 1 : 0)}
+                                            disabled={isActuallyReadOnly}
+                                        />
+                                    </td>
+                                    <td className="text-center align-middle">
+                                        {isActuallyReadOnly ? (
                                             <span className="font-weight-bold" style={{ color: '#333' }}>{s.dtScadenza}</span>
                                         ) : (
                                             <input 
@@ -222,7 +273,7 @@ const ScadenzeTable = ({
                                         )}
                                     </td>
                                     <td className="text-right align-middle">
-                                        {readOnly ? (
+                                        {isActuallyReadOnly ? (
                                             <span style={{ fontWeight: '600', color: '#17a2b8' }}>{formatCurrency(s.importo)}</span>
                                         ) : (
                                             <input 
@@ -235,12 +286,9 @@ const ScadenzeTable = ({
                                             />
                                         )}
                                     </td>
-                                    <td className="text-right align-middle text-muted">
-                                        {formatCurrency(s.importoSpeseIncasso || 0)}
-                                    </td>
                                     <td className="text-center align-middle">
-                                        {readOnly ? (
-                                            <span style={{ fontSize: '13px', padding: '4px 8px', color: '#495057', backgroundColor: '#e9ecef', border: '1px solid #ced4da', borderRadius: '4px', fontWeight: '500' }}>
+                                        {isActuallyReadOnly ? (
+                                            <span style={{ fontSize: '12px', padding: '3px 6px', color: '#495057', backgroundColor: '#f8f9fa', border: '1px solid #ddd', borderRadius: '4px' }}>
                                                 {s.modalitaPagamento || '-'}
                                             </span>
                                         ) : (
@@ -255,9 +303,49 @@ const ScadenzeTable = ({
                                             </select>
                                         )}
                                     </td>
-                                    {!readOnly && (
+                                    <td className="align-middle">
+                                        {s.saldato === 1 && (
+                                            <div className="payment-inputs-group">
+                                                <input 
+                                                    type="date" 
+                                                    className="form-control form-control-sm" 
+                                                    style={{ width: '135px', flexShrink: 0 }}
+                                                    value={formatDateForInput(s.dtPagamento)} 
+                                                    onChange={(e) => handleDataPagamentoChange(index, e.target.value)}
+                                                    disabled={isActuallyReadOnly}
+                                                />
+                                                <div className="flex-input-group" style={{ flex: 1, minWidth: 0 }}>
+                                                    <select
+                                                        className="form-control form-control-sm"
+                                                        style={{ 
+                                                            borderTopRightRadius: 0, 
+                                                            borderBottomRightRadius: 0,
+                                                            borderRight: 0 
+                                                        }}
+                                                        value={s.idRisorsa || ''}
+                                                        onChange={(e) => handleContoChange(index, e.target.value)}
+                                                        disabled={isActuallyReadOnly}
+                                                    >
+                                                        <option value="">Conto...</option>
+                                                        {conti.map(c => (
+                                                            <option key={c.id} value={c.id}>{c.descrizione}</option>
+                                                        ))}
+                                                    </select>
+                                                    {!isActuallyReadOnly && (
+                                                        <WrenchModalButton
+                                                            ModalComponent={RisorseManagementModal}
+                                                            modalProps={{ initialTipologia: 'BA' }}
+                                                            title="Gestione Conti"
+                                                            onClose={onRefreshConti}
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </td>
+                                    {!isActuallyReadOnly && (
                                         <td className="text-center align-middle">
-                                            <button type="button" className="btn btn-link text-danger p-0" onClick={() => deleteScadenza(index)}>
+                                            <button type="button" className="btn btn-link text-danger p-0" onClick={() => deleteScadenza(index)} title="Elimina riga">
                                                 <FaTrash />
                                             </button>
                                         </td>
@@ -266,7 +354,7 @@ const ScadenzeTable = ({
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={readOnly ? 4 : 5} className="text-center text-muted py-4">
+                                <td colSpan={isActuallyReadOnly ? 4 : 5} className="text-center text-muted py-4">
                                     <FaExclamationTriangle className="text-warning mr-2 mb-1" style={{ fontSize: '16px' }} />
                                     {idTipoPagamento 
                                         ? "Nessuna scadenza. Aggiungine una o ricalcola." 
@@ -277,22 +365,22 @@ const ScadenzeTable = ({
                     </tbody>
                     <tfoot style={{ borderTop: '2px solid #ebedf2', backgroundColor: '#fdfdfe' }}>
                         <tr style={{ borderBottom: '1px solid #ebedf2' }}>
-                            <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#555' }}>Subtotale:</td>
+                            <td colSpan="2" className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#555' }}>Subtotale:</td>
                             <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: difference !== 0 ? '#dc3545' : '#28a745' }}>
                                 {formatCurrency(sumScadenze)}
                             </td>
                             <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#6c757d' }}>
                                 {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0))}
                             </td>
-                            <td colSpan={readOnly ? 1 : 2}></td>
+                            <td colSpan={isActuallyReadOnly ? 1 : 2}></td>
                         </tr>
                         {difference !== 0 && (
                             <tr className="difference-alert-row" style={{ borderBottom: '1px solid #ebedf2' }}>
-                                <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#dc3545' }}>Differenza (Abbuono/Magg.):</td>
+                                <td colSpan="2" className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px', color: '#dc3545' }}>Differenza (Abbuono/Magg.):</td>
                                 <td className="text-right align-middle font-weight-bold" style={{ padding: '8px 12px' }}>
                                     <span className="difference-indicator">{formatCurrency(difference)}</span>
                                 </td>
-                                <td colSpan={readOnly ? 2 : 3} className="px-3">
+                                <td colSpan={isActuallyReadOnly ? 2 : 3} className="px-3">
                                     <span className="difference-text">
                                         <FaInfoCircle className="mr-2" /> 
                                         {difference > 0 ? "La somma delle rate supera l'importo da incassare (Maggiorazione)." : "La somma delle rate è inferiore all'importo da incassare (Sconto/Abbuono)."}
@@ -301,11 +389,11 @@ const ScadenzeTable = ({
                             </tr>
                         )}
                         <tr style={{ backgroundColor: '#f0f4f8' }}>
-                            <td className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#333', fontSize: '15px' }}>TOTALE COMPLESSIVO:</td>
-                            <td colSpan="2" className="text-center align-middle font-weight-bold" style={{ padding: '12px', color: '#0056b3', fontSize: '18px' }}>
+                            <td colSpan="2" className="text-right align-middle font-weight-bold" style={{ padding: '12px', color: '#333', fontSize: '15px', whiteSpace: 'nowrap' }}>TOTALE COMPLESSIVO:</td>
+                            <td className="text-center align-middle font-weight-bold" style={{ padding: '12px', color: '#0056b3', fontSize: '18px' }}>
                                 {formatCurrency(scadenze.reduce((acc, s) => acc + (s.importo || 0) + (s.importoSpeseIncasso || 0), 0))}
                             </td>
-                            <td colSpan={readOnly ? 1 : 2}></td>
+                            <td colSpan={isActuallyReadOnly ? 2 : 3}></td>
                         </tr>
                     </tfoot>
                 </table>

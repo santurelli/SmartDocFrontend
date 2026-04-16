@@ -419,7 +419,7 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                             <option value="">Seleziona...</option>
                                             {bancheList.map(b => <option key={b.id} value={b.id}>{b.descrizione}</option>)}
                                         </select>
-                                        <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)} title="Gestione risorse/banche"><FaWrench /></button>
+                                        <button type="button" className="btn btn-default" onClick={() => setShowRisorseModal(true)} title="Gestione conti/banche"><FaWrench /></button>
                                     </div>
                                 </div>
                             </div>

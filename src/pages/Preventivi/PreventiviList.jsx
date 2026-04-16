@@ -37,6 +37,7 @@ const PreventiviList = () => {
     const [loading, setLoading] = useState(false);
     const [total, setTotal] = useState(0);
     const [docConfigs, setDocConfigs] = useState(null);
+    const [globalConfigs, setGlobalConfigs] = useState(null);
 
     // Filters
     const [idCliente, setIdCliente] = useState(initialState.idCliente);
@@ -115,12 +116,16 @@ const PreventiviList = () => {
         try {
             const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
             if (res.data) setDocConfigs(res.data);
+
+            const resGlobal = await ConfigurazioneService.getByDomain('GLOBAL');
+            if (resGlobal.data) setGlobalConfigs(resGlobal.data);
         } catch (err) {
             console.error("Error loading preventivi configurations:", err);
         }
     };
 
     const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const loadAgenti = async () => {
         try {
@@ -418,27 +423,29 @@ const PreventiviList = () => {
                                 }}
                             />
                         </div>
-                        <div className="filter-field" style={{ minWidth: '250px' }}>
-                            <label>Agente:</label>
-                            <Select
-                                options={agentiOptions}
-                                onChange={(opt) => {
-                                    setSelectedAgente(opt);
-                                    setIdAgente(opt ? opt.value : '');
-                                }}
-                                value={selectedAgente}
-                                placeholder="Scegli agente..."
-                                isClearable
-                                menuPortalTarget={document.body}
-                                menuPosition="fixed"
-                                 noOptionsMessage={() => "Nessun risultato trovato"}
-                                loadingMessage={() => "Caricamento..."}
-                                styles={{
-                                    control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
-                                    menuPortal: (base) => ({ ...base, zIndex: 9999 })
-                                }}
-                            />
-                        </div>
+                        {isEnabledGlobal('AGENTI') && (
+                            <div className="filter-field" style={{ minWidth: '250px' }}>
+                                <label>Agente:</label>
+                                <Select
+                                    options={agentiOptions}
+                                    onChange={(opt) => {
+                                        setSelectedAgente(opt);
+                                        setIdAgente(opt ? opt.value : '');
+                                    }}
+                                    value={selectedAgente}
+                                    placeholder="Scegli agente..."
+                                    isClearable
+                                    menuPortalTarget={document.body}
+                                    menuPosition="fixed"
+                                    noOptionsMessage={() => "Nessun risultato trovato"}
+                                    loadingMessage={() => "Caricamento..."}
+                                    styles={{
+                                        control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
+                                        menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                                    }}
+                                />
+                            </div>
+                        )}
                         <button type="submit" className="btn-search-vibrant">
                             <FaSearch /> Cerca
                         </button>
@@ -465,7 +472,7 @@ const PreventiviList = () => {
                                     <th onClick={() => handleSort('data_preventivo')} style={{ cursor: 'pointer' }}>Data {renderSortIcon('data_preventivo')}</th>
                                     <th onClick={() => handleSort('num_preventivo')} style={{ cursor: 'pointer' }}>Numero {renderSortIcon('num_preventivo')}</th>
                                     <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>Cliente {renderSortIcon('d_e_clienti.denominazione')}</th>
-                                    <th onClick={() => handleSort('d_e_agenti.denominazione')} style={{ cursor: 'pointer' }}>Agente {renderSortIcon('d_e_agenti.denominazione')}</th>
+                                    {isEnabledGlobal('AGENTI') && <th onClick={() => handleSort('d_e_agenti.denominazione')} style={{ cursor: 'pointer' }}>Agente {renderSortIcon('d_e_agenti.denominazione')}</th>}
                                     <th>Stato</th>
                                     <th>Totale</th>
                                     <th style={{ width: '1%' }}></th>
@@ -495,7 +502,7 @@ const PreventiviList = () => {
                                                 <td>{prev.dataDocumento}</td>
                                                 <td>{prev.numeroDocumento}</td>
                                                 <td>{prev.soggetto}</td>
-                                                <td>{prev.agente}</td>
+                                                {isEnabledGlobal('AGENTI') && <td>{prev.agente}</td>}
                                                 <td style={{ whiteSpace: 'nowrap' }}>
                                                     {formatStato(prev.stato).split('\n').map((line, i) => (
                                                         <React.Fragment key={i}>

@@ -32,10 +32,10 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                 setList([]);
             }
         } catch (error) {
-            console.error("Error loading risorse:", error);
+            console.error("Error loading conti:", error);
             Swal.fire({
                 title: 'Errore',
-                text: 'Impossibile caricare le risorse',
+                text: 'Impossibile caricare i conti',
                 icon: 'error',
                 buttonsStyling: false,
                 customClass: {
@@ -52,7 +52,7 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
     const handleDelete = async (id) => {
         const result = await Swal.fire({
             title: 'Sei sicuro?',
-            text: "La risorsa verrà eliminata.",
+            text: "Il conto verrà eliminato.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sì, elimina',
@@ -72,7 +72,7 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                 loadData();
                 Swal.fire({
                     title: 'Eliminato!',
-                    text: 'Risorsa eliminata.',
+                    text: 'Conto eliminato.',
                     icon: 'success',
                     buttonsStyling: false,
                     customClass: {
@@ -161,7 +161,7 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                 <div class="form-group" style="margin-top: 15px;">
                     <div class="checkbox" style="padding-left: 5px;">
                         <label style="font-weight: 600; color: #555; cursor: pointer;">
-                            <input type="checkbox" id="swal-predefinita" ${item.predefinita === 1 ? 'checked' : ''} style="transform: scale(1.2); margin-right: 10px;"> Risorsa Predefinita
+                            <input type="checkbox" id="swal-predefinita" ${item.predefinita === 1 ? 'checked' : ''} style="transform: scale(1.2); margin-right: 10px;"> Conto Predefinito
                         </label>
                     </div>
                 </div>
@@ -189,7 +189,7 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
         `;
 
         Swal.fire({
-            title: isNew ? 'Nuova Risorsa' : 'Modifica Risorsa',
+            title: isNew ? 'Nuovo Conto' : 'Modifica Conto',
             html: htmlContent,
             showCancelButton: true,
             confirmButtonText: 'Salva',
@@ -280,7 +280,7 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title">Elenco risorse</h4>
+                        <h4 className="modal-title">Elenco Conti</h4>
                     </div>
                     <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
                         {/* Toolbar */}

@@ -768,6 +768,57 @@
     color: #c0392b;
 }
 
+/* Internal Status Badges */
+.internal-status-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-bozza {
+    background-color: #fef9c3;
+    color: #a16207;
+    border: 1px solid #fde047;
+}
+
+.badge-definitiva {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+/* Payment Progress Bar */
+.money-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.payment-progress-wrapper {
+    width: 60px;
+}
+
+.payment-progress-bar-container {
+    height: 4px;
+    background-color: #f1f2f7;
+    border-radius: 2px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.payment-progress-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.bg-danger { background-color: #ef4444; }
+.bg-warning { background-color: #f59e0b; }
+.bg-success { background-color: #10b981; }
+
 .column-tipo {
     font-size: 13px !important;
     font-weight: 500 !important;

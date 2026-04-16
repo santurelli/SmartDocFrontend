@@ -1501,6 +1501,8 @@ const FattureDetail = () => {
                                             totaleDocumento={calculateTotalDocument(false, true)}
                                             scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
                                             isDisabled={isLocked}
+                                            conti={combos.risorse || []}
+                                            onRefreshConti={fetchCombos}
                                             onScadenzeChange={useCallback((newScadenze) => {
                                                 const totalFees = newScadenze.reduce((acc, s) => acc + (s.importoSpeseIncasso || 0), 0);
                                                 

@@ -1107,10 +1107,12 @@ const DDTDetail = () => {
                                             idTipoPagamento={formData.idTipoPagamento}
                                             dataDocumento={formData.dataDocumento}
                                             totaleDocumento={calculateTotalDocument()}
-                                            scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
-                                            onScadenzeChange={(newScadenze) => {
+                                            isDisabled={isLocked}
+                                            conti={combos.risorse || []}
+                                            onRefreshConti={fetchCombos}
+                                            onScadenzeChange={useCallback((newScadenze) => {
                                                 setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
-                                            }}
+                                            }, [])}
                                         />
                                     </div>
                                 </div>

@@ -163,6 +163,8 @@ const Sidebar = ({ user }) => {
                                     <li><NavLink to="/configurazione/dati-azienda">Dati azienda</NavLink></li>
                                     <li><NavLink to="/configurazione/fatturazione">Fatturazione</NavLink></li>
                                     <li><NavLink to="/configurazione/documenti">Documenti</NavLink></li>
+                                    <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
+                                    <li><NavLink to="/configurazione/generali">Dati generali</NavLink></li>
                                 </ul>
                             </li>
 

@@ -5,6 +5,7 @@ import Select from 'react-select';
 import NoteCreditoService from '../../services/NoteCreditoService';
 import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
+import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import printJS from 'print-js';
@@ -54,10 +55,12 @@ const NoteCreditoList = () => {
     const [showFilters, setShowFilters] = useState(filters.showFilters);
 
     const [agenti, setAgenti] = useState([]);
+    const [globalConfigs, setGlobalConfigs] = useState(null);
 
     useEffect(() => {
         fetchAgenti();
         handleSearch();
+        loadGlobalConfigs();
 
         const handleClickOutside = () => setActiveActionMenu(null);
         document.addEventListener('click', handleClickOutside);
@@ -82,6 +85,17 @@ const NoteCreditoList = () => {
             console.error("Error fetching agenti:", error);
         }
     };
+
+    const loadGlobalConfigs = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('GLOBAL');
+            if (res.data) setGlobalConfigs(res.data);
+        } catch (err) {
+            console.error("Error loading global configurations:", err);
+        }
+    };
+
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const handleSearch = async (e) => {
         if (e) {
@@ -358,23 +372,25 @@ const NoteCreditoList = () => {
                             menuPortalTarget={document.body}
                         />
                     </div>
-                    <div className="filter-field" style={{ minWidth: '200px' }}>
-                        <label>Agente:</label>
-                        <Select
-                            isClearable
-                            options={agenti.map(a => ({ value: a.id, label: a.denominazione }))}
-                            onChange={(opt) => setFilters({ ...filters, idAgente: opt?.value, nomeAgente: opt?.label })}
-                            value={filters.idAgente ? { value: filters.idAgente, label: filters.nomeAgente } : null}
-                            placeholder="Tutti..."
-                            noOptionsMessage={() => "Nessun risultato trovato"}
-                            loadingMessage={() => "Caricamento..."}
-                            styles={{
-                                control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
-                                menuPortal: (base) => ({ ...base, zIndex: 9999 })
-                            }}
-                            menuPortalTarget={document.body}
-                        />
-                    </div>
+                    {isEnabledGlobal('AGENTI') && (
+                        <div className="filter-field" style={{ minWidth: '200px' }}>
+                            <label>Agente:</label>
+                            <Select
+                                isClearable
+                                options={agenti.map(a => ({ value: a.id, label: a.denominazione }))}
+                                onChange={(opt) => setFilters({ ...filters, idAgente: opt?.value, nomeAgente: opt?.label })}
+                                value={filters.idAgente ? { value: filters.idAgente, label: filters.nomeAgente } : null}
+                                placeholder="Tutti..."
+                                noOptionsMessage={() => "Nessun risultato trovato"}
+                                loadingMessage={() => "Caricamento..."}
+                                styles={{
+                                    control: (base) => ({ ...base, minHeight: '38px', borderRadius: '0', borderColor: '#ddd' }),
+                                    menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                                }}
+                                menuPortalTarget={document.body}
+                            />
+                        </div>
+                    )}
                     <div className="filter-field">
                         <label>Da Data:</label>
                         <input
@@ -424,7 +440,7 @@ const NoteCreditoList = () => {
                                     <th onClick={() => handleSort('d_e_clienti.denominazione')} style={{ cursor: 'pointer' }}>
                                         Cliente {getSortIcon('d_e_clienti.denominazione')}
                                     </th>
-                                    <th>Agente</th>
+                                    {isEnabledGlobal('AGENTI') && <th>Agente</th>}
                                     <th>Stato</th>
                                     <th className="text-right">Totale</th>
                                     <th style={{ width: '1%' }}></th>
@@ -450,7 +466,7 @@ const NoteCreditoList = () => {
                                                 <td>{f.dataDocumento}</td>
                                                 <td><strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}</td>
                                                 <td>{f.denominazioneCliente}</td>
-                                                <td>{f.agente || '-'}</td>
+                                                {isEnabledGlobal('AGENTI') && <td>{f.agente || '-'}</td>}
                                                 <td style={{ whiteSpace: 'nowrap' }}>
                                                     {renderStatus(f)}
                                                 </td>

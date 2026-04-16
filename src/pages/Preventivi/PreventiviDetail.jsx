@@ -1024,6 +1024,7 @@ const PreventiviDetail = () => {
                                             dataDocumento={formData.dataDocumento}
                                             totaleDocumento={totals.totale}
                                             scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
+                                            conti={combos.risorse || []}
                                             onScadenzeChange={(newScadenze) => {
                                                 setFormData(prev => ({ ...prev, listaScadenzePagamentiDocumento: newScadenze }));
                                             }}
