@@ -185,7 +185,7 @@ const DDTDetail = () => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [id, fromConfermeId]);
+    }, [id, searchParams]);
 
     const checkCeramica = async () => {
         const conf = authService.getConfig();

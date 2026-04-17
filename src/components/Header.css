@@ -194,3 +194,15 @@
     border-right: 4px solid transparent;
     border-left: 4px solid transparent;
 }
+.dropdown-menu .divider {
+    height: 1px;
+    margin: 9px 0;
+    overflow: hidden;
+    background-color: #e5e5e5;
+}
+
+.dropdown-menu .item a svg {
+    margin-right: 10px;
+    width: 14px;
+    color: #03a9f4;
+}

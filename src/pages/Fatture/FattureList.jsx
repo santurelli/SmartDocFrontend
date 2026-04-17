@@ -7,7 +7,7 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport, FaFileCode } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import NoteCreditoService from '../../services/NoteCreditoService';
@@ -342,6 +342,32 @@ const FattureList = () => {
         }
     };
 
+    const handleDownloadXml = async (id, num) => {
+        try {
+            const response = await FattureService.downloadXml(id);
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/xml' }));
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Try to get filename from content-disposition if possible, otherwise use fallback
+            const contentDisposition = response.headers['content-disposition'];
+            let fileName = `Fattura_${num}.xml`;
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename=(.+)/);
+                if (fileNameMatch && fileNameMatch.length > 1) fileName = fileNameMatch[1];
+            }
+            
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setActiveActionMenu(null);
+        } catch (error) {
+            console.error("Error downloading XML:", error);
+            Swal.fire('Errore', 'Errore durante lo scaricamento dell\'XML', 'error');
+        }
+    };
+
     const handleImportClick = () => {
         fileInputRef.current.click();
     };
@@ -438,8 +464,8 @@ const FattureList = () => {
         // Se non è elettronica, lo stato interno è già gestito dal badge
         if (!isElettronica) return null;
         
-        // Se è Bozza o Definitiva (stati interni), non mostriamo nulla nella colonna SDI
-        if (status === 'BO' || status === 'DI' || !status) return null;
+        // Se è Bozza, non mostriamo nulla nella colonna SDI. Lo stato 'DI' invece lo mostriamo come 'Inviata allo SDI' o 'In attesa'
+        if (status === 'BO' || !status) return null;
 
         const descr = f.descrizioneStatoFatturaElettronica || status;
         const error = f.erroreConsegna || f.erroreXml;
@@ -789,6 +815,11 @@ const FattureList = () => {
                                                                 {f.flFatturaElettronica === 1 && f.statoFatturaElettronica === 'NS' && (
                                                                     <button className="action-dropdown-item" onClick={() => handleSendSdi(docId)}>
                                                                         <FaPaperPlane /> Reinvia a SDI
+                                                                    </button>
+                                                                )}
+                                                                {f.flFatturaElettronica === 1 && (
+                                                                    <button className="action-dropdown-item" onClick={() => handleDownloadXml(docId, f.numDocumento)}>
+                                                                        <FaFileCode /> Scarica XML
                                                                     </button>
                                                                 )}
                                                                 <div className="action-dropdown-divider"></div>

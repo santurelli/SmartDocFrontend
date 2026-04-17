@@ -1,0 +1,319 @@
+.primanota-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.primanota-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.primanota-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.primanota-card-icon.entrate {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.primanota-card-icon.uscite {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.primanota-card-icon.saldo {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.primanota-card-content h3 {
+    margin: 0;
+    font-size: 13px;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.primanota-card-content h2 {
+    margin: 5px 0 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+}
+
+.primanota-row-entrata {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.primanota-row-uscita {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+.table-primanota th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6 !important;
+    color: #495057;
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 12px;
+}
+
+.table-primanota td {
+    vertical-align: middle;
+    padding: 12px;
+    font-size: 14px;
+}
+
+.badge-documento {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.tipo-doc-e {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #1e7e34;
+}
+
+.tipo-doc-u {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #bd2130;
+}
+
+.tipo-doc-n {
+    background-color: rgba(108, 117, 125, 0.15);
+    color: #495057;
+}
+
+/* Header & Toolbar - Vibrant Style matching DDT */
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 25px;
+}
+
+.header-row h1 {
+    color: #03a9f4;
+    font-weight: 300;
+    margin: 0;
+    font-size: 32px;
+}
+
+.toolbar-row {
+    background: #fff;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e7ebee;
+}
+
+.btn-new-vibrant {
+    background-color: #03a9f4;
+    border: none;
+    color: #fff !important;
+    padding: 0 20px;
+    height: 38px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.btn-new-vibrant:hover {
+    background-color: #039be5;
+    color: #fff !important;
+}
+
+.btn-export-vibrant {
+    background-color: #28a745;
+    border: none;
+    color: #fff !important;
+    padding: 0 20px;
+    height: 38px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+
+.btn-export-vibrant:hover {
+    background-color: #218838;
+    color: #fff !important;
+}
+
+/* Filter Box - Vibrant Style */
+.filter-box-vibrant {
+    background: #fff;
+    border-radius: 3px;
+    border: 1px solid #e7ebee;
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.filter-header-vibrant {
+    background-color: #03a9f4;
+    color: #fff;
+    padding: 10px 15px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.filter-body-vibrant {
+    padding: 20px 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.filter-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filter-field label {
+    font-weight: 700;
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.filter-field .form-control {
+    height: 38px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 6px 12px;
+}
+
+.btn-search-vibrant {
+    background-color: #03a9f4;
+    color: #fff;
+    border: none;
+    height: 38px;
+    padding: 0 25px;
+    border-radius: 4px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-paginate {
+    height: 38px;
+    padding: 0 15px;
+    background: #fff;
+    border: 1px solid #ddd;
+    color: #666;
+    margin-left: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-paginate:hover {
+    background-color: #f8f9fa;
+}
+
+/* Breadcrumbs */
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin-bottom: 5px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+}
+
+.breadcrumb a {
+    color: #999;
+    text-decoration: none;
+}
+
+.breadcrumb li.active {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Sorting & Pagination */
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+    position: relative;
+    white-space: nowrap;
+}
+
+.sortable-header:hover {
+    background-color: #f1f3f5 !important;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: #495057;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.pagination-buttons button {
+    min-width: 100px;
+    font-weight: 600;
+}

@@ -227,7 +227,7 @@ const FattureDetail = () => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [id]);
+    }, [id, searchParams]);
 
     const checkCeramica = async () => {
         const conf = authService.getConfig();
@@ -600,7 +600,9 @@ const FattureDetail = () => {
                     } : {}),
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
-                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento
+                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento,
+                    pec: clientFull.pecPrincipale || (clientFull.elencoContatti?.find(c => c.pec)?.pec) || prev.pec || '',
+                    codiceUfficioDestinazione: (header?.codiceUfficio || shipping?.codiceUfficio || indirizzi.find(i => i.codiceUfficio)?.codiceUfficio) || prev.codiceUfficioDestinazione || ''
                 }));
             }
         } catch (error) {

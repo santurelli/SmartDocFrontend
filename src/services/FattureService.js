@@ -47,6 +47,10 @@ const FattureService = {
                 'Content-Type': 'multipart/form-data'
             }
         });
+    },
+
+    downloadXml: (id) => {
+        return api.get(`/fatture/download-xml/${id}`, { responseType: 'blob' });
     }
 };
 

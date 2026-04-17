@@ -200,15 +200,20 @@ const ConfOrdineDetail = () => {
 
     useEffect(() => {
         checkCeramica();
-        fetchCombos();
-        if (!isNew) {
-            fetchData();
-        } else if (fromPreventiviId) {
-            fetchDataFromPreventivo(fromPreventiviId);
-        } else {
-            fetchNextNum(formData.dataDocumento);
-        }
-    }, [id, fromPreventiviId]);
+        const loadInitialData = async () => {
+            checkCeramica();
+            fetchCombos();
+            if (!isNew) {
+                fetchData();
+            } else if (fromPreventiviId) {
+                fetchDataFromPreventivo(fromPreventiviId);
+            } else {
+                fetchNextNum(formData.dataDocumento);
+            }
+        };
+
+        loadInitialData();
+    }, [id, searchParams]);
 
     const checkCeramica = async () => {
         const conf = authService.getConfig();

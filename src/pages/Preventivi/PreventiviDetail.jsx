@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import Select from 'react-select';
 import PreventiviService from '../../services/PreventiviService';
@@ -141,6 +141,7 @@ const particellaSelectStyles = {
 const PreventiviDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const isNew = !id || id === 'new';
     const [isCeramica, setIsCeramica] = useState(false);
 
@@ -294,7 +295,7 @@ const PreventiviDetail = () => {
         return () => {
             isCurrent = false; // Cleanup on unmount or id change
         };
-    }, [id, isNew]);
+    }, [id, isNew, searchParams]);
 
     const fetchCombos = async () => {
         try {

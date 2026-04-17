@@ -215,7 +215,7 @@ const NoteCreditoDetail = () => {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [id]);
+    }, [id, searchParams]);
 
     const checkCeramica = async () => {
         const conf = authService.getConfig();

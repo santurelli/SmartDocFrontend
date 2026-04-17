@@ -1,13 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { FaBars, FaCaretDown, FaThLarge, FaEdit, FaUser, FaTruck, FaLock, FaPowerOff, FaCogs, FaFileSignature } from 'react-icons/fa';
+import { FaBars, FaCaretDown, FaThLarge, FaEdit, FaUser, FaTruck, FaLock, FaPowerOff, FaCogs, FaFileSignature, FaPlus } from 'react-icons/fa';
 import authService from '../services/authService';
+import ConfigurazioneService from '../services/ConfigurazioneService';
 import './Header.css';
 
 const Header = ({ user, onLogout, toggleSidebar }) => {
     const navigate = useNavigate();
     const [inserisciOpen, setInserisciOpen] = useState(false);
     const [userOpen, setUserOpen] = useState(false);
+    const [docConfigs, setDocConfigs] = useState(null);
+
+    useEffect(() => {
+        const fetchDocConfigs = async () => {
+            try {
+                const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
+                if (res.data) setDocConfigs(res.data);
+            } catch (err) {
+                console.error("Error fetching header configs:", err);
+            }
+        };
+        fetchDocConfigs();
+
+        window.addEventListener('configupdated', fetchDocConfigs);
+        return () => window.removeEventListener('configupdated', fetchDocConfigs);
+    }, []);
+
+    const isEnabled = (key) => !docConfigs || docConfigs[key] === '1';
 
     const handleLogout = () => {
         onLogout();
@@ -37,23 +56,47 @@ const Header = ({ user, onLogout, toggleSidebar }) => {
                                 </a>
                                 {inserisciOpen && (
                                     <ul className="dropdown-menu">
+                                        {/* DOCUMENTI SECTION */}
+                                        {isEnabled('ABILITA_FATTURE') && (
+                                            <li className="item">
+                                                <NavLink to="/fatture/new?tipo=FATTURA&elet=1" onClick={() => setInserisciOpen(false)}>
+                                                    <FaPlus /> Nuova fattura
+                                                </NavLink>
+                                            </li>
+                                        )}
+                                        {isEnabled('ABILITA_FATTURE_ACCOMPAGNATORIE') && (
+                                            <li className="item">
+                                                <NavLink to="/fatture/new?tipo=FATTURA_ACCOMPAGNATORIA&elet=1" onClick={() => setInserisciOpen(false)}>
+                                                    <FaPlus /> Nuova accomp. elettr.
+                                                </NavLink>
+                                            </li>
+                                        )}
+                                        {isEnabled('ABILITA_FATTURE_PROFORMA') && (
+                                            <li className="item">
+                                                <NavLink to="/fatture/new?tipo=FATTURA_PROFORMA" onClick={() => setInserisciOpen(false)}>
+                                                    <FaPlus /> Nuova proforma
+                                                </NavLink>
+                                            </li>
+                                        )}
+
+                                        {/* DIVIDER IF DOCUMENTS ENABLED */}
+                                        {(isEnabled('ABILITA_FATTURE') || isEnabled('ABILITA_FATTURE_ACCOMPAGNATORIE') || isEnabled('ABILITA_FATTURE_PROFORMA')) && (
+                                            <li className="divider"></li>
+                                        )}
+
+                                        {/* ANAGRAFICHE SECTION */}
                                         <li className="item">
-                                            <NavLink to="/nuovo-articolo" onClick={() => setInserisciOpen(false)}>
-                                                <FaThLarge /> Nuovo articolo
-                                            </NavLink>
-                                        </li>
-                                        <li className="item">
-                                            <NavLink to="/nuova-fattura" onClick={() => setInserisciOpen(false)}>
-                                                <FaEdit /> Nuova fattura
-                                            </NavLink>
-                                        </li>
-                                        <li className="item">
-                                            <NavLink to="/nuovo-cliente" onClick={() => setInserisciOpen(false)}>
+                                            <NavLink to="/clienti/new" onClick={() => setInserisciOpen(false)}>
                                                 <FaUser /> Nuovo cliente
                                             </NavLink>
                                         </li>
                                         <li className="item">
-                                            <NavLink to="/nuovo-fornitore" onClick={() => setInserisciOpen(false)}>
+                                            <NavLink to="/articoli/new" onClick={() => setInserisciOpen(false)}>
+                                                <FaThLarge /> Nuovo articolo
+                                            </NavLink>
+                                        </li>
+                                        <li className="item">
+                                            <NavLink to="/fornitori/new" onClick={() => setInserisciOpen(false)}>
                                                 <FaTruck /> Nuovo fornitore
                                             </NavLink>
                                         </li>

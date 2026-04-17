@@ -75,46 +75,61 @@
     letter-spacing: -0.5px;
 }
 
-/* Background Gradients */
-.emerald-bg.colored {
-    background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
-    color: #fff;
+/* Background Gradients - using specificity to beat Bootstrap */
+.dashboard-container .infographic-box.emerald-bg.colored,
+div.infographic-box.emerald-bg.colored {
+    background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%) !important;
+    color: #fff !important;
 }
 
-.green-bg.colored {
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-    color: #fff;
+.dashboard-container .infographic-box.green-bg.colored,
+div.infographic-box.green-bg.colored {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+    color: #fff !important;
 }
 
-.red-bg.colored {
-    background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%);
-    color: #fff;
+.dashboard-container .infographic-box.red-bg.colored,
+div.infographic-box.red-bg.colored {
+    background: linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%) !important;
+    color: #fff !important;
 }
 
-.purple-bg.colored {
-    background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
-    color: #fff;
+.dashboard-container .infographic-box.purple-bg.colored,
+div.infographic-box.purple-bg.colored {
+    background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%) !important;
+    color: #fff !important;
 }
 
 /* Dashboard Stats List - PREMIUM */
-.dashboard-stats-list {
+.dashboard-container .dashboard-stats-list,
+ul.dashboard-stats-list {
     list-style-type: none !important;
     list-style: none !important;
     padding: 0 !important;
     margin: 0 !important;
+    padding-left: 0 !important;
 }
 
-.dashboard-stats-list li {
+.dashboard-container .dashboard-stats-list li,
+ul.dashboard-stats-list li {
     list-style: none !important;
+    list-style-type: none !important;
+    list-style-image: none !important;
     padding: 18px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    background: none;
 }
 
-.dashboard-stats-list li:before {
-    content: none !important; /* Force hide bullets */
+.dashboard-container .dashboard-stats-list li::before,
+.dashboard-container .dashboard-stats-list li::marker,
+ul.dashboard-stats-list li::before,
+ul.dashboard-stats-list li::marker {
+    content: none !important;
+    display: none !important;
 }
 
-.dashboard-stats-list li:last-child {
+.dashboard-container .dashboard-stats-list li:last-child,
+ul.dashboard-stats-list li:last-child {
     border-bottom: none;
 }
 
