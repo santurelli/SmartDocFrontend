@@ -765,14 +765,16 @@ const FattureDetail = () => {
         setShowAddressModal(false);
     };
 
-    const validate = () => {
+    const validate = (forceSdi = false) => {
         if (!formData.numDocumento) { Swal.fire('Errore', 'Inserire il numero documento', 'error'); return false; }
         if (!formData.dataDocumento) { Swal.fire('Errore', 'Inserire la data documento', 'error'); return false; }
         if (!formData.idCliente) { Swal.fire('Errore', 'Selezionare un cliente', 'error'); return false; }
         if (!prodotti || prodotti.length === 0) { Swal.fire('Errore', 'Inserire almeno un articolo', 'error'); return false; }
 
-        // Validazione SDI per fatture non Pro Forma
-        if (formData.tipoFattura !== 'FATTURA_PROFORMA' && formData.tipoFattura !== 'FATTURA_SEMPLIFICATA' && formData.flFatturaElettronica === 1) {
+        // Validazione SDI per fatture non Pro Forma (Solo se NON in stato Bozza, a meno che non sia forzato)
+        if (formData.tipoFattura !== 'FATTURA_PROFORMA' && formData.tipoFattura !== 'FATTURA_SEMPLIFICATA' && 
+            formData.flFatturaElettronica === 1 && (formData.statoFatturaElettronica !== 'BO' || forceSdi)) {
+            
             if (!formData.indirizzoIntestazione?.trim()) { Swal.fire('Errore SDI', 'L\'indirizzo del cliente è obbligatorio per la fatturazione elettronica ordinaria.', 'error'); return false; }
             if (!formData.cittaIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il comune del cliente è obbligatorio per la fatturazione elettronica ordinaria.', 'error'); return false; }
             if (!formData.capIntestazione?.trim()) { Swal.fire('Errore SDI', 'Il CAP del cliente è obbligatorio per la fatturazione elettronica ordinaria.', 'error'); return false; }
@@ -842,6 +844,7 @@ const FattureDetail = () => {
     };
 
     const handleSendSdi = async () => {
+        if (!validate(true)) return;
         try {
             Swal.fire({
                 title: 'Invio a SDI...',
@@ -1144,6 +1147,7 @@ const FattureDetail = () => {
                                                     placeholder="XXXXXXX"
                                                     maxLength={7}
                                                     disabled={isLocked}
+                                                    autoComplete="off"
                                                 />
                                             </div>
                                         </div>
@@ -1157,6 +1161,7 @@ const FattureDetail = () => {
                                                     value={formData.pec || ''}
                                                     onChange={handleHeaderChange}
                                                     placeholder="indirizzo@pec.it"
+                                                    autoComplete="off"
                                                 />
                                             </div>
                                         </div>
@@ -1297,6 +1302,7 @@ const FattureDetail = () => {
                                             value={formData.causale || ''}
                                             onChange={handleHeaderChange}
                                             placeholder="Inserisci la causale generica del documento..."
+                                            autoComplete="off"
                                         />
                                     </div>
                                 </div>

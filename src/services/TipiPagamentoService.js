@@ -38,6 +38,10 @@ class TipiPagamentoService {
             }
         });
     }
+
+    getModalitaSdi() {
+        return api.get('/tipi-pagamento/modalita-sdi');
+    }
 }
 
 export default new TipiPagamentoService();

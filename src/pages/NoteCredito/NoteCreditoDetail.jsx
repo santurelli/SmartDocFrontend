@@ -948,6 +948,7 @@ const NoteCreditoDetail = () => {
                                             value={formData.causale || ''}
                                             onChange={handleHeaderChange}
                                             placeholder="Inserisci la causale generica del documento..."
+                                            autoComplete="off"
                                         />
                                     </div>
                                 </div>

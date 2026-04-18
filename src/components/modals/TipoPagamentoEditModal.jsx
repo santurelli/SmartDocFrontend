@@ -21,10 +21,12 @@ const TipoPagamentoEditModal = ({ isOpen, onClose, tipoPagamentoId, onSave }) =>
     const [usaGiornoMeseSucc, setUsaGiornoMeseSucc] = useState(false);
     const [usaSpeseIncasso, setUsaSpeseIncasso] = useState(false);
     const [speseIncassoList, setSpeseIncassoList] = useState([]);
+    const [modalitaList, setModalitaList] = useState([]);
 
     useEffect(() => {
         if (isOpen) {
             loadSpeseIncasso();
+            loadModalita();
             if (tipoPagamentoId) {
                 loadData();
             } else {
@@ -52,6 +54,17 @@ const TipoPagamentoEditModal = ({ isOpen, onClose, tipoPagamentoId, onSave }) =>
             }
         } catch (error) {
             console.error("Errore caricamento spese incasso", error);
+        }
+    };
+
+    const loadModalita = async () => {
+        try {
+            const res = await TipiPagamentoService.getModalitaSdi();
+            if (res.data) {
+                setModalitaList(res.data);
+            }
+        } catch (error) {
+            console.error("Errore caricamento modalità SDI", error);
         }
     };
 
@@ -167,12 +180,9 @@ const TipoPagamentoEditModal = ({ isOpen, onClose, tipoPagamentoId, onSave }) =>
                                             value={formData.modalita || 'MP01'}
                                             onChange={(e) => setFormData({ ...formData, modalita: e.target.value })}
                                         >
-                                            <option value="MP01">Contanti</option>
-                                            <option value="MP05">Bonifico</option>
-                                            <option value="MP08">Carta di Pagamento</option>
-                                            <option value="MP12">RiBa</option>
-                                            <option value="MP02">Assegno</option>
-                                            <option value="MP21">Vaglia Postale</option>
+                                            {modalitaList.map(m => (
+                                                <option key={m.codiceSdi} value={m.codiceSdi}>{m.descrizione}</option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>

@@ -6,17 +6,7 @@ import WrenchModalButton from '../WrenchModalButton';
 import RisorseManagementModal from '../modals/RisorseManagementModal';
 import './ScadenzeTable.css';
 
-const MODALITA_PAGAMENTO = [
-    { value: 'CONTANTI', label: 'Contanti' },
-    { value: 'ASSEGNO', label: 'Assegno' },
-    { value: 'ASSEGNO_CIRCOLARE', label: 'Assegno circolare' },
-    { value: 'BONIFICO', label: 'Bonifico' },
-    { value: 'RIBA', label: 'Riba' },
-    { value: 'MAV', label: 'MAV' },
-    { value: 'RID', label: 'RID' },
-    { value: 'CARTA_CREDITO', label: 'Carta di credito' },
-    { value: 'BOLLETTINO_POSTA', label: 'Bollettino postale' },
-];
+// Modalità verranno caricate dal backend
 
 const ScadenzeTable = ({ 
     idTipoPagamento, 
@@ -32,9 +22,22 @@ const ScadenzeTable = ({
     const isActuallyReadOnly = readOnly || isDisabled;
     const [scadenze, setScadenze] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [modalitaList, setModalitaList] = useState([]);
     
     const initialScadenzeLoaded = useRef(false);
     const prevDeps = useRef({ id: null, tot: null, data: null });
+
+    useEffect(() => {
+        const loadModalita = async () => {
+            try {
+                const res = await TipiPagamentoService.getModalitaSdi();
+                if (res.data) setModalitaList(res.data);
+            } catch (err) {
+                console.error("Errore caricamento modalità SDI", err);
+            }
+        };
+        loadModalita();
+    }, []);
 
     useEffect(() => {
         if (!initialScadenzeLoaded.current && scadenzeIniziali && scadenzeIniziali.length > 0) {
@@ -134,7 +137,7 @@ const ScadenzeTable = ({
             dtScadenza: dataDocumento || new Date().toISOString().split('T')[0],
             importo: 0,
             importoSpeseIncasso: 0,
-            modalitaPagamento: 'BONIFICO'
+            modalitaPagamento: 'MP05' // Default Bonifico
         };
         setScadenze([...scadenze, newScadenza]);
     };
@@ -294,11 +297,11 @@ const ScadenzeTable = ({
                                         ) : (
                                             <select 
                                                 className="form-control form-control-sm"
-                                                value={s.modalitaPagamento || 'BONIFICO'}
+                                                value={s.modalitaPagamento || 'MP01'}
                                                 onChange={(e) => handleModalitaChange(index, e.target.value)}
                                             >
-                                                {MODALITA_PAGAMENTO.map(m => (
-                                                    <option key={m.value} value={m.value}>{m.label}</option>
+                                                {modalitaList.map(m => (
+                                                    <option key={m.codiceSdi} value={m.codiceSdi}>{m.descrizione}</option>
                                                 ))}
                                             </select>
                                         )}
