@@ -63,23 +63,23 @@ const ListinoEditModal = ({ show, handleClose, listino, refreshList, allListini 
     if (!show) return null;
 
     return (
-        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }} role="dialog">
             <div className="modal-dialog modal-lg" role="document">
-                <div className="modal-content">
+                <div className="modal-content premium-modal-content">
                     <div className="modal-header">
+                        <h4 className="modal-title">
+                            {listino ? 'Modifica Listino' : 'Nuovo Listino'}
+                        </h4>
                         <button type="button" className="close" onClick={handleClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>
-                            {listino ? 'Modifica Listino' : 'Nuovo Listino'}
-                        </h4>
                     </div>
                     <form onSubmit={handleSubmit}>
-                        <div className="modal-body">
+                        <div className="modal-body" style={{ padding: '30px' }}>
                             <div className="row">
                                 <div className="col-md-12">
-                                    <div className="form-group">
-                                        <label>Descrizione</label>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label className="premium-label">Descrizione</label>
                                         <input 
                                             type="text" 
                                             className="form-control"
@@ -88,26 +88,25 @@ const ListinoEditModal = ({ show, handleClose, listino, refreshList, allListini 
                                             onChange={handleChange}
                                             required
                                             placeholder="Es: Listino Rivenditori"
-                                            style={{ borderRadius: '8px', height: '40px' }}
+                                            style={{ borderRadius: '10px', height: '42px', border: '1px solid #dfe4e7', boxShadow: 'none' }}
                                         />
                                     </div>
                                 </div>
                                 
                                 <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Sorgente Prezzo</label>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label className="premium-label">Sorgente Prezzo</label>
                                         <select 
                                             className="form-control"
                                             name="derivationSource"
                                             value={formData.derivationSource}
                                             onChange={handleChange}
                                             disabled={formData.derivationType === 'NONE'}
-                                            style={{ borderRadius: '8px', height: '40px', backgroundColor: formData.derivationType === 'NONE' ? '#f5f5f5' : 'white' }}
+                                            style={{ borderRadius: '10px', height: '42px', border: '1px solid #dfe4e7', backgroundColor: formData.derivationType === 'NONE' ? '#f5f5f5' : 'white', boxShadow: 'none' }}
                                         >
                                             <option 
                                                 value="LISTINO" 
                                                 disabled={!formData.idParent}
-                                                style={{ color: !formData.idParent ? '#999' : 'inherit' }}
                                             >
                                                 Altro Listino (Padre) {!formData.idParent ? '(Scegli un padre)' : ''}
                                             </option>
@@ -118,18 +117,18 @@ const ListinoEditModal = ({ show, handleClose, listino, refreshList, allListini 
                                 </div>
 
                                 <div className="col-md-6">
-                                    <div className="form-group">
-                                        <label>Listino Padre</label>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label className="premium-label">Listino Padre</label>
                                         <select 
                                             className="form-control"
                                             name="idParent"
                                             value={formData.idParent}
                                             onChange={handleChange}
                                             required={formData.derivationSource === 'LISTINO' && formData.derivationType !== 'NONE'}
-                                            style={{ borderRadius: '8px', height: '40px' }}
+                                            style={{ borderRadius: '10px', height: '42px', border: '1px solid #dfe4e7', boxShadow: 'none' }}
                                         >
                                             <option value="">Nessuno (Radice)</option>
-                                            {allListini
+                                            {allListini && allListini
                                                 .filter(l => l.id !== formData.id)
                                                 .map(l => (
                                                     <option key={l.id} value={l.id}>{l.descrizione}</option>
@@ -139,14 +138,14 @@ const ListinoEditModal = ({ show, handleClose, listino, refreshList, allListini 
                                 </div>
 
                                 <div className="col-md-4">
-                                    <div className="form-group">
-                                        <label>Tipo Regola</label>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label className="premium-label">Tipo Regola</label>
                                         <select 
                                             className="form-control"
                                             name="derivationType"
                                             value={formData.derivationType}
                                             onChange={handleChange}
-                                            style={{ borderRadius: '8px', height: '40px' }}
+                                            style={{ borderRadius: '10px', height: '42px', border: '1px solid #dfe4e7', boxShadow: 'none' }}
                                         >
                                             <option value="NONE">Prezzo Manuale (Radice)</option>
                                             <option value="PERCENTAGE">Ricarico Percentuale (%)</option>
@@ -156,8 +155,8 @@ const ListinoEditModal = ({ show, handleClose, listino, refreshList, allListini 
                                 </div>
 
                                 <div className="col-md-4">
-                                    <div className="form-group">
-                                        <label>Valore Ricarico</label>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label className="premium-label">Valore Ricarico</label>
                                         <input 
                                             type="number" 
                                             step="0.01"
@@ -166,20 +165,20 @@ const ListinoEditModal = ({ show, handleClose, listino, refreshList, allListini 
                                             value={formData.derivationValue}
                                             onChange={handleChange}
                                             disabled={formData.derivationType === 'NONE'}
-                                            style={{ borderRadius: '8px', height: '40px' }}
+                                            style={{ borderRadius: '10px', height: '42px', border: '1px solid #dfe4e7', backgroundColor: formData.derivationType === 'NONE' ? '#f5f5f5' : 'white', boxShadow: 'none' }}
                                         />
                                     </div>
                                 </div>
 
                                 <div className="col-md-4">
-                                    <div className="form-group">
-                                        <label>Arrotondamento</label>
+                                    <div className="form-group" style={{ marginBottom: '20px' }}>
+                                        <label className="premium-label">Arrotondamento</label>
                                         <select 
                                             className="form-control"
                                             name="roundingRule"
                                             value={formData.roundingRule}
                                             onChange={handleChange}
-                                            style={{ borderRadius: '8px', height: '40px' }}
+                                            style={{ borderRadius: '10px', height: '42px', border: '1px solid #dfe4e7', boxShadow: 'none' }}
                                         >
                                             <option value={0}>Standard (2 decimali)</option>
                                             <option value={0.05}>Al 0.05 più vicino</option>
@@ -191,22 +190,25 @@ const ListinoEditModal = ({ show, handleClose, listino, refreshList, allListini 
                                 </div>
 
                                 <div className="col-md-12" style={{ marginTop: '10px' }}>
-                                    <div className="checkbox">
-                                        <label>
-                                            <input 
-                                                type="checkbox"
-                                                name="flDefault"
-                                                checked={formData.flDefault === 1}
-                                                onChange={handleChange}
-                                            /> Listino Predefinito
+                                    <div className="premium-checkbox-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                        <input 
+                                            type="checkbox"
+                                            id="flDefault"
+                                            name="flDefault"
+                                            checked={formData.flDefault === 1}
+                                            onChange={handleChange}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <label htmlFor="flDefault" style={{ margin: 0, fontWeight: '500', cursor: 'pointer', color: '#444' }}>
+                                            Listino Predefinito
                                         </label>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-default" onClick={handleClose} style={{ borderRadius: '8px' }}>Annulla</button>
-                            <button type="submit" className="btn btn-primary" disabled={submitting} style={{ borderRadius: '8px' }}>
+                        <div className="modal-footer" style={{ padding: '20px 30px', backgroundColor: '#f8f9fa', borderTop: '1px solid #eee' }}>
+                            <button type="button" className="btn btn-default" onClick={handleClose} style={{ borderRadius: '10px', height: '42px', padding: '0 25px', border: '1px solid #dfe4e7', color: '#666' }}>Annulla</button>
+                            <button type="submit" className="btn btn-primary premium-btn" disabled={submitting} style={{ borderRadius: '10px', height: '42px', padding: '0 30px', fontWeight: '600' }}>
                                 {submitting ? 'Salvataggio...' : 'Salva Listino'}
                             </button>
                         </div>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import Swal from 'sweetalert2';
 import AliquoteIvaService from '../../services/AliquoteIvaService';
-import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaSearch, FaChevronLeft, FaChevronRight, FaSortUp, FaSortDown, FaSort, FaCheck } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaEdit, FaPlus, FaTimes, FaSearch, FaChevronLeft, FaChevronRight, FaSortUp, FaSortDown, FaSort, FaCheck } from 'react-icons/fa';
 
 const AliquoteIvaManagementModal = ({ isOpen, onClose, onSave }) => {
     const [list, setList] = useState([]);
@@ -68,6 +69,15 @@ const AliquoteIvaManagementModal = ({ isOpen, onClose, onSave }) => {
         } catch (error) {
             console.error("Error loading vat rates", error);
             setList([]);
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore Caricamento',
+                text: 'Impossibile caricare le aliquote IVA: ' + (error.response?.data?.errorText || error.message),
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -261,95 +271,109 @@ const AliquoteIvaManagementModal = ({ isOpen, onClose, onSave }) => {
 
     const totalPages = Math.ceil(totalItems / pageSize);
 
-    return (
+    return ReactDOM.createPortal(
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content premium-modal-content">
                     <div className="modal-header">
-                        <button type="button" className="close" onClick={onClose} aria-label="Close" style={{ opacity: 1, color: '#333' }}>
+                        <h4 className="modal-title">Gestione Aliquote IVA</h4>
+                        <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title">Gestione Aliquote IVA</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
-                        {/* Toolbar */}
-                        <div className="modal-toolbar">
-                            <div className="toolbar-left">
-                                <div className="toolbar-item">
-                                    <span>Mostra 10 righe</span>
+                    <div className="modal-body" style={{ padding: '25px' }}>
+                        {/* Toolbar - Balanced Layout */}
+                        <div className="modal-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', gap: '20px' }}>
+                            <div className="toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ 
+                                    backgroundColor: '#e7f1ff', 
+                                    width: '42px', 
+                                    height: '42px', 
+                                    borderRadius: '10px', 
+                                    color: '#03a9f4',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <FaSearch style={{ fontSize: '1.2em' }} />
                                 </div>
-                            </div>
-
-                            <div className="toolbar-right">
-                                <div className="toolbar-search-wrapper">
+                                <div className="toolbar-search-wrapper" style={{ minWidth: '350px' }}>
                                     <input
                                         type="text"
                                         className="form-control"
                                         placeholder="Cerca..."
                                         value={search}
                                         onChange={handleSearch}
+                                        style={{ 
+                                            height: '42px',
+                                            paddingLeft: '15px', 
+                                            borderRadius: '10px', 
+                                            border: '1px solid #dfe4e7', 
+                                            boxShadow: 'none' 
+                                        }}
                                     />
-                                    <i className="fa fa-search"></i>
                                 </div>
-                                <button className="btn btn-primary" onClick={handleAdd}>
-                                    <FaPlus /> Aggiungi
+                            </div>
+                            <div className="toolbar-right">
+                                <button className="btn btn-primary premium-btn" onClick={handleAdd} style={{ height: '42px', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px' }}>
+                                    <FaPlus /> Nuova Aliquota
                                 </button>
                             </div>
                         </div>
 
-                        <table className="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th style={{ width: '20%', cursor: 'pointer' }} onClick={() => handleSort('codice')}>
-                                        CODICE {getSortIcon('codice')}
-                                    </th>
-                                    <th style={{ cursor: 'pointer' }} onClick={() => handleSort('descrizione')}>
-                                        DESCRIZIONE {getSortIcon('descrizione')}
-                                    </th>
-                                    <th style={{ width: '15%' }}>IMPOSTA %</th>
-                                    <th style={{ width: '80px', textAlign: 'center' }}>PRED.</th>
-                                    <th style={{ width: '120px', textAlign: 'center' }}>AZIONI</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
+                        <div className="table-wrapper" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto', borderRadius: '12px', border: '1px solid #eee' }}>
+                            <table className="table table-striped table-hover" style={{ marginBottom: 0 }}>
+                                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa', zIndex: 1, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
                                     <tr>
-                                        <td colSpan="4" className="text-center">Caricamento...</td>
+                                        <th style={{ width: '20%', cursor: 'pointer', padding: '15px' }} onClick={() => handleSort('codice')}>
+                                            CODICE {getSortIcon('codice')}
+                                        </th>
+                                        <th style={{ cursor: 'pointer', padding: '15px' }} onClick={() => handleSort('descrizione')}>
+                                            DESCRIZIONE {getSortIcon('descrizione')}
+                                        </th>
+                                        <th style={{ width: '15%', padding: '15px' }}>IMPOSTA %</th>
+                                        <th style={{ width: '80px', textAlign: 'center', padding: '15px' }}>PRED.</th>
+                                        <th style={{ width: '120px', textAlign: 'center', padding: '15px' }}>AZIONI</th>
                                     </tr>
-                                ) : list.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="4" className="text-center">Nessuna aliquota trovata.</td>
-                                    </tr>
-                                ) : (
-                                    list.map(item => (
-                                        <tr key={item.id}>
-                                            <td> {item.codice} </td>
-                                            <td> {item.descrizione} </td>
-                                            <td> {item.imposta}% </td>
-                                            <td className="text-center">
-                                                {(item.predefinita === 1 || item.predefinita === true) && <FaCheck style={{ color: '#2ecc71' }} />}
-                                            </td>
-                                            <td className="text-center">
-                                                <button className="btn btn-info btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
-                                                    <FaPencilAlt />
-                                                </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
-                                                    <FaTrash />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr><td colSpan="5" className="text-center" style={{ padding: '40px' }}>Caricamento...</td></tr>
+                                    ) : list.length === 0 ? (
+                                        <tr><td colSpan="5" className="text-center" style={{ padding: '40px' }}>Nessuna aliquota trovata.</td></tr>
+                                    ) : (
+                                        list.map(item => (
+                                            <tr key={item.id}>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px' }}> {item.codice} </td>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px', fontWeight: '500' }}> {item.descrizione} </td>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px' }}> <span className="badge" style={{ backgroundColor: '#eef3f7', color: '#2c3e50', padding: '6px 10px' }}>{item.imposta}%</span> </td>
+                                                <td className="text-center" style={{ verticalAlign: 'middle', padding: '15px' }}>
+                                                    {(item.predefinita === 1 || item.predefinita === true) && <FaCheck style={{ color: '#2ecc71' }} />}
+                                                </td>
+                                                <td className="text-center" style={{ verticalAlign: 'middle', padding: '15px' }}>
+                                                    <button className="btn btn-info btn-sm" style={{ marginRight: '8px' }} onClick={() => handleEdit(item)} title="Modifica">
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
+                                                        <FaTrash />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-                        <div className="pagination-container" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span className="pagination-info" style={{ color: '#888', fontSize: '0.9em' }}>
-                                Visualizzati {list.length} di {totalItems} risultati
+                        {/* Footer Status Bar with Pagination */}
+                        <div className="status-footer" style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#f8f9fa', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #eee' }}>
+                            <span className="pagination-info" style={{ color: '#666', fontSize: '0.85em', fontWeight: '500' }}>
+                                <FaSearch style={{ marginRight: '8px', opacity: 0.5 }} />
+                                Visualizzati <strong style={{ color: '#03a9f4' }}>{list.length}</strong> di <strong style={{ color: '#03a9f4' }}>{totalItems}</strong> risultati
                             </span>
                             {totalPages > 1 && (
                                 <nav>
-                                    <ul className="pagination">
+                                    <ul className="pagination" style={{ margin: 0 }}>
                                         <li className={page === 0 ? 'disabled' : ''}>
                                             <a href="#" onClick={(e) => { e.preventDefault(); if (page > 0) setPage(page - 1); }}>
                                                 <FaChevronLeft />
@@ -382,7 +406,8 @@ const AliquoteIvaManagementModal = ({ isOpen, onClose, onSave }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

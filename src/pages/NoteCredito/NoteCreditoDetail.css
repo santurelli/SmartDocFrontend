@@ -323,6 +323,8 @@ hr {
     cursor: pointer;
     font-size: 14px;
     color: #555;
+    font-weight: 600;
+}
 
 /* Status Workflow Bar */
 .status-workflow-bar {

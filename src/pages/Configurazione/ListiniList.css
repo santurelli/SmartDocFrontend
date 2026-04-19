@@ -41,16 +41,16 @@
 }
 
 .listino-title {
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: #2c3e50;
     margin: 0;
 }
 
 .listino-badge {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-    border-radius: 10px;
+    font-size: 0.85rem;
+    padding: 5px 12px;
+    border-radius: 12px;
     font-weight: 600;
     text-transform: uppercase;
 }
@@ -58,19 +58,21 @@
 .badge-default {
     background: #e1f5fe;
     color: #039be5;
+    box-shadow: 0 2px 4px rgba(3, 155, 229, 0.1);
 }
 
 .listino-body {
     flex-grow: 1;
+    margin-top: 10px;
 }
 
 .derivation-info {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-    margin-bottom: 8px;
+    font-size: 1.1rem;
+    color: #5d6768;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
 }
 
 .derivation-source {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import Swal from 'sweetalert2';
 import RisorseService from '../../services/RisorseService';
-import { FaPencilAlt, FaTrash, FaPlus, FaCheck } from 'react-icons/fa';
+import { FaPencilAlt, FaTrash, FaPlus, FaCheck, FaSearch, FaEdit, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const RisorseManagementModal = ({ onClose, initialTipologia }) => {
     const [list, setList] = useState([]);
@@ -275,21 +276,64 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
-                <div className="modal-content">
+                <div className="modal-content premium-modal-content">
                     <div className="modal-header">
+                        <h4 className="modal-title">Elenco Conti</h4>
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title">Elenco Conti</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
-                        {/* Toolbar */}
-                        <div className="modal-toolbar">
-                            <div className="toolbar-left">
+                    <div className="modal-body" style={{ padding: '25px' }}>
+                        {/* Toolbar - Balanced Layout */}
+                        <div className="modal-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', gap: '15px' }}>
+                            <div className="toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                                <div style={{ 
+                                    backgroundColor: '#e7f1ff', 
+                                    width: '42px', 
+                                    height: '42px', 
+                                    borderRadius: '10px', 
+                                    color: '#03a9f4',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <FaSearch style={{ fontSize: '1.2em' }} />
+                                </div>
+                                <select
+                                    className="form-control"
+                                    style={{ width: '180px', height: '42px', borderRadius: '10px', border: '1px solid #dfe4e7', fontSize: '0.9em' }}
+                                    value={searchTipologia}
+                                    onChange={(e) => { setSearchTipologia(e.target.value); setCurrentPage(1); }}
+                                >
+                                    <option value="">Tutte le tipologie...</option>
+                                    <option value="BA">Banca</option>
+                                    <option value="CA">Cassa</option>
+                                    <option value="CC">Carta di credito</option>
+                                    <option value="TI">Titoli</option>
+                                </select>
+                                <div className="toolbar-search-wrapper" style={{ flex: 1, position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Cerca per descrizione..."
+                                        value={searchTerm}
+                                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                        style={{ 
+                                            height: '42px',
+                                            paddingLeft: '15px', 
+                                            borderRadius: '10px', 
+                                            border: '1px solid #dfe4e7', 
+                                            boxShadow: 'none' 
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="toolbar-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <div className="toolbar-item">
-                                    <span>Mostra</span>
                                     <select
-                                        className="form-control input-sm"
+                                        className="form-control"
+                                        style={{ width: '75px', height: '42px', borderRadius: '10px', fontSize: '0.9em', border: '1px solid #dfe4e7' }}
                                         value={pageSize}
                                         onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
                                     >
@@ -298,109 +342,96 @@ const RisorseManagementModal = ({ onClose, initialTipologia }) => {
                                         <option value="50">50</option>
                                         <option value="100">100</option>
                                     </select>
-                                    <span>righe</span>
                                 </div>
-                            </div>
-
-                            <div className="toolbar-right">
-                                <div className="toolbar-item">
-                                    <select
-                                        className="form-control input-sm"
-                                        style={{ minWidth: '150px' }}
-                                        value={searchTipologia}
-                                        onChange={(e) => { setSearchTipologia(e.target.value); setCurrentPage(1); }}
-                                    >
-                                        <option value="">Tutte le tipologie...</option>
-                                        <option value="BA">Banca</option>
-                                        <option value="CA">Cassa</option>
-                                        <option value="CC">Carta di credito</option>
-                                        <option value="TI">Titoli</option>
-                                    </select>
-                                </div>
-                                <div className="toolbar-search-wrapper">
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Cerca..."
-                                        value={searchTerm}
-                                        onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                                    />
-                                    <i className="fa fa-search"></i>
-                                </div>
-                                <button type="button" className="btn btn-primary" onClick={handleAdd}>
+                                <button type="button" className="btn btn-primary premium-btn" onClick={handleAdd} style={{ height: '42px', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px' }}>
                                     <FaPlus /> Aggiungi
                                 </button>
                             </div>
                         </div>
 
                         {/* Table */}
-                        <table className="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th style={{ verticalAlign: 'middle' }}>TIPOLOGIA</th>
-                                    <th style={{ verticalAlign: 'middle' }}>DESCRIZIONE</th>
-                                    <th style={{ width: '120px', verticalAlign: 'middle', textAlign: 'center' }}>AZIONI</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentItems.length > 0 ? (
-                                    currentItems.map(item => (
-                                        <tr key={item.id}>
-                                            <td style={{ verticalAlign: 'middle' }}>{getTypeLabel(item.tipologia)}</td>
-                                            <td style={{ verticalAlign: 'middle' }}>
-                                                {item.descrizione}
-                                                {item.predefinita === 1 && (
-                                                    <span className="label label-success pull-right">Predefinita</span>
-                                                )}
-                                            </td>
-                                            <td className="text-center" style={{ verticalAlign: 'middle' }}>
-                                                <button type="button" className="btn btn-info btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
-                                                    <FaPencilAlt />
-                                                </button>
-                                                <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
-                                                    <FaTrash />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
+                        <div className="table-wrapper" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto', borderRadius: '12px', border: '1px solid #eee' }}>
+                            <table className="table table-striped table-hover" style={{ marginBottom: 0 }}>
+                                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa', zIndex: 1, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
                                     <tr>
-                                        <td colSpan="3" className="text-center">Nessun elemento trovato</td>
+                                        <th style={{ padding: '15px' }}>TIPOLOGIA</th>
+                                        <th style={{ padding: '15px' }}>DESCRIZIONE</th>
+                                        <th style={{ width: '120px', textAlign: 'center', padding: '15px' }}>AZIONI</th>
                                     </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr><td colSpan="3" className="text-center" style={{ padding: '40px' }}>Caricamento...</td></tr>
+                                    ) : currentItems.length > 0 ? (
+                                        currentItems.map(item => (
+                                            <tr key={item.id}>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px' }}>
+                                                    <span className="badge" style={{ backgroundColor: '#eef3f7', color: '#2c3e50', padding: '6px 10px', borderRadius: '6px' }}>
+                                                        {getTypeLabel(item.tipologia)}
+                                                    </span>
+                                                </td>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px', fontWeight: '500' }}>
+                                                    {item.descrizione}
+                                                    {item.predefinita === 1 && (
+                                                        <span className="label label-success" style={{ marginLeft: '10px', borderRadius: '4px', padding: '3px 8px', fontSize: '0.75em' }}>Predefinita</span>
+                                                    )}
+                                                </td>
+                                                <td className="text-center" style={{ verticalAlign: 'middle', padding: '15px' }}>
+                                                    <button type="button" className="btn btn-info btn-sm" style={{ marginRight: '8px' }} onClick={() => handleEdit(item)} title="Modifica">
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
+                                                        <FaTrash />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="3" className="text-center" style={{ padding: '40px' }}>Nessun elemento trovato</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-                        {/* Pagination Footer */}
-                        <div className="row" style={{ marginTop: '15px' }}>
-                            <div className="col-md-6">
-                                <div style={{ paddingTop: '8px' }}>
-                                    Vista da {totalItems > 0 ? startIdx + 1 : 0} a {Math.min(startIdx + pageSize, totalItems)} di {totalItems} elementi
-                                </div>
-                            </div>
-                            <div className="col-md-6 text-right">
+                        {/* Pagination Status Bar */}
+                        <div className="status-footer" style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#f8f9fa', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #eee' }}>
+                            <span className="pagination-info" style={{ color: '#666', fontSize: '0.85em', fontWeight: '500' }}>
+                                <FaSearch style={{ marginRight: '8px', opacity: 0.5 }} />
+                                Vista da <strong style={{ color: '#03a9f4' }}>{totalItems > 0 ? startIdx + 1 : 0}</strong> a <strong style={{ color: '#03a9f4' }}>{Math.min(startIdx + pageSize, totalItems)}</strong> di <strong style={{ color: '#03a9f4' }}>{totalItems}</strong> elementi
+                            </span>
+                            {totalPages > 1 && (
                                 <nav>
-                                    <ul className="pagination" style={{ margin: '0' }}>
+                                    <ul className="pagination" style={{ margin: 0 }}>
                                         <li className={currentPage === 1 ? 'disabled' : ''}>
                                             <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>
-                                                <span>&laquo;</span>
+                                                <FaChevronLeft />
                                             </a>
                                         </li>
-                                        {[...Array(totalPages)].map((_, i) => (
-                                            <li key={i} className={currentPage === i + 1 ? 'active' : ''}>
-                                                <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
-                                                    {i + 1}
-                                                </a>
-                                            </li>
-                                        ))}
+                                        {[...Array(totalPages)].map((_, i) => {
+                                            if (totalPages > 10) {
+                                                if (i > 0 && i < totalPages - 1 && (i < currentPage - 2 || i > currentPage + 1)) {
+                                                    if (i === currentPage - 3 || i === currentPage + 2) return <li key={i} className="disabled"><span>...</span></li>;
+                                                    return null;
+                                                }
+                                            }
+                                            return (
+                                                <li key={i} className={currentPage === i + 1 ? 'active' : ''}>
+                                                    <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
+                                                        {i + 1}
+                                                    </a>
+                                                </li>
+                                            );
+                                        })}
                                         <li className={currentPage === totalPages ? 'disabled' : ''}>
                                             <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>
-                                                <span>&raquo;</span>
+                                                <FaChevronRight />
                                             </a>
                                         </li>
                                     </ul>
                                 </nav>
-                            </div>
+                            )}
                         </div>
                     </div>
                     <div className="modal-footer">

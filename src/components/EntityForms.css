@@ -585,24 +585,102 @@
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    margin-bottom: 20px !important;
-    gap: 15px !important;
+    margin-bottom: 25px !important; /* Increased breathing room */
+    gap: 20px !important;
     width: 100% !important;
+}
+
+/* Force centering for premium modals even if body doesn't have .modal-open */
+.premium-modal {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    background-color: rgba(0,0,0,0.5) !important;
+}
+
+.premium-modal .modal-dialog {
+    margin: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 600px !important; /* Default fallback */
+    min-height: auto !important;
+}
+
+.premium-modal .modal-dialog.modal-lg {
+    max-width: 900px !important;
+}
+
+.premium-modal .modal-dialog.modal-xl {
+    max-width: 1200px !important;
+}
+
+.premium-modal .premium-modal-content {
+    width: 100% !important;
+    border-radius: 15px !important; /* Softer corners */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+    border: none !important;
+}
+
+.premium-modal .modal-header {
+    padding: 20px 25px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.premium-modal .modal-header .modal-title {
+    font-weight: 700 !important;
+    font-size: 1.4rem !important;
+    color: #333 !important;
+    margin: 0 !important;
+}
+
+.premium-modal .modal-header .close {
+    margin-left: auto !important;
+    font-size: 24px !important;
+    opacity: 0.6 !important;
+    transition: all 0.2s !important;
+    padding: 10px !important;
+}
+
+.premium-modal .modal-header .close:hover {
+    opacity: 1 !important;
+    transform: scale(1.1) !important;
+}
+
+.premium-modal .modal-body {
+    padding: 25px 30px !important; /* Increased horizontal padding */
+}
+
+/* Custom table wrapper to replace table-responsive that was cutting off buttons */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 10px; /* Space for scrollbar if needed */
+    margin-bottom: 20px;
+}
+
+.table-wrapper table {
+    min-width: 100%;
 }
 
 .toolbar-left,
 .toolbar-right {
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 15px !important;
 }
 
 .toolbar-item {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    color: #555;
-    font-size: 13px;
+    gap: 10px !important;
+    color: #444;
+    font-size: 14px;
     font-weight: 500;
 }
 
@@ -610,27 +688,25 @@
     margin: 0 !important;
 }
 
-.toolbar-item select.input-sm {
-    width: auto !important;
-    min-width: 70px;
-}
-
 .toolbar-search-wrapper {
     position: relative;
-    width: 250px;
+    width: 300px; /* Wider search field */
 }
 
 .toolbar-search-wrapper .form-control {
-    padding-right: 35px !important;
-    border-radius: 20px !important;
+    padding-right: 40px !important;
+    border-radius: 25px !important; /* More rounded */
+    height: 42px !important; /* Slightly taller */
+    border: 1px solid #e0e0e0 !important;
 }
 
 .toolbar-search-wrapper .fa-search {
     position: absolute;
-    right: 12px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: #ccc;
+    color: #03a9f4 !important;
+    font-size: 1.1rem !important;
     pointer-events: none;
 }
 

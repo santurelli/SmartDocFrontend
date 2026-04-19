@@ -1,3 +1,7 @@
+www2.smart-doc.it {
+    redir https://app.smart-doc.it{uri}
+}
+
 app.smart-doc.it {
     # 1. Rotta per l'API: usiamo 'handle' per MANTENERE il prefisso /api richiesto dal Backend
     handle /api/* {

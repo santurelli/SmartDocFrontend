@@ -5,26 +5,40 @@ import {
     FaTachometerAlt, FaThLarge, FaCubes, FaAngleRight, FaAngleDown,
     FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaLock, FaUser, FaCircle, FaFileAlt
 } from 'react-icons/fa';
+import TipiPagamentoManagementModal from './modals/TipiPagamentoManagementModal';
+import UnitaMisuraManagementModal from './modals/UnitaMisuraManagementModal';
+import AliquoteIvaManagementModal from './modals/AliquoteIvaManagementModal';
 import './Sidebar.css';
 
 const Sidebar = ({ user }) => {
     const [openMenus, setOpenMenus] = useState({});
-    const [docConfigs, setDocConfigs] = useState(null);
+    const [configs, setConfigs] = useState(null);
+    const [showTipiPagamento, setShowTipiPagamento] = useState(false);
+    const [showUnitaMisura, setShowUnitaMisura] = useState(false);
+    const [showAliquoteIva, setShowAliquoteIva] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchDocConfigs = async () => {
+        const fetchConfigs = async () => {
             try {
-                const res = await ConfigurazioneService.getByDomain('DOCUMENTI');
-                if (res.data) setDocConfigs(res.data);
+                const res = await ConfigurazioneService.getAll();
+                const data = res.data || res || [];
+                const configMap = {};
+                data.forEach(c => {
+                    configMap[`${c.dominio}:${c.chiave}`] = c.valore;
+                    if (c.dominio === 'DOCUMENTI') {
+                        configMap[c.chiave] = c.valore;
+                    }
+                });
+                setConfigs(configMap);
             } catch (err) {
                 console.error("Error fetching sidebar configs:", err);
             }
         };
-        fetchDocConfigs();
+        fetchConfigs();
 
-        window.addEventListener('configupdated', fetchDocConfigs);
-        return () => window.removeEventListener('configupdated', fetchDocConfigs);
+        window.addEventListener('configupdated', fetchConfigs);
+        return () => window.removeEventListener('configupdated', fetchConfigs);
     }, []);
 
     const toggleMenu = (menuKey) => {
@@ -39,7 +53,24 @@ const Sidebar = ({ user }) => {
         navigate('/login');
     };
 
-    const isEnabled = (key) => !docConfigs || docConfigs[key] === '1' || docConfigs[key] === undefined;
+    const isEnabled = (key, domain = 'DOCUMENTI') => {
+        if (!configs) return true;
+        
+        const fullKey = key.includes(':') ? key : `${domain}:${key}`;
+        
+        // Se la chiave (con o senza dominio) esiste nella mappa, usiamo il suo valore
+        if (configs[fullKey] !== undefined) {
+            return configs[fullKey] === '1';
+        }
+        
+        // Fallback per compatibilità con il dominio DOCUMENTI (senza prefisso nella mappa)
+        if (configs[key] !== undefined) {
+            return configs[key] === '1';
+        }
+        
+        // Se la chiave è totalmente assente, la consideriamo abilitata di default
+        return true;
+    };
 
     const userName = user ? `${user.nome} ${user.cognome ? user.cognome.charAt(0) + '.' : ''}` : 'Utente';
 
@@ -134,8 +165,11 @@ const Sidebar = ({ user }) => {
                                 <ul className="submenu">
                                     <li><NavLink to="/clienti">Clienti</NavLink></li>
                                     <li><NavLink to="/fornitori">Fornitori</NavLink></li>
-                                    <li><NavLink to="/dipendenti">Dipendenti</NavLink></li>
+                                    {isEnabled('DIPENDENTI', 'GLOBAL') && <li><NavLink to="/dipendenti">Dipendenti</NavLink></li>}
                                     <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); setShowTipiPagamento(true); }}>Tipi pagamento</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); setShowUnitaMisura(true); }}>Unità di misura</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); setShowAliquoteIva(true); }}>Aliquote IVA</a></li>
                                 </ul>
                             </li>
 
@@ -172,6 +206,10 @@ const Sidebar = ({ user }) => {
                     </div>
                 </div >
             </section >
+
+            <TipiPagamentoManagementModal isOpen={showTipiPagamento} onClose={() => setShowTipiPagamento(false)} />
+            <UnitaMisuraManagementModal isOpen={showUnitaMisura} onClose={() => setShowUnitaMisura(false)} />
+            <AliquoteIvaManagementModal isOpen={showAliquoteIva} onClose={() => setShowAliquoteIva(false)} />
         </div >
     );
 };

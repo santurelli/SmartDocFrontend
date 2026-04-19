@@ -1,0 +1,200 @@
+.registri-container {
+    padding: 20px;
+}
+
+.form-control.premium-select, .form-control.premium-input {
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #dce4ec;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control.premium-select:focus, .form-control.premium-input:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.btn-filter {
+    height: 42px;
+    padding: 0 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.registri-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.registro-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.registro-header {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ebeef5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.registro-header.vendite {
+    border-left: 5px solid #2ecc71;
+}
+
+.registro-header.acquisti {
+    border-left: 5px solid #e74c3c;
+}
+
+.registro-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.premium-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.premium-table th {
+    background: #f8fbfd;
+    padding: 16px 20px;
+    font-weight: 700;
+    color: #7f8c8d;
+    font-size: 1rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid #ebeef5;
+    text-align: left;
+}
+
+.premium-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f4f8;
+    color: #34495e;
+    font-size: 1.1rem;
+    vertical-align: middle;
+}
+
+.premium-table tbody tr:hover {
+    background-color: #fcfdfe;
+}
+
+.amount-cell {
+    text-align: right !important;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-weight: 600;
+}
+
+.total-row td {
+    background: #f8fbfd;
+    font-weight: 700;
+    border-top: 2px solid #dce4ec;
+    font-size: 1.25rem;
+}
+
+.badge-differita {
+    background-color: #f39c12;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* Tab System */
+.tabs-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 0;
+    border-bottom: 2px solid #ebeef5;
+    padding: 0 10px;
+}
+
+.registro-tab {
+    padding: 12px 25px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    color: #7f8c8d;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.05rem;
+    position: relative;
+    bottom: -2px;
+}
+
+.registro-tab:hover {
+    color: #2c3e50;
+    background: #f8fbfd;
+}
+
+.registro-tab.active {
+    color: #3498db;
+    border-bottom: 3px solid #3498db;
+}
+
+.tab-badge {
+    background: #bdc3c7;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.registro-tab.active .tab-badge {
+    background: #3498db;
+}
+
+.registro-tab.vendite.active { color: #2ecc71; border-bottom-color: #2ecc71; }
+.registro-tab.vendite.active .tab-badge { background: #2ecc71; }
+
+.registro-tab.differita.active { color: #f1c40f; border-bottom-color: #f1c40f; }
+.registro-tab.differita.active .tab-badge { background: #f1c40f; }
+
+.registro-tab.acquisti.active { color: #e74c3c; border-bottom-color: #e74c3c; }
+.registro-tab.acquisti.active .tab-badge { background: #e74c3c; }
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #95a5a6;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    color: #bdc3c7;
+}
+
+.empty-state h3 {
+    margin: 0 0 10px 0;
+    color: #7f8c8d;
+}
+
+.empty-state p {
+    margin: 0;
+}

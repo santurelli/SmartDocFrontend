@@ -2,7 +2,15 @@ import api from './api';
 
 class UnitaMisuraService {
     getList(params) {
-        return api.post('/unitamisura/list', params);
+        const { start, length, orderColumn, orderDir, ...filter } = params;
+        const queryParams = new URLSearchParams({
+            start: start || 0,
+            length: length || 10
+        });
+        if (orderColumn !== undefined && orderColumn !== null) queryParams.append('orderColumn', orderColumn);
+        if (orderDir) queryParams.append('orderDir', orderDir);
+
+        return api.post(`/unitamisura/list?${queryParams.toString()}`, filter);
     }
 
     getListForCombo() {

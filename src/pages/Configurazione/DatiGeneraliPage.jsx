@@ -3,7 +3,6 @@ import ConfigurazioneService from '../../services/ConfigurazioneService';
 import { FaSave, FaCogs, FaHome } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import './ConfigurazionePage.css';
-
 const DatiGeneraliPage = () => {
     const [configs, setConfigs] = useState({});
     const [loading, setLoading] = useState(true);
@@ -59,6 +58,7 @@ const DatiGeneraliPage = () => {
                 { d: 'GLOBAL', k: 'AGENTI' },
                 { d: 'GLOBAL', k: 'DIVISIONI' },
                 { d: 'GLOBAL', k: 'PROGETTI' },
+                { d: 'GLOBAL', k: 'DIPENDENTI' },
                 { d: 'GLOBAL', k: 'TIPO_STORE' },
                 { d: 'GLOBAL', k: 'UNITAMISURA_ABILITA' },
                 { d: 'GLOBAL', k: 'ANNOTAZIONI_ESTESE' },
@@ -151,6 +151,17 @@ const DatiGeneraliPage = () => {
                                 readOnly 
                             />
                             <span className="config-label">Gestione Progetti</span>
+                        </div>
+                    </div>
+                    <div className="col-md-4 mb-3">
+                        <div className="document-config-card" onClick={() => handleToggle('GLOBAL', 'DIPENDENTI')}>
+                            <input 
+                                type="checkbox" 
+                                className="config-checkbox" 
+                                checked={getValue('GLOBAL', 'DIPENDENTI') === '1'} 
+                                readOnly 
+                            />
+                            <span className="config-label">Gestione Dipendenti</span>
                         </div>
                     </div>
                 </div>

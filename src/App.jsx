@@ -32,6 +32,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import ListiniList from './pages/Configurazione/ListiniList';
 import DatiGeneraliPage from './pages/Configurazione/DatiGeneraliPage';
 import PrimaNotaList from './pages/PrimaNota/PrimaNotaList';
+import RegistriIvaPage from './pages/RegistriIva/RegistriIvaPage';
 
 const ProtectedRoute = () => {
   const user = authService.getCurrentUser();
@@ -89,6 +90,7 @@ function App() {
         <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />
         <Route path="/articoli/:id" element={<ArticoliDetail />} />
         <Route path="/prima-nota" element={<PrimaNotaList />} />
+        <Route path="/registri-iva" element={<RegistriIvaPage />} />
       </Route>
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>

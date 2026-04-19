@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import CausaliEsigibilitaDifferitaService from '../../services/CausaliEsigibilitaDifferitaService';
-import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
@@ -45,14 +45,31 @@ const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
+            cancelButtonText: 'Annulla',
+            buttonsStyling: false,
+            customClass: {
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title',
+                confirmButton: 'premium-swal-confirm btn-danger',
+                cancelButton: 'premium-swal-cancel'
+            }
         });
 
         if (result.isConfirmed) {
             try {
                 await CausaliEsigibilitaDifferitaService.delete(id);
                 loadData();
-                Swal.fire('Eliminata!', 'Causale eliminata.', 'success');
+                Swal.fire({
+                    title: 'Eliminata!',
+                    text: 'Causale eliminata.',
+                    icon: 'success',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             } catch (error) {
                 Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
             }
@@ -72,10 +89,10 @@ const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
         Swal.fire({
             title: isNew ? 'Nuova Causale' : 'Modifica Causale',
             html: `
-                <div style="text-align: left;">
+                <div style="text-align: left; padding: 10px 5px;">
                     <div class="form-group">
-                        <label style="font-weight: 700; color: #444; font-size: 11px; text-transform: uppercase;">Descrizione</label>
-                        <input id="swal-descrizione" class="form-control" value="${item.descrizione || ''}" placeholder="Inserisci descrizione">
+                        <label class="premium-swal-label">Descrizione</label>
+                        <input id="swal-descrizione" class="form-control premium-swal-input" value="${item.descrizione || ''}" placeholder="Es. Esigibilità differita art. 7...">
                     </div>
                 </div>
             `,
@@ -84,9 +101,10 @@ const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
             cancelButtonText: 'Annulla',
             buttonsStyling: false,
             customClass: {
-                confirmButton: 'btn-premium-save',
-                cancelButton: 'btn-premium-cancel',
-                popup: 'premium-swal-popup'
+                confirmButton: 'premium-swal-confirm',
+                cancelButton: 'premium-swal-cancel',
+                popup: 'premium-swal-popup',
+                title: 'premium-swal-title'
             },
             preConfirm: async () => {
                 const descrizione = document.getElementById('swal-descrizione').value;
@@ -115,7 +133,17 @@ const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
         }).then((result) => {
             if (result.isConfirmed) {
                 loadData();
-                Swal.fire('Salvata!', 'Operazione completata con successo.', 'success');
+                Swal.fire({
+                    title: 'Salvata!',
+                    text: 'Operazione completata con successo.',
+                    icon: 'success',
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'premium-swal-popup',
+                        title: 'premium-swal-title',
+                        confirmButton: 'premium-swal-confirm'
+                    }
+                });
             }
         });
     };
@@ -124,80 +152,86 @@ const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
     const startIdx = (currentPage - 1) * pageSize;
 
     return (
-        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
-            <div className="modal-dialog modal-md">
-                <div className="modal-content">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }} role="dialog">
+            <div className="modal-dialog modal-lg">
+                <div className="modal-content premium-modal-content">
                     <div className="modal-header">
+                        <h4 className="modal-title">Causali Esigibilità Differita</h4>
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title">Gestione Causali Esigibilità Differita</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
-                        <div className="modal-toolbar">
-                            <div className="toolbar-left">
-                                <div className="toolbar-item">
-                                    <span>Mostra</span>
-                                    <select
-                                        className="form-control input-sm"
-                                        value={pageSize}
-                                        onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                                    >
-                                        <option value="10">10</option>
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                    <span>righe</span>
+                    <div className="modal-body" style={{ padding: '25px' }}>
+                        {/* Toolbar - Balanced Layout */}
+                        <div className="modal-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', gap: '15px' }}>
+                            <div className="toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                                <div style={{ 
+                                    backgroundColor: '#e7f1ff', 
+                                    width: '42px', 
+                                    height: '42px', 
+                                    borderRadius: '10px', 
+                                    color: '#03a9f4',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <FaSearch style={{ fontSize: '1.2em' }} />
                                 </div>
-                            </div>
-
-                            <div className="toolbar-right">
-                                <div className="toolbar-search-wrapper">
+                                <div className="toolbar-search-wrapper" style={{ flex: 1 }}>
                                     <input
                                         type="text"
                                         className="form-control"
                                         placeholder="Cerca..."
                                         value={searchTerm}
                                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                                        style={{ 
+                                            height: '42px',
+                                            paddingLeft: '15px', 
+                                            borderRadius: '10px', 
+                                            border: '1px solid #dfe4e7', 
+                                            boxShadow: 'none' 
+                                        }}
                                     />
-                                    <i className="fa fa-search"></i>
                                 </div>
-                                <button className="btn btn-primary" onClick={handleAdd}>
+                            </div>
+                            <div className="toolbar-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <select
+                                    className="form-control"
+                                    style={{ width: '75px', height: '42px', borderRadius: '10px', fontSize: '0.9em', border: '1px solid #dfe4e7' }}
+                                    value={pageSize}
+                                    onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                                >
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                                <button className="btn btn-primary premium-btn" onClick={handleAdd} style={{ height: '42px', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px' }}>
                                     <FaPlus /> Nuova
                                 </button>
                             </div>
                         </div>
 
-                        <div className="table-responsive" style={{ border: 'none' }}>
-                            <table className="table" style={{ borderCollapse: 'separate', borderSpacing: '0 10px' }}>
-                                <thead>
-                                    <tr style={{ background: '#f8f9fa' }}>
-                                        <th style={{ border: 'none', borderRadius: '10px 0 0 10px', padding: '12px 15px' }}>DESCRIZIONE</th>
-                                        <th style={{ border: 'none', borderRadius: '0 10px 10px 0', padding: '12px 15px', width: '120px', textAlign: 'center' }}>AZIONI</th>
+                        <div className="table-wrapper" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto', borderRadius: '12px', border: '1px solid #eee' }}>
+                            <table className="table table-striped table-hover" style={{ marginBottom: 0 }}>
+                                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa', zIndex: 1, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+                                    <tr>
+                                        <th style={{ padding: '15px' }}>DESCRIZIONE</th>
+                                        <th style={{ width: '120px', textAlign: 'center', padding: '15px' }}>AZIONI</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {list.length > 0 ? (
+                                    {loading ? (
+                                        <tr><td colSpan="2" className="text-center" style={{ padding: '40px' }}>Caricamento...</td></tr>
+                                    ) : list.length > 0 ? (
                                         list.map(item => (
-                                            <tr key={item.id} style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderRadius: '10px' }}>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px' }}>{item.descrizione}</td>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
-                                                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                                                        <button
-                                                            className="btn-premium-save"
-                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, boxShadow: 'none', backgroundColor: '#5bc0de' }}
-                                                            onClick={() => handleEdit(item)}
-                                                            title="Modifica"
-                                                        >
-                                                            <FaPencilAlt />
+                                            <tr key={item.id}>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px', fontWeight: '500' }}>{item.descrizione}</td>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px' }} className="text-center">
+                                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                                        <button className="btn btn-info btn-sm" onClick={() => handleEdit(item)} title="Modifica">
+                                                            <FaEdit />
                                                         </button>
-                                                        <button
-                                                            className="btn-premium-cancel"
-                                                            style={{ padding: '8px', minWidth: '35px', margin: 0, backgroundColor: '#e74c3c' }}
-                                                            onClick={() => handleDelete(item.id)}
-                                                            title="Elimina"
-                                                        >
+                                                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
                                                             <FaTrash />
                                                         </button>
                                                     </div>
@@ -206,35 +240,44 @@ const CausaliEsigibilitaDifferitaManagementModal = ({ onClose }) => {
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="2" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun elemento trovato</td>
+                                            <td colSpan="2" className="text-center" style={{ padding: '40px', color: '#999' }}>Nessun elemento trovato</td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
                         </div>
 
-                        {totalItems > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '0 10px' }}>
+                        {/* Status Footer */}
+                        <div className="status-footer" style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#f8f9fa', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #eee' }}>
+                            <span className="pagination-info" style={{ color: '#666', fontSize: '0.85em', fontWeight: '500' }}>
+                                <FaSearch style={{ marginRight: '8px', opacity: 0.5 }} />
+                                Vista da <strong style={{ color: '#03a9f4' }}>{totalItems > 0 ? startIdx + 1 : 0}</strong> a <strong style={{ color: '#03a9f4' }}>{Math.min(startIdx + pageSize, totalItems)}</strong> di <strong style={{ color: '#03a9f4' }}>{totalItems}</strong> elementi
+                            </span>
+                            {totalPages > 1 && (
                                 <nav>
-                                    <ul className="pagination pagination-sm" style={{ margin: 0 }}>
+                                    <ul className="pagination" style={{ margin: 0 }}>
                                         <li className={currentPage === 1 ? 'disabled' : ''}>
-                                            <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>&laquo;</a>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage > 1) setCurrentPage(currentPage - 1); }}>
+                                                <FaChevronLeft />
+                                            </a>
                                         </li>
                                         {[...Array(totalPages)].map((_, i) => (
                                             <li key={i} className={currentPage === i + 1 ? 'active' : ''}>
-                                                <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
+                                                <a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>{i + 1}</a>
                                             </li>
                                         ))}
                                         <li className={currentPage === totalPages ? 'disabled' : ''}>
-                                            <a href="#" style={{ borderRadius: '5px', margin: '0 2px' }} onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>&raquo;</a>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}>
+                                                <FaChevronRight />
+                                            </a>
                                         </li>
                                     </ul>
                                 </nav>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                    <div className="modal-footer" style={{ borderTop: '1px solid #f0f0f0', padding: '15px 25px' }}>
-                        <button type="button" className="btn-premium-cancel" style={{ padding: '10px 25px' }} onClick={onClose}>Chiudi</button>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>
                     </div>
                 </div>
             </div>

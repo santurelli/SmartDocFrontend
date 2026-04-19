@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import Swal from 'sweetalert2';
 import UnitaMisuraService from '../../services/UnitaMisuraService';
-import { FaTrash, FaPencilAlt, FaPlus, FaTimes, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaEdit, FaPlus, FaTimes, FaSearch, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const UnitaMisuraManagementModal = ({ isOpen, onClose, onSave }) => {
     const [list, setList] = useState([]);
@@ -45,6 +46,15 @@ const UnitaMisuraManagementModal = ({ isOpen, onClose, onSave }) => {
         } catch (error) {
             console.error("Error loading units", error);
             setList([]);
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore Caricamento',
+                text: 'Impossibile caricare le unità di misura: ' + (error.response?.data?.errorText || error.message),
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    title: 'premium-swal-title'
+                }
+            });
         } finally {
             setLoading(false);
         }
@@ -161,79 +171,97 @@ const UnitaMisuraManagementModal = ({ isOpen, onClose, onSave }) => {
 
     const totalPages = Math.ceil(totalItems / pageSize);
 
-    return (
+    return ReactDOM.createPortal(
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
             <div className="modal-dialog modal-lg" role="document">
                 <div className="modal-content premium-modal-content">
                     <div className="modal-header">
+                        <h4 className="modal-title">Gestione Unità di Misura</h4>
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title" style={{ fontWeight: 'bold' }}>Gestione Unità di Misura</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
-                        <div className="row" style={{ marginBottom: '15px' }}>
-                            <div className="col-md-6">
-                            </div>
-                            <div className="col-md-6 text-right form-inline">
-                                <div className="form-group" style={{ display: 'inline-block', marginRight: '10px' }}>
+                    <div className="modal-body" style={{ padding: '25px' }}>
+                        {/* Toolbar - Balanced Layout */}
+                        <div className="modal-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', gap: '20px' }}>
+                            <div className="toolbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ 
+                                    backgroundColor: '#e7f1ff', 
+                                    width: '42px', 
+                                    height: '42px', 
+                                    borderRadius: '10px', 
+                                    color: '#03a9f4',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <FaSearch style={{ fontSize: '1.2em' }} />
+                                </div>
+                                <div className="toolbar-search-wrapper" style={{ minWidth: '350px' }}>
                                     <input
                                         type="text"
-                                        className="form-control input-sm"
+                                        className="form-control"
                                         placeholder="Cerca..."
                                         value={search}
                                         onChange={handleSearch}
+                                        style={{ 
+                                            height: '42px',
+                                            paddingLeft: '15px', 
+                                            borderRadius: '10px', 
+                                            border: '1px solid #dfe4e7', 
+                                            boxShadow: 'none' 
+                                        }}
                                     />
                                 </div>
-                                <button className="btn btn-primary" onClick={handleAdd}>
-                                    <FaPlus /> Aggiungi
+                            </div>
+                            <div className="toolbar-right">
+                                <button className="btn btn-primary premium-btn" onClick={handleAdd} style={{ height: '42px', padding: '0 25px', display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '10px' }}>
+                                    <FaPlus /> Nuova Unità
                                 </button>
                             </div>
                         </div>
 
-                        <table className="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>DESCRIZIONE</th>
-                                    <th style={{ width: '120px', textAlign: 'center' }}>AZIONI</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loading ? (
+                        <div className="table-wrapper" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto', borderRadius: '12px', border: '1px solid #eee' }}>
+                            <table className="table table-striped table-hover" style={{ marginBottom: 0 }}>
+                                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8f9fa', zIndex: 1, boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
                                     <tr>
-                                        <td colSpan="2" className="text-center">Caricamento...</td>
+                                        <th style={{ padding: '15px' }}>DESCRIZIONE</th>
+                                        <th style={{ width: '120px', textAlign: 'center', padding: '15px' }}>AZIONI</th>
                                     </tr>
-                                ) : list.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="2" className="text-center">Nessuna unità di misura trovata.</td>
-                                    </tr>
-                                ) : (
-                                    list.map(item => (
-                                        <tr key={item.id}>
-                                            <td>
-                                                {item.descrizione}
-                                            </td>
-                                            <td className="text-center">
-                                                <button className="btn btn-info btn-sm" style={{ marginRight: '5px' }} onClick={() => handleEdit(item)} title="Modifica">
-                                                    <FaPencilAlt />
-                                                </button>
-                                                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
-                                                    <FaTrash />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr><td colSpan="2" className="text-center" style={{ padding: '40px' }}>Caricamento...</td></tr>
+                                    ) : list.length === 0 ? (
+                                        <tr><td colSpan="2" className="text-center" style={{ padding: '40px' }}>Nessuna unità di misura trovata.</td></tr>
+                                    ) : (
+                                        list.map(item => (
+                                            <tr key={item.id}>
+                                                <td style={{ verticalAlign: 'middle', padding: '15px', fontWeight: '500' }}>{item.descrizione}</td>
+                                                <td className="text-center" style={{ verticalAlign: 'middle', padding: '15px' }}>
+                                                    <button className="btn btn-info btn-sm" style={{ marginRight: '8px' }} onClick={() => handleEdit(item)} title="Modifica">
+                                                        <FaEdit />
+                                                    </button>
+                                                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)} title="Elimina">
+                                                        <FaTrash />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
 
-                        <div className="pagination-container" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span className="pagination-info" style={{ color: '#888', fontSize: '0.9em' }}>
-                                Visualizzati {list.length} di {totalItems} risultati
+                        {/* Footer Status Bar */}
+                        <div className="status-footer" style={{ marginTop: '20px', padding: '12px 20px', backgroundColor: '#f8f9fa', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #eee' }}>
+                            <span className="pagination-info" style={{ color: '#666', fontSize: '0.85em', fontWeight: '500' }}>
+                                <FaSearch style={{ marginRight: '8px', opacity: 0.5 }} />
+                                Visualizzati <strong style={{ color: '#03a9f4' }}>{list.length}</strong> di <strong style={{ color: '#03a9f4' }}>{totalItems}</strong> risultati
                             </span>
                             {totalPages > 1 && (
                                 <nav>
-                                    <ul className="pagination">
+                                    <ul className="pagination" style={{ margin: 0 }}>
                                         <li className={page === 0 ? 'disabled' : ''}>
                                             <a href="#" onClick={(e) => { e.preventDefault(); if (page > 0) setPage(page - 1); }}>
                                                 <FaChevronLeft />
@@ -266,7 +294,8 @@ const UnitaMisuraManagementModal = ({ isOpen, onClose, onSave }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
