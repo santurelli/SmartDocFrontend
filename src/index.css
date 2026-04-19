@@ -12,6 +12,17 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Utilities */
+.text-center {
+  text-align: center !important;
+}
+.text-right {
+  text-align: right !important;
+}
+.text-left {
+  text-align: left !important;
+}
+
 a {
   font-weight: 500;
   color: #03a9f4;

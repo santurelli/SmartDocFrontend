@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import ConfigurazioneService from '../services/ConfigurazioneService';
+import authService from '../services/authService';
 import {
     FaTachometerAlt, FaThLarge, FaCubes, FaAngleRight, FaAngleDown,
     FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaLock, FaUser, FaCircle, FaFileAlt
@@ -199,6 +200,9 @@ const Sidebar = ({ user }) => {
                                     <li><NavLink to="/configurazione/documenti">Documenti</NavLink></li>
                                     <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
                                     <li><NavLink to="/configurazione/generali">Dati generali</NavLink></li>
+                                    {(authService.getConfig()?.role === 'ROLE_ADMIN') && (
+                                        <li><NavLink to="/configurazione/utenti">Gestione Utenti</NavLink></li>
+                                    )}
                                 </ul>
                             </li>
 

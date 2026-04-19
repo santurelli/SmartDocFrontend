@@ -33,6 +33,27 @@ import ListiniList from './pages/Configurazione/ListiniList';
 import DatiGeneraliPage from './pages/Configurazione/DatiGeneraliPage';
 import PrimaNotaList from './pages/PrimaNota/PrimaNotaList';
 import RegistriIvaPage from './pages/RegistriIva/RegistriIvaPage';
+import UtentiList from './pages/Configurazione/UtentiList';
+import UtentiDetail from './pages/Configurazione/UtentiDetail';
+
+const RoleProtectedRoute = ({ allowedRoles, children }) => {
+  const user = authService.getCurrentUser();
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const appConfig = authService.getConfig();
+  const userRole = appConfig?.role || 'ROLE_USER';
+
+  // Se l'utente ha il ruolo richiesto, mostra il contenuto, altrimenti reindirizza (es: alla dashboard)
+  const hasRole = allowedRoles.includes(userRole);
+
+  if (!hasRole) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children ? children : <Outlet />;
+};
 
 const ProtectedRoute = () => {
   const user = authService.getCurrentUser();
@@ -69,11 +90,16 @@ function App() {
         <Route path="/conf-ordine" element={<ConfOrdineList />} />
         <Route path="/conf-ordine/new" element={<ConfOrdineDetail />} />
         <Route path="/conf-ordine/:id" element={<ConfOrdineDetail />} />
-        <Route path="/configurazione/dati-azienda" element={<DatiAziendaPage />} />
-        <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
-        <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
-        <Route path="/configurazione/listini" element={<ListiniList />} />
-        <Route path="/configurazione/generali" element={<DatiGeneraliPage />} />
+        <Route path="/configurazione/dati-azienda" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><DatiAziendaPage /></RoleProtectedRoute>} />
+        <Route path="/configurazione/fatturazione" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><ImpostazioniFatturazionePage /></RoleProtectedRoute>} />
+        <Route path="/configurazione/documenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><ImpostazioniDocumentiPage /></RoleProtectedRoute>} />
+        <Route path="/configurazione/listini" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_SALES']}><ListiniList /></RoleProtectedRoute>} />
+        <Route path="/configurazione/generali" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><DatiGeneraliPage /></RoleProtectedRoute>} />
+        
+        <Route path="/configurazione/utenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiList /></RoleProtectedRoute>} />
+        <Route path="/configurazione/utenti/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiDetail /></RoleProtectedRoute>} />
+        <Route path="/configurazione/utenti/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiDetail /></RoleProtectedRoute>} />
+
         <Route path="/fornitori" element={<FornitoriList />} />
         <Route path="/fornitori/:id" element={<FornitoriDetail />} />
         <Route path="/ddt" element={<DDTList />} />
