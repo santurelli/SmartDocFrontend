@@ -76,7 +76,7 @@ const Login = () => {
             navigate('/');
         } catch (err) {
             console.error("Login Error:", err);
-            if (err.response && err.response.data && err.response.data.erroreUtenteNonTrovato) {
+            if (err.response && (err.response.status === 401 || (err.response.data && err.response.data.erroreUtenteNonTrovato))) {
                 setError('Nessun utente corrispondente alla coppia username/password inserita.');
             } else {
                 setError('Errore generico durante il login.');

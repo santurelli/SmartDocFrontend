@@ -35,6 +35,7 @@ import PrimaNotaList from './pages/PrimaNota/PrimaNotaList';
 import RegistriIvaPage from './pages/RegistriIva/RegistriIvaPage';
 import UtentiList from './pages/Configurazione/UtentiList';
 import UtentiDetail from './pages/Configurazione/UtentiDetail';
+import StatistichePage from './pages/Statistiche/StatistichePage';
 
 const RoleProtectedRoute = ({ allowedRoles, children }) => {
   const user = authService.getCurrentUser();
@@ -117,6 +118,9 @@ function App() {
         <Route path="/articoli/:id" element={<ArticoliDetail />} />
         <Route path="/prima-nota" element={<PrimaNotaList />} />
         <Route path="/registri-iva" element={<RegistriIvaPage />} />
+        <Route path="/statistiche/vendite" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
+        <Route path="/statistiche/acquisti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
+        <Route path="/statistiche/pagamenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
       </Route>
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>

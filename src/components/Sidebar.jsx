@@ -181,7 +181,7 @@ const Sidebar = ({ user }) => {
                                     <FaAngleRight className="drop-icon" />
                                 </a>
                                 <ul className="submenu">
-                                    <li><NavLink to="/statistiche/progetti">Progetti</NavLink></li>
+                                    {isEnabled('PROGETTI', 'GLOBAL') && <li><NavLink to="/statistiche/progetti">Progetti</NavLink></li>}
                                     <li><NavLink to="/statistiche/vendite">Vendite</NavLink></li>
                                     <li><NavLink to="/statistiche/acquisti">Acquisti</NavLink></li>
                                     <li><NavLink to="/statistiche/pagamenti">Pagamenti</NavLink></li>
