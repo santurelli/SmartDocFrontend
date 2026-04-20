@@ -200,6 +200,9 @@ const FattureDetail = () => {
         if (!isNew) {
             fetchData();
         } else {
+            // Load base preferences for new documents
+            fetchFatturazionePreferences();
+
             if (tipoParam || eletParam) {
                 setFormData(prev => ({
                     ...prev,
@@ -210,13 +213,12 @@ const FattureDetail = () => {
 
             if (fromDDTId) {
                 fetchDataFromDDT(fromDDTId);
-            } else if (fromPreventiviId) { // Added this block
+            } else if (fromPreventiviId) {
                 fetchDataFromPreventivo(fromPreventiviId);
             } else if (fromConfermeId) {
                 fetchDataFromConfOrdine(fromConfermeId);
             } else {
                 fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
-                fetchRitenutaPreferences();
             }
         }
 
@@ -260,24 +262,42 @@ const FattureDetail = () => {
         }
     };
 
-    const fetchRitenutaPreferences = async () => {
+    const fetchFatturazionePreferences = async () => {
         try {
             const res = await ConfigurazioneService.getByDomain('FATTURAZIONE');
             if (res.data) {
                 const prefs = res.data;
-                const isEnabled = prefs.EMETTI_RITENUTA === '1';
-                setRitenutaEnabled(isEnabled);
+                const isRitenutaEnabled = prefs.EMETTI_RITENUTA === '1';
+                setRitenutaEnabled(isRitenutaEnabled);
+                
+                const defaultType = prefs.DEFAULT_TIPO_FATTURA || 'FATTURA';
+
                 setFormData(prev => ({
                     ...prev,
-                    flRitenutaAcconto: isEnabled ? 1 : prev.flRitenutaAcconto,
+                    tipoFattura: (isNew && !tipoParam && (fromDDTId || fromPreventiviId || fromConfermeId)) ? defaultType : prev.tipoFattura,
+                    flRitenutaAcconto: isRitenutaEnabled ? 1 : prev.flRitenutaAcconto,
                     percRitenutaAcconto: prefs.PERC_RITENUTA ? parseFloat(prefs.PERC_RITENUTA) : prev.percRitenutaAcconto,
                     tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta
                 }));
+
+                // Auto-set flFatturaElettronica and fetch numbering
+                if (isNew && (fromDDTId || fromPreventiviId || fromConfermeId)) {
+                   const effectiveType = tipoParam || defaultType;
+                   const effectiveElet = (effectiveType === 'FATTURA_PROFORMA') ? 0 : 1;
+                   
+                   setFormData(prev => ({
+                       ...prev,
+                       flFatturaElettronica: effectiveElet
+                   }));
+
+                   fetchNextNum(formData.dataDocumento, effectiveElet, effectiveType);
+                }
             }
         } catch (error) {
-            console.error("Errore nel recupero delle preferenze ritenuta", error);
+            console.error("Errore nel recupero delle preferenze fatturazione", error);
         }
     };
+
 
     const fetchDataFromDDT = async (ddtIdsStr) => {
         setLoading(true);
@@ -328,7 +348,7 @@ const FattureDetail = () => {
                     idAgente: firstDDTData.idAgente,
                     agente: firstDDTData.agente,
                     idTipoPagamento: firstDDTData.idTipoPagamento,
-                    tipologiaDocumento: tipoParam || firstDDTData.tipologiaDocumento || 'FATTURA',
+                    // Note: tipoFattura will be set by fetchFatturazionePreferences or defaults to 'FATTURA'
                     idProgetto: firstDDTData.idProgetto,
                     nomeProgetto: firstDDTData.nomeProgetto,
                     idListino: firstDDTData.idListino || '',
@@ -336,14 +356,15 @@ const FattureDetail = () => {
                     indirizzoIntestazione: firstDDTData.indirizzoIntestazione,
                     capIntestazione: firstDDTData.capIntestazione,
                     provinciaIntestazione: firstDDTData.provinciaIntestazione,
-                    codiceFiscale: firstDDTData.codiceFiscale,
-                    partitaIva: firstDDTData.partitaIva,
+                    codiceFiscale: firstDDTData.codiceFiscale || '',
+                    partitaIva: firstDDTData.partitaIva || '',
                     cittaDestinazione: firstDDTData.cittaDestinazione,
                     indirizzoDestinazione: firstDDTData.indirizzoDestinazione,
                     capDestinazione: firstDDTData.capDestinazione,
                     provinciaDestinazione: firstDDTData.provinciaDestinazione
                 }));
                 loadClientAddresses(firstDDTData.idCliente, false);
+                fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
             }
         } catch (error) {
             console.error(error);
@@ -406,7 +427,7 @@ const FattureDetail = () => {
                     idAgente: firstPrevData.idAgente,
                     agente: firstPrevData.agente,
                     idTipoPagamento: firstPrevData.idTipoPagamento,
-                    tipologiaDocumento: tipoParam || 'FATTURA',
+                    // Note: tipoFattura will be set by fetchFatturazionePreferences or defaults to 'FATTURA'
                     idProgetto: firstPrevData.idProgetto,
                     nomeProgetto: firstPrevData.nomeProgetto,
                     idListino: firstPrevData.idListino || '',
@@ -415,8 +436,8 @@ const FattureDetail = () => {
                     capIntestazione: firstPrevData.capIntestazione,
                     provinciaIntestazione: firstPrevData.provinciaIntestazione,
                     nazioneIntestazione: firstPrevData.nazioneIntestazione || 'Italia',
-                    codiceFiscale: firstPrevData.codiceFiscale,
-                    partitaIva: firstPrevData.partitaIva,
+                    codiceFiscale: firstPrevData.codiceFiscale || '',
+                    partitaIva: firstPrevData.partitaIva || '',
                     cittaDestinazione: firstPrevData.cittaDestinazione,
                     indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
                     capDestinazione: firstPrevData.capDestinazione,
@@ -424,6 +445,7 @@ const FattureDetail = () => {
                     nazioneDestinazione: firstPrevData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstPrevData.idCliente, false);
+                fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
             }
         } catch (error) {
             console.error(error);
@@ -486,7 +508,7 @@ const FattureDetail = () => {
                     idAgente: firstConfData.idAgente,
                     agente: firstConfData.agente,
                     idTipoPagamento: firstConfData.idTipoPagamento,
-                    tipologiaDocumento: tipoParam || firstConfData.tipologiaDocumento || 'FATTURA',
+                    // Note: tipoFattura will be set by fetchFatturazionePreferences or defaults to 'FATTURA'
                     idProgetto: firstConfData.idProgetto,
                     nomeProgetto: firstConfData.nomeProgetto,
                     idListino: firstConfData.idListino || '',
@@ -495,8 +517,8 @@ const FattureDetail = () => {
                     capIntestazione: firstConfData.capIntestazione,
                     provinciaIntestazione: firstConfData.provinciaIntestazione,
                     nazioneIntestazione: firstConfData.nazioneIntestazione || 'Italia',
-                    codiceFiscale: firstConfData.codiceFiscale,
-                    partitaIva: firstConfData.partitaIva,
+                    codiceFiscale: firstConfData.codiceFiscale || '',
+                    partitaIva: firstConfData.partitaIva || '',
                     cittaDestinazione: firstConfData.cittaDestinazione,
                     indirizzoDestinazione: firstConfData.indirizzoDestinazione,
                     capDestinazione: firstConfData.capDestinazione,
@@ -504,6 +526,7 @@ const FattureDetail = () => {
                     nazioneDestinazione: firstConfData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstConfData.idCliente, false);
+                fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
             }
         } catch (error) {
             console.error(error);
@@ -827,7 +850,10 @@ const FattureDetail = () => {
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
-            prodotti: prodotti,
+            prodotti: prodotti.map(p => ({
+                ...p,
+                prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile
+            })),
             listaScadenzePagamentiDocumento: scadenzeSync,
             importoRitenutaAcconto: calculateRitenutaAcconto()
         };
@@ -1053,7 +1079,7 @@ const FattureDetail = () => {
                                                     type="text"
                                                     className="form-control premium-input"
                                                     name="numDocumento"
-                                                    value={formData.numDocumento}
+                                                    value={formData.numDocumento || ''}
                                                     onChange={handleHeaderChange}
                                                     disabled={isLocked || formData.statoFatturaElettronica === 'RC'}
                                                 />

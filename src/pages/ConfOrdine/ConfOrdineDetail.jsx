@@ -591,7 +591,10 @@ const ConfOrdineDetail = () => {
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
-            prodotti: prodotti,
+            prodotti: prodotti.map(p => ({
+                ...p,
+                prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile
+            })),
             idDocAssociato: fromPreventiviId ? parseInt(fromPreventiviId.split(',')[0]) : null,
             tipoDocAssociato: fromPreventiviId ? 'PREVENTIVO' : null
         };

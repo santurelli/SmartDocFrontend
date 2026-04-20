@@ -538,7 +538,10 @@ const NoteCreditoDetail = () => {
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
-            prodotti: prodotti
+            prodotti: prodotti.map(p => ({
+                ...p,
+                prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile
+            }))
         };
 
         try {

@@ -8,7 +8,8 @@ const ImpostazioniFatturazionePage = () => {
     const [configs, setConfigs] = useState({
         EMETTI_RITENUTA: { chiave: 'EMETTI_RITENUTA', valore: '0', dominio: 'FATTURAZIONE' },
         TIPO_RITENUTA: { chiave: 'TIPO_RITENUTA', valore: 'RT01', dominio: 'FATTURAZIONE' },
-        PERC_RITENUTA: { chiave: 'PERC_RITENUTA', valore: '20.00', dominio: 'FATTURAZIONE' }
+        PERC_RITENUTA: { chiave: 'PERC_RITENUTA', valore: '20.00', dominio: 'FATTURAZIONE' },
+        DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: 'FATTURA', dominio: 'FATTURAZIONE' }
     });
     const [loading, setLoading] = useState(true);
 
@@ -27,7 +28,8 @@ const ImpostazioniFatturazionePage = () => {
                     // Ensure the properties exists as object if returned as simple values map by ByDomain endpoint
                     EMETTI_RITENUTA: { chiave: 'EMETTI_RITENUTA', valore: response.data.EMETTI_RITENUTA || '0', dominio: 'FATTURAZIONE' },
                     TIPO_RITENUTA: { chiave: 'TIPO_RITENUTA', valore: response.data.TIPO_RITENUTA || 'RT01', dominio: 'FATTURAZIONE' },
-                    PERC_RITENUTA: { chiave: 'PERC_RITENUTA', valore: response.data.PERC_RITENUTA || '20.00', dominio: 'FATTURAZIONE' }
+                    PERC_RITENUTA: { chiave: 'PERC_RITENUTA', valore: response.data.PERC_RITENUTA || '20.00', dominio: 'FATTURAZIONE' },
+                    DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: response.data.DEFAULT_TIPO_FATTURA || 'FATTURA', dominio: 'FATTURAZIONE' }
                 }));
             }
         } catch (err) {
@@ -51,6 +53,7 @@ const ImpostazioniFatturazionePage = () => {
             await ConfigurazioneService.save(configs.EMETTI_RITENUTA);
             await ConfigurazioneService.save(configs.TIPO_RITENUTA);
             await ConfigurazioneService.save(configs.PERC_RITENUTA);
+            await ConfigurazioneService.save(configs.DEFAULT_TIPO_FATTURA);
 
             Swal.fire({
                 title: 'Successo!',
@@ -126,7 +129,31 @@ const ImpostazioniFatturazionePage = () => {
                         </div>
                     )}
 
-                    <div className="form-actions mt-4">
+                    <div className="section-title mt-5">
+                        <FaFileInvoiceDollar /> Tipi Documento
+                    </div>
+
+                    <div className="row mt-4">
+                        <div className="col-md-6 form-group">
+                            <label>Tipo fattura predefinito (da altri documenti)</label>
+                            <select
+                                className="form-control"
+                                value={configs.DEFAULT_TIPO_FATTURA.valore}
+                                onChange={(e) => handleChange('DEFAULT_TIPO_FATTURA', e.target.value)}
+                            >
+                                <option value="FATTURA">Fattura</option>
+                                <option value="FATTURA_ACCOMPAGNATORIA">Fattura Accompagnatoria</option>
+                                <option value="FATTURA_PROFORMA">Fattura Pro Forma</option>
+                                <option value="NOTA_DEBITO">Nota di Debito</option>
+                                <option value="FATTURA_SEMPLIFICATA">Fattura Semplificata (TD07)</option>
+                            </select>
+                            <p className="help-block" style={{ fontSize: '12px', color: '#777', marginTop: '5px' }}>
+                                Definisce il tipo di fattura che viene proposto automaticamente quando generi una fattura da un Preventivo, DDT o Conferma d'Ordine.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="form-actions mt-5">
                         <button type="button" className="btn btn-success" onClick={handleSave}>
                             <FaSave /> Salva Modifiche
                         </button>

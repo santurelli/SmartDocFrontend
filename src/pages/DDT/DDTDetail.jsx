@@ -316,6 +316,7 @@ const DDTDetail = () => {
                     nazioneDestinazione: firstConfData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstConfData.idCliente);
+                fetchNextNum(formData.dataDocumento);
             }
         } catch (error) {
             console.error(error);
@@ -397,6 +398,7 @@ const DDTDetail = () => {
                     nazioneDestinazione: firstPrevData.nazioneDestinazione || 'Italia'
                 }));
                 loadClientAddresses(firstPrevData.idCliente);
+                fetchNextNum(formData.dataDocumento);
             }
         } catch (error) {
             console.error(error);
@@ -606,7 +608,10 @@ const DDTDetail = () => {
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
-            prodotti: prodotti
+            prodotti: prodotti.map(p => ({
+                ...p,
+                prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile
+            }))
         };
 
         try {

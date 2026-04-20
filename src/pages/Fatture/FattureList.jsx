@@ -157,6 +157,7 @@ const FattureList = () => {
             }
         } catch (error) {
             console.error(error);
+            Swal.fire('Errore', 'Errore nel caricamento delle fatture', 'error');
             setFatture([]);
             setTotal(0);
         } finally {

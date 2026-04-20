@@ -563,7 +563,8 @@ const PreventiviDetail = () => {
                 ...formData,
                 dataDocumento: formData.dataDocumento.split('-').reverse().join('/'),
                 prodotti: prodotti.map(p => {
-                    const cleaned = { ...p };
+                    const vals = getRowValues(p, combos.aliquoteIva);
+                    const cleaned = { ...p, prezzoImponibile: vals.imponibile };
                     if (p.tipo === 'A') {
                         delete cleaned.fmDescrizione;
                     } else if (p.tipo === 'F') {
