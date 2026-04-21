@@ -62,6 +62,16 @@ const authHeader = () => {
   }
 };
 
+const changePassword = async (currentPassword, newPassword) => {
+    const user = authStorage.getCurrentUser();
+    const ente = user ? user.ente : null;
+    return api.post(AUTH_URL + 'change-password', {
+        currentPassword,
+        newPassword,
+        ente
+    });
+}
+
 const authService = {
   login,
   logout,
@@ -69,7 +79,8 @@ const authService = {
   getMunicipalities,
   getConfig,
   updateConfig,
-  authHeader
+  authHeader,
+  changePassword
 };
 
 export default authService;

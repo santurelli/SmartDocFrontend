@@ -830,23 +830,6 @@ const FattureDetail = () => {
         const parts = formData.dataDocumento.split('-');
         const dtFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-        // Forzo la sincronizzazione delle scadenze con il totale calcolato (al netto di sconti) 
-        // per evitare discrepanze nel batch SDI.
-        const targetTotal = calculateTotalDocument(false, true);
-        let scadenzeSync = [...(formData.listaScadenzePagamentiDocumento || [])];
-        if (scadenzeSync.length > 0) {
-            const sumScadenze = scadenzeSync.reduce((acc, s) => acc + (s.importo || 0), 0);
-            const diff = Math.round((targetTotal - sumScadenze + Number.EPSILON) * 100) / 100;
-            if (Math.abs(diff) > 0) {
-                // Ribilancio l'ultima rata
-                const lastIdx = scadenzeSync.length - 1;
-                scadenzeSync[lastIdx] = {
-                    ...scadenzeSync[lastIdx],
-                    importo: Math.round((scadenzeSync[lastIdx].importo + diff + Number.EPSILON) * 100) / 100
-                };
-            }
-        }
-
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
@@ -854,7 +837,7 @@ const FattureDetail = () => {
                 ...p,
                 prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile
             })),
-            listaScadenzePagamentiDocumento: scadenzeSync,
+            listaScadenzePagamentiDocumento: formData.listaScadenzePagamentiDocumento || [],
             importoRitenutaAcconto: calculateRitenutaAcconto()
         };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import DDTService from '../../services/DDTService';
 import ConfOrdineService from '../../services/ConfOrdineService';
@@ -101,6 +101,8 @@ const DDTDetail = () => {
     const isNew = !id || id === 'new';
     const [activeTab, setActiveTab] = useState('generale'); // generale, articoli, note, pagamento
     const [isCeramica, setIsCeramica] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
 
     const [formData, setFormData] = useState({
         numDocumento: '',
@@ -136,6 +138,8 @@ const DDTDetail = () => {
         colli: '',
         pesoNetto: '',
         pesoLordo: '',
+        dataTrasporto: '',
+        oraTrasporto: '',
         pallet: '',
         idVettore: null,
         annotazioneEstesa: '',
@@ -228,6 +232,20 @@ const DDTDetail = () => {
                     const parts = data.dataDocumento.split('/');
                     data.dataDocumento = `${parts[2]}-${parts[1]}-${parts[0]}`;
                 }
+                
+                // Gestione Data e Ora Trasporto
+                if (data.dataOraTrasporto && data.dataOraTrasporto.includes(' ')) {
+                    const [d, t] = data.dataOraTrasporto.split(' ');
+                    if (d.includes('/')) {
+                        const parts = d.split('/');
+                        data.dataTrasporto = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    }
+                    data.oraTrasporto = t;
+                } else if (data.dataTrasporto && data.dataTrasporto.includes('/')) {
+                    const parts = data.dataTrasporto.split('/');
+                    data.dataTrasporto = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+
                 setFormData(prev => ({ ...prev, ...data }));
                 const mappedProdotti = (data.prodotti || []).map(p => ({
                     ...p,
@@ -605,9 +623,18 @@ const DDTDetail = () => {
         const parts = formData.dataDocumento.split('-');
         const dtFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
+        let dtOraTrasporto = null;
+        if (formData.dataTrasporto) {
+            const tParts = formData.dataTrasporto.split('-');
+            const dStr = `${tParts[2]}/${tParts[1]}/${tParts[0]}`;
+            const hStr = formData.oraTrasporto || '00:00';
+            dtOraTrasporto = `${dStr} ${hStr}`;
+        }
+
         const payload = {
             ...formData,
             dataDocumento: dtFormatted,
+            dataOraTrasporto: dtOraTrasporto,
             prodotti: prodotti.map(p => ({
                 ...p,
                 prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile

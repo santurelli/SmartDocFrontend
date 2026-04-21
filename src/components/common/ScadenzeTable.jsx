@@ -23,6 +23,7 @@ const ScadenzeTable = ({
     const [scadenze, setScadenze] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [modalitaList, setModalitaList] = useState([]);
+    const [isManualMode, setIsManualMode] = useState(false);
     
     const initialScadenzeLoaded = useRef(false);
     const prevDeps = useRef({ id: null, tot: null, data: null });
@@ -79,12 +80,14 @@ const ScadenzeTable = ({
     };
 
     const handleDateChange = (index, value) => {
+        setIsManualMode(true);
         const newScadenze = [...scadenze];
         newScadenze[index].dtScadenza = value;
         setScadenze(newScadenze);
     };
 
     const handleImportoChange = (index, value) => {
+        setIsManualMode(true);
         const newScadenze = [...scadenze];
         const val = parseFloat(value) || 0;
         newScadenze[index].importo = Math.round((val + Number.EPSILON) * 100) / 100;
@@ -133,6 +136,7 @@ const ScadenzeTable = ({
     };
 
     const addScadenza = () => {
+        setIsManualMode(true);
         const newScadenza = {
             dtScadenza: dataDocumento || new Date().toISOString().split('T')[0],
             importo: 0,
@@ -143,6 +147,7 @@ const ScadenzeTable = ({
     };
 
     const deleteScadenza = (index) => {
+        setIsManualMode(true);
         const newScadenze = scadenze.filter((_, i) => i !== index);
         setScadenze(newScadenze);
     };
@@ -151,6 +156,7 @@ const ScadenzeTable = ({
         if (!idTipoPagamento || !dataDocumento || totaleDocumento == null || totaleDocumento === 0) {
             setScadenze([]);
             if (isManualTrigger) {
+                setIsManualMode(false);
                 if (!idTipoPagamento) Swal.fire('Attenzione', 'Selezionare prima un tipo di pagamento.', 'warning');
                 else if (!dataDocumento) Swal.fire('Attenzione', 'Manca la data del documento.', 'warning');
                 else Swal.fire('Attenzione', 'Totale documento mancante o pari a zero.', 'warning');
@@ -167,6 +173,7 @@ const ScadenzeTable = ({
                     importo: Math.round((s.importo + Number.EPSILON) * 100) / 100
                 }));
                 setScadenze(rounded);
+                if (isManualTrigger) setIsManualMode(false);
             }
         } catch (error) {
             console.error("Errore nel calcolo delle scadenze", error);
@@ -191,6 +198,11 @@ const ScadenzeTable = ({
                 return;
             }
 
+            // Don't auto-recalculate if user has manual edits
+            if (isManualMode && (totChanged || dataChanged)) {
+                return;
+            }
+
             if (idTipoPagamento && totaleDocumento > 0) {
                 const timer = setTimeout(() => {
                     calcolaScadenze(false);
@@ -200,7 +212,7 @@ const ScadenzeTable = ({
                 setScadenze([]);
             }
         }
-    }, [idTipoPagamento, totaleDocumento, dataDocumento, calcolaScadenze, scadenzeIniziali]);
+    }, [idTipoPagamento, totaleDocumento, dataDocumento, calcolaScadenze, scadenzeIniziali, isManualMode]);
 
     const sumScadenze = scadenze.reduce((acc, s) => acc + (s.importo || 0), 0);
     const difference = parseFloat((sumScadenze - totaleDocumento).toFixed(2));

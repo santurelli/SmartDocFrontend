@@ -3,12 +3,14 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { FaBars, FaCaretDown, FaThLarge, FaEdit, FaUser, FaTruck, FaLock, FaPowerOff, FaCogs, FaFileSignature, FaPlus } from 'react-icons/fa';
 import authService from '../services/authService';
 import ConfigurazioneService from '../services/ConfigurazioneService';
+import ChangePasswordModal from './modals/ChangePasswordModal';
 import './Header.css';
 
 const Header = ({ user, onLogout, toggleSidebar }) => {
     const navigate = useNavigate();
     const [inserisciOpen, setInserisciOpen] = useState(false);
     const [userOpen, setUserOpen] = useState(false);
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
     const [docConfigs, setDocConfigs] = useState(null);
 
     useEffect(() => {
@@ -117,7 +119,7 @@ const Header = ({ user, onLogout, toggleSidebar }) => {
                                 </a>
                                 {userOpen && (
                                     <ul className="dropdown-menu dropdown-menu-right">
-                                        <li><a href="#" className="change-pwd" onClick={(e) => { e.preventDefault(); alert('Change Password unimplemented'); setUserOpen(false); }}><FaLock /> Cambia password</a></li>
+                                        <li><a href="#" className="change-pwd" onClick={(e) => { e.preventDefault(); setIsChangePasswordOpen(true); setUserOpen(false); }}><FaLock /> Cambia password</a></li>
                                         <li><a href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }}><FaPowerOff /> Logout</a></li>
                                     </ul>
                                 )}
@@ -131,6 +133,10 @@ const Header = ({ user, onLogout, toggleSidebar }) => {
                     </div>
                 </div>
             </div>
+            <ChangePasswordModal 
+                isOpen={isChangePasswordOpen} 
+                onClose={() => setIsChangePasswordOpen(false)} 
+            />
         </header>
     );
 };

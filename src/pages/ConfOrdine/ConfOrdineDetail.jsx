@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import ConfOrdineService from '../../services/ConfOrdineService';
 import ClientiService from '../../services/ClientiService';
@@ -169,6 +169,7 @@ const ConfOrdineDetail = () => {
 
     const [prodotti, setProdotti] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isLocked, setIsLocked] = useState(false);
 
     // Combos
     const [combos, setCombos] = useState({
