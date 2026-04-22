@@ -9,20 +9,27 @@ import Swal from 'sweetalert2';
 import { FaSearch, FaSync, FaPlus, FaTrash, FaEdit, FaArrowUp, FaArrowDown, FaLandmark, FaEllipsisV, FaHome, FaAngleRight, FaFileExcel } from 'react-icons/fa';
 import PrimaNotaModal from './PrimaNotaModal';
 import storageHelper from '../../utils/storageHelper';
+import { getDefaultSearchRange } from '../../utils/dateUtils';
 import './PrimaNotaList.css';
 
 const MODULE_NAME = 'primanota';
 
 const PrimaNotaList = () => {
+    const defaultRange = getDefaultSearchRange(30);
+
     // Gestione stato tramite storageHelper (mantiene filtri attivi tra le pagine)
     const initialState = storageHelper.loadState(MODULE_NAME, {
-        dataDa: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0], // 1° del mese corrente
-        dataA: new Date().toISOString().split('T')[0], // Oggi
+        dataDa: defaultRange.dataDa,
+        dataA: defaultRange.dataA,
         idRisorsa: null,
         idSoggetto: null
     });
 
-    const [filters, setFilters] = useState(initialState);
+    const [filters, setFilters] = useState({
+        ...initialState,
+        dataDa: initialState.dataDa || defaultRange.dataDa,
+        dataA: initialState.dataA || defaultRange.dataA
+    });
     const [data, setData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [risorseCombo, setRisorseCombo] = useState([]);
@@ -34,7 +41,11 @@ const PrimaNotaList = () => {
     const [sort, setSort] = useState({ column: 0, direction: 'desc' });
 
     // Applied filters (to avoid auto-refreshing while typing)
-    const [appliedFilters, setAppliedFilters] = useState(initialState);
+    const [appliedFilters, setAppliedFilters] = useState({
+        ...initialState,
+        dataDa: initialState.dataDa || defaultRange.dataDa,
+        dataA: initialState.dataA || defaultRange.dataA
+    });
 
     // Cards values
     const [totali, setTotali] = useState({ entrate: 0, uscite: 0, saldo: 0 });

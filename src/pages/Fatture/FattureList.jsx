@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport, FaFileCode } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
+import { getDefaultSearchRange } from '../../utils/dateUtils';
 import NoteCreditoService from '../../services/NoteCreditoService';
 
 import { formatStato, formatTipoFattura } from '../../utils/documentUtils';
@@ -22,11 +23,13 @@ const FattureList = () => {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
+    const defaultRange = getDefaultSearchRange(30);
+
     // Load initial state
     const initialState = storageHelper.loadState(MODULE_NAME, {
         numDocumento: '',
-        dataDa: '',
-        dataA: '',
+        dataDa: defaultRange.dataDa,
+        dataA: defaultRange.dataA,
         idCliente: null,
         nomeCliente: '',
         idAgente: null,
@@ -50,8 +53,8 @@ const FattureList = () => {
     // Filters
     const [filters, setFilters] = useState({
         numDocumento: initialState.numDocumento || '',
-        dataDa: initialState.dataDa || '',
-        dataA: initialState.dataA || '',
+        dataDa: initialState.dataDa || defaultRange.dataDa,
+        dataA: initialState.dataA || defaultRange.dataA,
         idCliente: initialState.idCliente || null,
         nomeCliente: initialState.nomeCliente || '',
         idAgente: initialState.idAgente || null,

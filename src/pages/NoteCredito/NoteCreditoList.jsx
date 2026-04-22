@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
+import { getDefaultSearchRange } from '../../utils/dateUtils';
 import authService from '../../services/authService';
 
 import { formatStato } from '../../utils/documentUtils';
@@ -35,10 +36,11 @@ const NoteCreditoList = () => {
 
     const [filters, setFilters] = useState(() => {
         const saved = storageHelper.loadState('note_credito_filters', {});
+        const defaultRange = getDefaultSearchRange(30);
         return {
             numDocumento: saved.numDocumento || '',
-            dataDa: saved.dataDa || '',
-            dataA: saved.dataA || '',
+            dataDa: saved.dataDa || defaultRange.dataDa,
+            dataA: saved.dataA || defaultRange.dataA,
             idCliente: saved.idCliente || null,
             nomeCliente: saved.nomeCliente || '',
             idAgente: saved.idAgente || null,

@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
+import { getDefaultSearchRange } from '../../utils/dateUtils';
 import { formatStato } from '../../utils/documentUtils';
 import './DDTList.css';
 
@@ -18,11 +19,13 @@ const MODULE_NAME = 'ddts';
 const DDTList = () => {
     const navigate = useNavigate();
 
+    const defaultRange = getDefaultSearchRange(30);
+
     // Load initial state
     const initialState = storageHelper.loadState(MODULE_NAME, {
         idAgente: '',
-        dtFrom: '',
-        dtTo: '',
+        dtFrom: defaultRange.dataDa,
+        dtTo: defaultRange.dataA,
         currentPage: 0,
         pageSize: 50,
         sortCol: 'd_e_ddt.data_ddt',
@@ -43,8 +46,8 @@ const DDTList = () => {
     const [filters, setFilters] = useState({
         idCliente: initialState.idCliente,
         idAgente: initialState.idAgente,
-        dataDA: initialState.dtFrom,
-        dataA: initialState.dtTo
+        dataDA: initialState.dtFrom || defaultRange.dataDa,
+        dataA: initialState.dtTo || defaultRange.dataA
     });
 
     // Pagination

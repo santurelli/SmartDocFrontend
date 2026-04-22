@@ -83,7 +83,10 @@ const FattureDetail = () => {
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('generale'); // legale, articoli, note, pagamento
     const [isCeramica, setIsCeramica] = useState(false);
-    const [ritenutaEnabled, setRitenutaEnabled] = useState(true); // Default to true as per current behavior
+    const [ritenutaEnabled, setRitenutaEnabled] = useState(false);
+    const [rivalsaEnabled, setRivalsaEnabled] = useState(false);
+    const [dicituraRitenuta, setDicituraRitenuta] = useState('');
+    const [dicituraRivalsa, setDicituraRivalsa] = useState('');
 
 
     const [formData, setFormData] = useState({
@@ -129,6 +132,10 @@ const FattureDetail = () => {
         percRitenutaAcconto: 20,
         importoRitenutaAcconto: 0,
         tipoRitenuta: '',
+        flRivalsaInps: 0,
+        percRivalsaInps: 4,
+        importoRivalsaInps: 0,
+        tipoCassaInps: 'TC22',
         sconto: 0,
         listaScadenzePagamentiDocumento: [],
         statoFatturaElettronica: 'BO'
@@ -271,14 +278,40 @@ const FattureDetail = () => {
                 setRitenutaEnabled(isRitenutaEnabled);
                 
                 const defaultType = prefs.DEFAULT_TIPO_FATTURA || 'FATTURA';
+                
+                const dRitenuta = prefs.DICITURA_RITENUTA || 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73';
+                const dRivalsa = prefs.DICITURA_RIVALSA || 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95';
+                setDicituraRitenuta(dRitenuta);
+                setDicituraRivalsa(dRivalsa);
 
-                setFormData(prev => ({
-                    ...prev,
-                    tipoFattura: (isNew && !tipoParam && (fromDDTId || fromPreventiviId || fromConfermeId)) ? defaultType : prev.tipoFattura,
-                    flRitenutaAcconto: isRitenutaEnabled ? 1 : prev.flRitenutaAcconto,
-                    percRitenutaAcconto: prefs.PERC_RITENUTA ? parseFloat(prefs.PERC_RITENUTA) : prev.percRitenutaAcconto,
-                    tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta
-                }));
+                setFormData(prev => {
+                    const isRitenuta = isRitenutaEnabled || prev.flRitenutaAcconto === 1;
+                    const isRivalsa = (prefs.EMETTI_RIVALSA_INPS === '1') || prev.flRivalsaInps === 1;
+                    
+                    let nextData = {
+                        ...prev,
+                        tipoFattura: (isNew && !tipoParam && (fromDDTId || fromPreventiviId || fromConfermeId)) ? defaultType : prev.tipoFattura,
+                        flRitenutaAcconto: isRitenuta ? 1 : prev.flRitenutaAcconto,
+                        percRitenutaAcconto: prefs.PERC_RITENUTA ? parseFloat(prefs.PERC_RITENUTA) : prev.percRitenutaAcconto,
+                        tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta,
+                        flRivalsaInps: isRivalsa ? 1 : prev.flRivalsaInps,
+                        percRivalsaInps: prefs.PERC_RIVALSA_INPS ? parseFloat(prefs.PERC_RIVALSA_INPS) : prev.percRivalsaInps,
+                        tipoCassaInps: prefs.TIPO_CASSA_INPS ? prefs.TIPO_CASSA_INPS : prev.tipoCassaInps
+                    };
+
+                    // Auto-inject legal notes for new documents if flags are active
+                    if (isNew) {
+                        let newNote = nextData.annotazioneEstesa || '';
+                        if (isRitenuta && dRitenuta && !newNote.includes(dRitenuta)) {
+                            newNote = newNote + (newNote ? '\n' : '') + dRitenuta;
+                        }
+                        if (isRivalsa && dRivalsa && !newNote.includes(dRivalsa)) {
+                            newNote = newNote + (newNote ? '\n' : '') + dRivalsa;
+                        }
+                        nextData.annotazioneEstesa = newNote;
+                    }
+                    return nextData;
+                });
 
                 // Auto-set flFatturaElettronica and fetch numbering
                 if (isNew && (fromDDTId || fromPreventiviId || fromConfermeId)) {
@@ -631,23 +664,41 @@ const FattureDetail = () => {
         } catch (error) {
             console.error("Error loading client addresses:", error);
         }
-    };
-
-    const handleHeaderChange = (e) => {
+    };    const handleHeaderChange = (e) => {
         const { name, value, type, checked } = e.target;
-        const val = type === 'checkbox' ? (checked ? 1 : 0) : value;
-        setFormData(prev => {
-            let next = { ...prev, [name]: val };
+        let newValue = type === 'checkbox' ? (checked ? 1 : 0) : value;
 
+        setFormData(prev => {
+            let nextData = { ...prev, [name]: newValue };
+            
+            // Auto-append legal diciture when toggling checkboxes
+            if (name === 'flRitenutaAcconto' && newValue === 1 && dicituraRitenuta) {
+                if (!nextData.annotazioneEstesa || !nextData.annotazioneEstesa.includes(dicituraRitenuta)) {
+                    nextData.annotazioneEstesa = (nextData.annotazioneEstesa || '') + 
+                        (nextData.annotazioneEstesa ? '\n' : '') + dicituraRitenuta;
+                }
+            }
+            if (name === 'flRivalsaInps' && newValue === 1 && dicituraRivalsa) {
+                if (!nextData.annotazioneEstesa || !nextData.annotazioneEstesa.includes(dicituraRivalsa)) {
+                    nextData.annotazioneEstesa = (nextData.annotazioneEstesa || '') + 
+                        (nextData.annotazioneEstesa ? '\n' : '') + dicituraRivalsa;
+                }
+            }
+            
+            // Handle dependent logic for date/type
+            if ((name === 'dataDocumento' || name === 'tipoFattura') && isNew) {
+                fetchNextNum(nextData.dataDocumento, nextData.flFatturaElettronica, nextData.tipoFattura);
+            }
+            
             // Auto-set flFatturaElettronica based on tipoFattura
             if (name === 'tipoFattura') {
-                next.flFatturaElettronica = (val === 'FATTURA_PROFORMA') ? 0 : 1;
+                nextData.flFatturaElettronica = (newValue === 'FATTURA_PROFORMA') ? 0 : 1;
             }
 
-            if ((name === 'dataDocumento' || name === 'tipoFattura') && isNew) {
-                fetchNextNum(next.dataDocumento, next.flFatturaElettronica, next.tipoFattura);
+            if ((name === 'dataDocumento' || name === 'tipoFattura' || name === 'flFatturaElettronica') && isNew) {
+                fetchNextNum(nextData.dataDocumento, nextData.flFatturaElettronica, nextData.tipoFattura);
             }
-            return next;
+            return nextData;
         });
     };
 
@@ -662,16 +713,26 @@ const FattureDetail = () => {
 
     const calculateTotalDocument = (includeFees = true, forScadenze = false) => {
         const prodTotal = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
+        const rivalsa = calculateRivalsaInps();
+        
+        // Find VAT rate for rivalsa (fallback to 22 if not found)
+        let aliquotaIvaRivalsa = 22;
+        if (prodotti.length > 0) {
+            const firstRowIva = (combos.aliquoteIva || []).find(ai => ai.id === prodotti[0].idAliquotaIva);
+            if (firstRowIva) aliquotaIvaRivalsa = firstRowIva.imposta;
+        }
+        const ivaRivalsa = (rivalsa * aliquotaIvaRivalsa) / 100;
+        
         const globalDiscount = parseFloat(formData.sconto) || 0;
         
         // If it's for scadenze calculation, we need the "Collectible" part of products
-        let base = prodTotal - globalDiscount;
+        let base = prodTotal + rivalsa + ivaRivalsa - globalDiscount;
         if (forScadenze) {
             const ritenuta = calculateRitenutaAcconto();
             base = base - ritenuta;
             if (formData.splitPayment === 1) {
                 const totalIva = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).iva || 0), 0);
-                base = base - totalIva;
+                base = base - totalIva - ivaRivalsa;
             }
             return base;
         }
@@ -686,11 +747,21 @@ const FattureDetail = () => {
         return prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
     };
 
-    const calculateRitenutaAcconto = () => {
-        if (formData.flRitenutaAcconto !== 1) return 0;
+    const calculateRivalsaInps = () => {
+        if (formData.flRivalsaInps !== 1) return 0;
         const base = prodotti
             .filter(row => row.tipo !== 'N' && (row.flRitenuta === 1 || row.flRitenuta === undefined))
             .reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
+        return (base * (formData.percRivalsaInps || 0)) / 100;
+    };
+
+    const calculateRitenutaAcconto = () => {
+        if (formData.flRitenutaAcconto !== 1) return 0;
+        const baseItems = prodotti
+            .filter(row => row.tipo !== 'N' && (row.flRitenuta === 1 || row.flRitenuta === undefined))
+            .reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
+        const rivalsa = calculateRivalsaInps();
+        const base = baseItems + rivalsa;
         return (base * (formData.percRitenutaAcconto || 0)) / 100;
     };
 
@@ -700,9 +771,17 @@ const FattureDetail = () => {
         
         if (formData.splitPayment === 1) {
             const totalIva = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).iva || 0), 0);
+            const rivalsa = calculateRivalsaInps();
+            let aliquotaIvaRivalsa = 22;
+            if (prodotti.length > 0) {
+                const firstRowIva = (combos.aliquoteIva || []).find(ai => ai.id === prodotti[0].idAliquotaIva);
+                if (firstRowIva) aliquotaIvaRivalsa = firstRowIva.imposta;
+            }
+            const ivaRivalsa = (rivalsa * aliquotaIvaRivalsa) / 100;
+
             // Consider also VAT of expenses stored in scadenze
             const feesIva = (formData.listaScadenzePagamentiDocumento || []).reduce((acc, s) => acc + (s.ivaSpeseIncasso || 0), 0);
-            total = total - totalIva - feesIva;
+            total = total - totalIva - feesIva - ivaRivalsa;
         }
         
         return total - ritenuta;
@@ -838,7 +917,8 @@ const FattureDetail = () => {
                 prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile
             })),
             listaScadenzePagamentiDocumento: formData.listaScadenzePagamentiDocumento || [],
-            importoRitenutaAcconto: calculateRitenutaAcconto()
+            importoRitenutaAcconto: calculateRitenutaAcconto(),
+            importoRivalsaInps: calculateRivalsaInps()
         };
 
         try {
@@ -966,6 +1046,12 @@ const FattureDetail = () => {
                         <span className="label">Totale Doc.</span>
                         <span className="value">{formatCurrency(calculateTotalDocument())}</span>
                     </div>
+                    {formData.flRivalsaInps === 1 && (
+                        <div className="total-box">
+                            <span className="label">Rivalsa INPS/Cassa</span>
+                            <span className="value">{formatCurrency(calculateRivalsaInps())}</span>
+                        </div>
+                    )}
                     {formData.flRitenutaAcconto === 1 && (
                         <>
                             <div className="total-box danger">
@@ -1362,6 +1448,78 @@ const FattureDetail = () => {
                                                         className="form-control premium-input text-right"
                                                         name="percRitenutaAcconto"
                                                         value={formData.percRitenutaAcconto ?? ''}
+                                                        onChange={handleHeaderChange}
+                                                        min="0"
+                                                        max="100"
+                                                        step="0.01"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {rivalsaEnabled && (
+                                <div className="row mb-3 px-3">
+                                    <div className="col-md-4">
+                                        <div className="form-group mb-0" style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '10px 0' }}>
+                                            <label className="premium-label" style={{ marginBottom: 0, marginRight: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    name="flRivalsaInps"
+                                                    checked={formData.flRivalsaInps === 1}
+                                                    onChange={handleHeaderChange}
+                                                    style={{ marginRight: '10px', width: '18px', height: '18px' }}
+                                                />
+                                                <span style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50' }}>Gestione Rivalsa INPS / Cassa</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {formData.flRivalsaInps === 1 && (
+                                        <>
+                                            <div className="col-md-4">
+                                                <div className="form-group mb-0">
+                                                    <label className="premium-label">Tipo Cassa</label>
+                                                    <select
+                                                        className="form-control premium-input"
+                                                        name="tipoCassaInps"
+                                                        value={formData.tipoCassaInps || ''}
+                                                        onChange={handleHeaderChange}
+                                                    >
+                                                        <option value="TC01">TC01 - Cassa Nazionale Previdenza Avvocati</option>
+                                                        <option value="TC02">TC02 - Cassa Previdenza Dottori Commercialisti</option>
+                                                        <option value="TC03">TC03 - Cassa Previdenza Geometri</option>
+                                                        <option value="TC04">TC04 - Cassa Nazionale Previdenza Ingegneri e Architetti</option>
+                                                        <option value="TC05">TC05 - Cassa Nazionale Notariato</option>
+                                                        <option value="TC06">TC06 - Cassa Nazionale Previdenza Ragionieri e Periti Commerciali</option>
+                                                        <option value="TC07">TC07 - ENPAIA (Agricoltura)</option>
+                                                        <option value="TC08">TC08 - ENPACL (Consulenti del Lavoro)</option>
+                                                        <option value="TC09">TC09 - ENPAM (Medici)</option>
+                                                        <option value="TC10">TC10 - ENPAF (Farmacisti)</option>
+                                                        <option value="TC11">TC11 - ENPAB (Biologi)</option>
+                                                        <option value="TC12">TC12 - ENPAPI (Infermieri)</option>
+                                                        <option value="TC13">TC13 - ENPVP (Veterinari)</option>
+                                                        <option value="TC14">TC14 - ENPGI (Giornalisti)</option>
+                                                        <option value="TC15">TC15 - ENPAPP (Psicologi)</option>
+                                                        <option value="TC16">TC16 - INPGI (Giornalisti)</option>
+                                                        <option value="TC17">TC17 - ENPAV (Veterinari)</option>
+                                                        <option value="TC18">TC18 - ENPAPI (Infermieri professionali)</option>
+                                                        <option value="TC19">TC19 - Cassa pluricategoriale</option>
+                                                        <option value="TC20">TC20 - ENPADC (Dottori commercialisti)</option>
+                                                        <option value="TC21">TC21 - ENPAG (Giornalisti)</option>
+                                                        <option value="TC22">TC22 - INPS</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="col-md-2">
+                                                <div className="form-group mb-0">
+                                                    <label className="premium-label">Perc. Cassa (%)</label>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control premium-input text-right"
+                                                        name="percRivalsaInps"
+                                                        value={formData.percRivalsaInps ?? ''}
                                                         onChange={handleHeaderChange}
                                                         min="0"
                                                         max="100"

@@ -126,6 +126,10 @@ const ConfOrdineDetail = () => {
     const isNew = !id || id === 'new';
     const [activeTab, setActiveTab] = useState('generale'); // generale, articoli, note, pagamento
     const [isCeramica, setIsCeramica] = useState(false);
+    const [ritenutaEnabled, setRitenutaEnabled] = useState(false);
+    const [rivalsaEnabled, setRivalsaEnabled] = useState(false);
+    const [dicituraRitenuta, setDicituraRitenuta] = useState('');
+    const [dicituraRivalsa, setDicituraRivalsa] = useState('');
 
     const [formData, setFormData] = useState({
         numDocumento: '',
@@ -164,6 +168,14 @@ const ConfOrdineDetail = () => {
         pallet: '',
         idVettore: null,
         annotazioneEstesa: '',
+        flRitenutaAcconto: 0,
+        percRitenutaAcconto: 20,
+        importoRitenutaAcconto: 0,
+        tipoRitenuta: '',
+        flRivalsaInps: 0,
+        percRivalsaInps: 4,
+        importoRivalsaInps: 0,
+        tipoCassaInps: 'TC22',
         listaScadenzePagamentiDocumento: []
     });
 
@@ -209,6 +221,7 @@ const ConfOrdineDetail = () => {
             } else if (fromPreventiviId) {
                 fetchDataFromPreventivo(fromPreventiviId);
             } else {
+                fetchFatturazionePreferences();
                 fetchNextNum(formData.dataDocumento);
             }
         };
@@ -248,6 +261,52 @@ const ConfOrdineDetail = () => {
         } catch (error) {
             console.error(error);
             Swal.fire('Errore', 'Impossibile caricare i dati di base', 'error');
+        }
+    };
+
+    const fetchFatturazionePreferences = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('FATTURAZIONE');
+            if (res.data) {
+                const prefs = res.data;
+                const isRitenutaEnabled = prefs.EMETTI_RITENUTA === '1';
+                setRitenutaEnabled(isRitenutaEnabled);
+                
+                const dRitenuta = prefs.DICITURA_RITENUTA || 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73';
+                const dRivalsa = prefs.DICITURA_RIVALSA || 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95';
+                setDicituraRitenuta(dRitenuta);
+                setDicituraRivalsa(dRivalsa);
+
+                setFormData(prev => {
+                    const isRitenuta = isRitenutaEnabled || prev.flRitenutaAcconto === 1;
+                    const isRivalsa = (prefs.EMETTI_RIVALSA_INPS === '1') || prev.flRivalsaInps === 1;
+                    
+                    let nextData = {
+                        ...prev,
+                        flRitenutaAcconto: isRitenuta ? 1 : prev.flRitenutaAcconto,
+                        percRitenutaAcconto: prefs.PERC_RITENUTA ? parseFloat(prefs.PERC_RITENUTA) : prev.percRitenutaAcconto,
+                        tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta,
+                        flRivalsaInps: isRivalsa ? 1 : prev.flRivalsaInps,
+                        percRivalsaInps: prefs.PERC_RIVALSA_INPS ? parseFloat(prefs.PERC_RIVALSA_INPS) : prev.percRivalsaInps,
+                        tipoCassaInps: prefs.TIPO_CASSA_INPS ? prefs.TIPO_CASSA_INPS : prev.tipoCassaInps
+                    };
+
+                    // Auto-inject legal notes for new documents if flags are active
+                    if (isNew) {
+                        let newNote = nextData.annotazioneEstesa || '';
+                        if (isRitenuta && dRitenuta && !newNote.includes(dRitenuta)) {
+                            newNote = newNote + (newNote ? '\n' : '') + dRitenuta;
+                        }
+                        if (isRivalsa && dRivalsa && !newNote.includes(dRivalsa)) {
+                            newNote = newNote + (newNote ? '\n' : '') + dRivalsa;
+                        }
+                        nextData.annotazioneEstesa = newNote;
+                    }
+                    return nextData;
+                });
+            }
+        } catch (error) {
+            console.error("Errore nel recupero delle preferenze fatturazione", error);
         }
     };
 
@@ -445,11 +504,31 @@ const ConfOrdineDetail = () => {
     };
 
     const handleHeaderChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        let newValue = type === 'checkbox' ? (checked ? 1 : 0) : value;
+
+        setFormData(prev => {
+            let nextData = { ...prev, [name]: newValue };
+
+            // Auto-append legal diciture when toggling checkboxes
+            if (name === 'flRitenutaAcconto' && newValue === 1 && dicituraRitenuta) {
+                if (!nextData.annotazioneEstesa || !nextData.annotazioneEstesa.includes(dicituraRitenuta)) {
+                    nextData.annotazioneEstesa = (nextData.annotazioneEstesa || '') + 
+                        (nextData.annotazioneEstesa ? '\n' : '') + dicituraRitenuta;
+                }
+            }
+            if (name === 'flRivalsaInps' && newValue === 1 && dicituraRivalsa) {
+                if (!nextData.annotazioneEstesa || !nextData.annotazioneEstesa.includes(dicituraRivalsa)) {
+                    nextData.annotazioneEstesa = (nextData.annotazioneEstesa || '') + 
+                        (nextData.annotazioneEstesa ? '\n' : '') + dicituraRivalsa;
+                }
+            }
+
+            return nextData;
+        });
 
         if (name === 'dataDocumento' && isNew) {
-            fetchNextNum(value);
+            fetchNextNum(newValue);
         }
     };
 
@@ -480,11 +559,39 @@ const ConfOrdineDetail = () => {
     };
 
     const calculateTotalDocument = () => {
-        return prodotti.reduce((acc, row) => acc + calculateRowTotal(row), 0);
+        const prodTotal = prodotti.reduce((acc, row) => acc + calculateRowTotal(row), 0);
+        const rivalsa = calculateRivalsaInps();
+        
+        let aliquotaIvaRivalsa = 22;
+        if (prodotti.length > 0) {
+            const firstRowIva = (combos.aliquoteIva || []).find(ai => ai.id === prodotti[0].idAliquotaIva);
+            if (firstRowIva) aliquotaIvaRivalsa = firstRowIva.imposta;
+        }
+        const ivaRivalsa = (rivalsa * aliquotaIvaRivalsa) / 100;
+        
+        return prodTotal + rivalsa + ivaRivalsa;
     };
 
     const calculateTotalImponibile = () => {
         return prodotti.reduce((acc, row) => acc + getRowValues(row, combos.aliquoteIva).imponibile, 0);
+    };
+
+    const calculateRivalsaInps = () => {
+        if (formData.flRivalsaInps !== 1) return 0;
+        const base = prodotti
+            .filter(row => row.tipo !== 'N' && (row.flRitenuta === 1 || row.flRitenuta === undefined))
+            .reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
+        return (base * (formData.percRivalsaInps || 0)) / 100;
+    };
+
+    const calculateRitenutaAcconto = () => {
+        if (formData.flRitenutaAcconto !== 1) return 0;
+        const baseItems = prodotti
+            .filter(row => row.tipo !== 'N' && (row.flRitenuta === 1 || row.flRitenuta === undefined))
+            .reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
+        const rivalsa = calculateRivalsaInps();
+        const base = baseItems + rivalsa;
+        return (base * (formData.percRitenutaAcconto || 0)) / 100;
     };
 
     // --- Async Select Loaders ---
@@ -597,7 +704,9 @@ const ConfOrdineDetail = () => {
                 prezzoImponibile: getRowValues(p, combos.aliquoteIva).imponibile
             })),
             idDocAssociato: fromPreventiviId ? parseInt(fromPreventiviId.split(',')[0]) : null,
-            tipoDocAssociato: fromPreventiviId ? 'PREVENTIVO' : null
+            tipoDocAssociato: fromPreventiviId ? 'PREVENTIVO' : null,
+            importoRitenutaAcconto: calculateRitenutaAcconto(),
+            importoRivalsaInps: calculateRivalsaInps()
         };
 
         try {
@@ -717,6 +826,18 @@ const ConfOrdineDetail = () => {
                         <span className="label">Totale Doc.</span>
                         <span className="value">{formatCurrency(calculateTotalDocument())}</span>
                     </div>
+                    {formData.flRivalsaInps === 1 && (
+                        <div className="total-box">
+                            <span className="label">Rivalsa INPS/Cassa</span>
+                            <span className="value">{formatCurrency(calculateRivalsaInps())}</span>
+                        </div>
+                    )}
+                    {formData.flRitenutaAcconto === 1 && (
+                        <div className="total-box danger">
+                            <span className="label">Ritenuta</span>
+                            <span className="value">-{formatCurrency(calculateRitenutaAcconto())}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -929,10 +1050,145 @@ const ConfOrdineDetail = () => {
                                                     <label className="premium-label">Note Consegna</label>
                                                     <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="off" />
                                                 </div>
+                                                <div className="row">
+                                                    <div className="col-md-12">
+                                                        <label className="premium-label">Note Consegna</label>
+                                                        <input type="text" className="form-control premium-input" name="noteConsegna" value={formData.noteConsegna || ''} onChange={handleHeaderChange} placeholder="Es. Citofono, orari..." autoComplete="off" />
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                {ritenutaEnabled && (
+                                    <div className="row mb-3 px-3">
+                                        <div className="col-md-4">
+                                            <div className="form-group mb-0" style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '10px 0' }}>
+                                                <label className="premium-label" style={{ marginBottom: 0, marginRight: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        name="flRitenutaAcconto"
+                                                        checked={formData.flRitenutaAcconto === 1}
+                                                        onChange={handleHeaderChange}
+                                                        style={{ marginRight: '10px', width: '18px', height: '18px' }}
+                                                    />
+                                                    <span style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50' }}>Gestione Ritenuta d'Acconto</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {formData.flRitenutaAcconto === 1 && (
+                                            <>
+                                                <div className="col-md-4">
+                                                    <div className="form-group mb-0">
+                                                        <label className="premium-label">Tipo Ritenuta</label>
+                                                        <select
+                                                            className="form-control premium-input"
+                                                            name="tipoRitenuta"
+                                                            value={formData.tipoRitenuta || ''}
+                                                            onChange={handleHeaderChange}
+                                                        >
+                                                            <option value="">Seleziona tipo...</option>
+                                                            <option value="RT01">RT01 - Ritenuta persone fisiche</option>
+                                                            <option value="RT02">RT02 - Ritenuta persone giuridiche</option>
+                                                            <option value="RT03">RT03 - Contributo INPS</option>
+                                                            <option value="RT04">RT04 - Contributo ENASARCO</option>
+                                                            <option value="RT05">RT05 - Contributo ENPAM</option>
+                                                            <option value="RT06">RT06 - Altro contributo previdenziale</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-2">
+                                                    <div className="form-group mb-0">
+                                                        <label className="premium-label">Perc. Ritenuta (%)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control premium-input text-right"
+                                                            name="percRitenutaAcconto"
+                                                            value={formData.percRitenutaAcconto ?? ''}
+                                                            onChange={handleHeaderChange}
+                                                            min="0"
+                                                            max="100"
+                                                            step="0.01"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+
+                                {rivalsaEnabled && (
+                                    <div className="row mb-3 px-3">
+                                        <div className="col-md-4">
+                                            <div className="form-group mb-0" style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '10px 0' }}>
+                                                <label className="premium-label" style={{ marginBottom: 0, marginRight: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        name="flRivalsaInps"
+                                                        checked={formData.flRivalsaInps === 1}
+                                                        onChange={handleHeaderChange}
+                                                        style={{ marginRight: '10px', width: '18px', height: '18px' }}
+                                                    />
+                                                    <span style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50' }}>Gestione Rivalsa INPS / Cassa</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {formData.flRivalsaInps === 1 && (
+                                            <>
+                                                <div className="col-md-4">
+                                                    <div className="form-group mb-0">
+                                                        <label className="premium-label">Tipo Cassa</label>
+                                                        <select
+                                                            className="form-control premium-input"
+                                                            name="tipoCassaInps"
+                                                            value={formData.tipoCassaInps || ''}
+                                                            onChange={handleHeaderChange}
+                                                        >
+                                                            <option value="TC01">TC01 - Cassa Nazionale Previdenza Avvocati</option>
+                                                            <option value="TC02">TC02 - Cassa Previdenza Dottori Commercialisti</option>
+                                                            <option value="TC03">TC03 - Cassa Previdenza Geometri</option>
+                                                            <option value="TC04">TC04 - Cassa Nazionale Previdenza Ingegneri e Architetti</option>
+                                                            <option value="TC05">TC05 - Cassa Nazionale Notariato</option>
+                                                            <option value="TC06">TC06 - Cassa Nazionale Previdenza Ragionieri e Periti Commerciali</option>
+                                                            <option value="TC07">TC07 - ENPAIA (Agricoltura)</option>
+                                                            <option value="TC08">TC08 - ENPACL (Consulenti del Lavoro)</option>
+                                                            <option value="TC09">TC09 - ENPAM (Medici)</option>
+                                                            <option value="TC10">TC10 - ENPAF (Farmacisti)</option>
+                                                            <option value="TC11">TC11 - ENPAB (Biologi)</option>
+                                                            <option value="TC12">TC12 - ENPAPI (Infermieri)</option>
+                                                            <option value="TC13">TC13 - ENPVP (Veterinari)</option>
+                                                            <option value="TC14">TC14 - ENPGI (Giornalisti)</option>
+                                                            <option value="TC15">TC15 - ENPAPP (Psicologi)</option>
+                                                            <option value="TC16">TC16 - INPGI (Giornalisti)</option>
+                                                            <option value="TC17">TC17 - ENPAV (Veterinari)</option>
+                                                            <option value="TC18">TC18 - ENPAPI (Infermieri professionali)</option>
+                                                            <option value="TC19">TC19 - Cassa pluricategoriale</option>
+                                                            <option value="TC20">TC20 - ENPADC (Dottori commercialisti)</option>
+                                                            <option value="TC21">TC21 - ENPAG (Giornalisti)</option>
+                                                            <option value="TC22">TC22 - INPS</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-2">
+                                                    <div className="form-group mb-0">
+                                                        <label className="premium-label">Perc. Cassa (%)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control premium-input text-right"
+                                                            name="percRivalsaInps"
+                                                            value={formData.percRivalsaInps ?? ''}
+                                                            onChange={handleHeaderChange}
+                                                            min="0"
+                                                            max="100"
+                                                            step="0.01"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="row mb-3">

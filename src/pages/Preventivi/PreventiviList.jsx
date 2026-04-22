@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
+import { getDefaultSearchRange } from '../../utils/dateUtils';
 import { formatStato } from '../../utils/documentUtils';
 import './PreventiviList.css';
 
@@ -18,12 +19,14 @@ const MODULE_NAME = 'preventivi';
 const PreventiviList = () => {
     const navigate = useNavigate();
 
+    const defaultRange = getDefaultSearchRange(30);
+
     // Load initial state
     const initialState = storageHelper.loadState(MODULE_NAME, {
         idCliente: '',
         idAgente: '',
-        dtFrom: '',
-        dtTo: '',
+        dtFrom: defaultRange.dataDa,
+        dtTo: defaultRange.dataA,
         currentPage: 0,
         pageSize: 50,
         sortCol: 'data_preventivo',
@@ -42,8 +45,8 @@ const PreventiviList = () => {
     // Filters
     const [idCliente, setIdCliente] = useState(initialState.idCliente);
     const [idAgente, setIdAgente] = useState(initialState.idAgente);
-    const [dtFrom, setDtFrom] = useState(initialState.dtFrom);
-    const [dtTo, setDtTo] = useState(initialState.dtTo);
+    const [dtFrom, setDtFrom] = useState(initialState.dtFrom || defaultRange.dataDa);
+    const [dtTo, setDtTo] = useState(initialState.dtTo || defaultRange.dataA);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(initialState.currentPage);

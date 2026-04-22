@@ -9,20 +9,17 @@ import Swal from 'sweetalert2';
 import './ArticoliList.css'; // Reusing Articoli CSS
 
 import storageHelper from '../../utils/storageHelper';
+import { getDefaultSearchRange } from '../../utils/dateUtils';
 
 const MODULE_NAME = 'movimenti';
 
 const MovimentiList = () => {
-    // Default dates: current month
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const fmt = (d) => d.toISOString().split('T')[0];
+    const defaultRange = getDefaultSearchRange(30);
 
     // Load initial state
     const initialState = storageHelper.loadState(MODULE_NAME, {
-        dtFrom: fmt(firstDay),
-        dtTo: fmt(lastDay),
+        dtFrom: defaultRange.dataDa,
+        dtTo: defaultRange.dataA,
         page: 0,
         pageSize: 50,
         selectedArticle: null
@@ -36,8 +33,8 @@ const MovimentiList = () => {
     const location = useLocation();
 
     // Filters
-    const [dtFrom, setDtFrom] = useState(initialState.dtFrom);
-    const [dtTo, setDtTo] = useState(initialState.dtTo);
+    const [dtFrom, setDtFrom] = useState(initialState.dtFrom || defaultRange.dataDa);
+    const [dtTo, setDtTo] = useState(initialState.dtTo || defaultRange.dataA);
     const [selectedArticle, setSelectedArticle] = useState(initialState.selectedArticle);
 
     // Save state whenever filters or pagination change

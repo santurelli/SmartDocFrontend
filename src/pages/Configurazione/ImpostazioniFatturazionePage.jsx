@@ -9,7 +9,12 @@ const ImpostazioniFatturazionePage = () => {
         EMETTI_RITENUTA: { chiave: 'EMETTI_RITENUTA', valore: '0', dominio: 'FATTURAZIONE' },
         TIPO_RITENUTA: { chiave: 'TIPO_RITENUTA', valore: 'RT01', dominio: 'FATTURAZIONE' },
         PERC_RITENUTA: { chiave: 'PERC_RITENUTA', valore: '20.00', dominio: 'FATTURAZIONE' },
-        DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: 'FATTURA', dominio: 'FATTURAZIONE' }
+        EMETTI_RIVALSA_INPS: { chiave: 'EMETTI_RIVALSA_INPS', valore: '0', dominio: 'FATTURAZIONE' },
+        PERC_RIVALSA_INPS: { chiave: 'PERC_RIVALSA_INPS', valore: '4.00', dominio: 'FATTURAZIONE' },
+        TIPO_CASSA_INPS: { chiave: 'TIPO_CASSA_INPS', valore: 'TC22', dominio: 'FATTURAZIONE' },
+        DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: 'FATTURA', dominio: 'FATTURAZIONE' },
+        DICITURA_RITENUTA: { chiave: 'DICITURA_RITENUTA', valore: 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73', dominio: 'FATTURAZIONE' },
+        DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' }
     });
     const [loading, setLoading] = useState(true);
 
@@ -29,7 +34,12 @@ const ImpostazioniFatturazionePage = () => {
                     EMETTI_RITENUTA: { chiave: 'EMETTI_RITENUTA', valore: response.data.EMETTI_RITENUTA || '0', dominio: 'FATTURAZIONE' },
                     TIPO_RITENUTA: { chiave: 'TIPO_RITENUTA', valore: response.data.TIPO_RITENUTA || 'RT01', dominio: 'FATTURAZIONE' },
                     PERC_RITENUTA: { chiave: 'PERC_RITENUTA', valore: response.data.PERC_RITENUTA || '20.00', dominio: 'FATTURAZIONE' },
-                    DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: response.data.DEFAULT_TIPO_FATTURA || 'FATTURA', dominio: 'FATTURAZIONE' }
+                    EMETTI_RIVALSA_INPS: { chiave: 'EMETTI_RIVALSA_INPS', valore: response.data.EMETTI_RIVALSA_INPS || '0', dominio: 'FATTURAZIONE' },
+                    PERC_RIVALSA_INPS: { chiave: 'PERC_RIVALSA_INPS', valore: response.data.PERC_RIVALSA_INPS || '4.00', dominio: 'FATTURAZIONE' },
+                    TIPO_CASSA_INPS: { chiave: 'TIPO_CASSA_INPS', valore: response.data.TIPO_CASSA_INPS || 'TC22', dominio: 'FATTURAZIONE' },
+                    DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: response.data.DEFAULT_TIPO_FATTURA || 'FATTURA', dominio: 'FATTURAZIONE' },
+                    DICITURA_RITENUTA: { chiave: 'DICITURA_RITENUTA', valore: response.data.DICITURA_RITENUTA || 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73', dominio: 'FATTURAZIONE' },
+                    DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: response.data.DICITURA_RIVALSA || 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' }
                 }));
             }
         } catch (err) {
@@ -53,7 +63,12 @@ const ImpostazioniFatturazionePage = () => {
             await ConfigurazioneService.save(configs.EMETTI_RITENUTA);
             await ConfigurazioneService.save(configs.TIPO_RITENUTA);
             await ConfigurazioneService.save(configs.PERC_RITENUTA);
+            await ConfigurazioneService.save(configs.EMETTI_RIVALSA_INPS);
+            await ConfigurazioneService.save(configs.PERC_RIVALSA_INPS);
+            await ConfigurazioneService.save(configs.TIPO_CASSA_INPS);
             await ConfigurazioneService.save(configs.DEFAULT_TIPO_FATTURA);
+            await ConfigurazioneService.save(configs.DICITURA_RITENUTA);
+            await ConfigurazioneService.save(configs.DICITURA_RIVALSA);
 
             Swal.fire({
                 title: 'Successo!',
@@ -124,6 +139,93 @@ const ImpostazioniFatturazionePage = () => {
                                     value={configs.PERC_RITENUTA.valore}
                                     onChange={(e) => handleChange('PERC_RITENUTA', e.target.value)}
                                     min="0" max="100" step="0.01"
+                                />
+                            </div>
+                            <div className="col-md-12 form-group mt-2">
+                                <label>Dicitura Legge Ritenuta (automatica in nota)</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={configs.DICITURA_RITENUTA.valore}
+                                    onChange={(e) => handleChange('DICITURA_RITENUTA', e.target.value)}
+                                    placeholder="Es. Soggetto a ritenuta..."
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="section-title mt-5">
+                        <FaFileInvoiceDollar /> Rivalsa INPS / Cassa Previdenziale
+                    </div>
+
+                    <div className="row mt-4">
+                        <div className="col-md-12 form-group">
+                            <div className="checkbox-nice" style={{ display: 'flex', alignItems: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    id="emetti_rivalsa"
+                                    checked={configs.EMETTI_RIVALSA_INPS.valore === '1'}
+                                    onChange={(e) => handleChange('EMETTI_RIVALSA_INPS', e.target.checked ? '1' : '0')}
+                                    style={{ margin: 0 }}
+                                />
+                                <label htmlFor="emetti_rivalsa" style={{ fontWeight: 'normal', margin: 0, paddingLeft: '8px' }}>
+                                    Applica rivalsa INPS / Cassa previdenziale di default nei nuovi documenti
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {configs.EMETTI_RIVALSA_INPS.valore === '1' && (
+                        <div className="row mt-3">
+                            <div className="col-md-6 form-group">
+                                <label>Tipo Cassa Previdenziale</label>
+                                <select
+                                    className="form-control"
+                                    value={configs.TIPO_CASSA_INPS.valore}
+                                    onChange={(e) => handleChange('TIPO_CASSA_INPS', e.target.value)}
+                                >
+                                    <option value="TC01">TC01 - Cassa Nazionale Previdenza Avvocati</option>
+                                    <option value="TC02">TC02 - Cassa Previdenza Dottori Commercialisti</option>
+                                    <option value="TC03">TC03 - Cassa Previdenza Geometri</option>
+                                    <option value="TC04">TC04 - Cassa Nazionale Previdenza Ingegneri e Architetti</option>
+                                    <option value="TC05">TC05 - Cassa Nazionale Notariato</option>
+                                    <option value="TC06">TC06 - Cassa Nazionale Previdenza Ragionieri e Periti Commerciali</option>
+                                    <option value="TC07">TC07 - ENPAIA (Agricoltura)</option>
+                                    <option value="TC08">TC08 - ENPACL (Consulenti del Lavoro)</option>
+                                    <option value="TC09">TC09 - ENPAM (Medici)</option>
+                                    <option value="TC10">TC10 - ENPAF (Farmacisti)</option>
+                                    <option value="TC11">TC11 - ENPAB (Biologi)</option>
+                                    <option value="TC12">TC12 - ENPAPI (Infermieri)</option>
+                                    <option value="TC13">TC13 - ENPVP (Veterinari)</option>
+                                    <option value="TC14">TC14 - ENPGI (Giornalisti)</option>
+                                    <option value="TC15">TC15 - ENPAPP (Psicologi)</option>
+                                    <option value="TC16">TC16 - INPGI (Giornalisti)</option>
+                                    <option value="TC17">TC17 - ENPAV (Veterinari)</option>
+                                    <option value="TC18">TC18 - ENPAPI (Infermieri professionali)</option>
+                                    <option value="TC19">TC19 - Cassa pluricategoriale</option>
+                                    <option value="TC20">TC20 - ENPADC (Dottori commercialisti)</option>
+                                    <option value="TC21">TC21 - ENPAG (Giornalisti)</option>
+                                    <option value="TC22">TC22 - INPS</option>
+                                </select>
+                            </div>
+                            <div className="col-md-2 form-group">
+                                <label>Percentuale (%)</label>
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    value={configs.PERC_RIVALSA_INPS.valore}
+                                    onChange={(e) => handleChange('PERC_RIVALSA_INPS', e.target.value)}
+                                    min="0" max="100" step="0.01"
+                                />
+                            </div>
+                            <div className="col-md-12 form-group mt-2">
+                                <label>Dicitura Legge Rivalsa (automatica in nota)</label>
+                                <input
+                                    type="text"
+                                    className="form-control"
+                                    value={configs.DICITURA_RIVALSA.valore}
+                                    onChange={(e) => handleChange('DICITURA_RIVALSA', e.target.value)}
+                                    placeholder="Es. Contributo previdenziale..."
                                 />
                             </div>
                         </div>
