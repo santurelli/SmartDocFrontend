@@ -254,7 +254,7 @@ const ArticoliDetail = () => {
 
             if (isNew) {
                 res = await ArticoliService.createArticolo(dataToSave);
-                const newId = res.data?.id || id; // If backend returns id
+                const newId = res.data?.payload || id; // If backend returns id in payload
                 await ArticoliService.savePrezzi(newId, prezzi);
             } else {
                 const results = await Promise.all([
@@ -264,7 +264,7 @@ const ArticoliDetail = () => {
                 res = results[0]; // The response from updateArticolo
             }
 
-            if (res.data.errorNum === '0' || res.data.payload) {
+            if (!res.data.errorText) {
                 const Swal = (await import('sweetalert2')).default;
                 await Swal.fire({
                     title: 'Successo!',

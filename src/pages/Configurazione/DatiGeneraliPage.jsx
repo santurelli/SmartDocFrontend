@@ -65,7 +65,8 @@ const DatiGeneraliPage = () => {
                 { d: 'ARTICOLI', k: 'TIPOPRODOTTO_ABILITA' },
                 { d: 'ARTICOLI', k: 'CODICE_ABILITA' },
                 { d: 'ARTICOLI', k: 'PREZZI_IVATI' },
-                { d: 'CLIENTI', k: 'ABILITA_DATICOMMERCIALI' }
+                { d: 'CLIENTI', k: 'ABILITA_DATICOMMERCIALI' },
+                { d: 'GLOBAL', k: 'CONSIDERA_PROFORMA_PRIMA_NOTA' }
             ];
 
             for (const item of keysToSave) {
@@ -162,6 +163,17 @@ const DatiGeneraliPage = () => {
                                 readOnly 
                             />
                             <span className="config-label">Gestione Dipendenti</span>
+                        </div>
+                    </div>
+                    <div className="col-md-4 mb-3">
+                        <div className="document-config-card" onClick={() => handleToggle('GLOBAL', 'CONSIDERA_PROFORMA_PRIMA_NOTA')}>
+                            <input 
+                                type="checkbox" 
+                                className="config-checkbox" 
+                                checked={getValue('GLOBAL', 'CONSIDERA_PROFORMA_PRIMA_NOTA') === '1'} 
+                                readOnly 
+                            />
+                            <span className="config-label">Considera pro forma in prima nota</span>
                         </div>
                     </div>
                 </div>

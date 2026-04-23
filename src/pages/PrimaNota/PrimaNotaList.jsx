@@ -99,9 +99,11 @@ const PrimaNotaList = () => {
             
             const res = await PrimaNotaService.getAll(params);
             if (res.data) {
-                setData(res.data.list || []);
-                setTotalRows(res.data.totalCount || 0);
-                calcolaTotali(res.data.list || []);
+                const list = Array.isArray(res.data) ? res.data : (res.data.list || []);
+                setData(list);
+                // Il totale è presente in ogni riga grazie a COUNT(*) OVER()
+                setTotalRows(list.length > 0 ? list[0].total : 0);
+                calcolaTotali(list);
             }
         } catch (err) {
             console.error("Errore recupero prima nota", err);
@@ -257,8 +259,10 @@ const PrimaNotaList = () => {
         row.saldoProgressivo = prog;
     });
 
-    // Invertiamo di nuovo per mostrare i più recenti in alto se desiderato
-    dataConProgressivo.reverse();
+    // Invertiamo solo se l'utente ha richiesto l'ordine decrescente
+    if (sort.direction === 'desc') {
+        dataConProgressivo.reverse();
+    }
 
     const [showFilters, setShowFilters] = useState(true);
 
