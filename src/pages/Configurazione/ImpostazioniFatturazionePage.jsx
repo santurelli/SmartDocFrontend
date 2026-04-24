@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
-import { FaSave, FaFileInvoiceDollar } from 'react-icons/fa';
+import AliquoteIvaService from '../../services/AliquoteIvaService';
+import { FaSave, FaFileInvoiceDollar, FaWrench } from 'react-icons/fa';
 import './ConfigurazionePage.css';
 import Swal from 'sweetalert2';
+import AliquoteIvaManagementModal from '../../components/modals/AliquoteIvaManagementModal';
 
 const ImpostazioniFatturazionePage = () => {
     const [configs, setConfigs] = useState({
@@ -14,12 +16,17 @@ const ImpostazioniFatturazionePage = () => {
         TIPO_CASSA_INPS: { chiave: 'TIPO_CASSA_INPS', valore: 'TC22', dominio: 'FATTURAZIONE' },
         DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: 'FATTURA', dominio: 'FATTURAZIONE' },
         DICITURA_RITENUTA: { chiave: 'DICITURA_RITENUTA', valore: 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73', dominio: 'FATTURAZIONE' },
-        DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' }
+        DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' },
+        PERC_IMPONIBILE_RIVALSA: { chiave: 'PERC_IMPONIBILE_RIVALSA', valore: '100.00', dominio: 'FATTURAZIONE' },
+        ID_ALIQUOTA_IVA_RIVALSA: { chiave: 'ID_ALIQUOTA_IVA_RIVALSA', valore: '0', dominio: 'FATTURAZIONE' }
     });
+    const [aliquoteIva, setAliquoteIva] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [showIvaModal, setShowIvaModal] = useState(false);
 
     useEffect(() => {
         fetchConfigs();
+        fetchAliquoteIva();
     }, []);
 
     const fetchConfigs = async () => {
@@ -39,7 +46,9 @@ const ImpostazioniFatturazionePage = () => {
                     TIPO_CASSA_INPS: { chiave: 'TIPO_CASSA_INPS', valore: response.data.TIPO_CASSA_INPS || 'TC22', dominio: 'FATTURAZIONE' },
                     DEFAULT_TIPO_FATTURA: { chiave: 'DEFAULT_TIPO_FATTURA', valore: response.data.DEFAULT_TIPO_FATTURA || 'FATTURA', dominio: 'FATTURAZIONE' },
                     DICITURA_RITENUTA: { chiave: 'DICITURA_RITENUTA', valore: response.data.DICITURA_RITENUTA || 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73', dominio: 'FATTURAZIONE' },
-                    DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: response.data.DICITURA_RIVALSA || 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' }
+                    DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: response.data.DICITURA_RIVALSA || 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' },
+                    PERC_IMPONIBILE_RIVALSA: { chiave: 'PERC_IMPONIBILE_RIVALSA', valore: response.data.PERC_IMPONIBILE_RIVALSA || '100.00', dominio: 'FATTURAZIONE' },
+                    ID_ALIQUOTA_IVA_RIVALSA: { chiave: 'ID_ALIQUOTA_IVA_RIVALSA', valore: response.data.ID_ALIQUOTA_IVA_RIVALSA || '0', dominio: 'FATTURAZIONE' }
                 }));
             }
         } catch (err) {
@@ -47,6 +56,19 @@ const ImpostazioniFatturazionePage = () => {
             Swal.fire('Errore', 'Si è verificato un errore nel caricamento delle configurazioni.', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchAliquoteIva = async () => {
+        try {
+            const res = await AliquoteIvaService.getListForCombo();
+            if (res.data && res.data.payload) {
+                setAliquoteIva(res.data.payload);
+            } else if (Array.isArray(res.data)) {
+                setAliquoteIva(res.data);
+            }
+        } catch (error) {
+            console.error("Error fetching VAT rates:", error);
         }
     };
 
@@ -69,6 +91,8 @@ const ImpostazioniFatturazionePage = () => {
             await ConfigurazioneService.save(configs.DEFAULT_TIPO_FATTURA);
             await ConfigurazioneService.save(configs.DICITURA_RITENUTA);
             await ConfigurazioneService.save(configs.DICITURA_RIVALSA);
+            await ConfigurazioneService.save(configs.PERC_IMPONIBILE_RIVALSA);
+            await ConfigurazioneService.save(configs.ID_ALIQUOTA_IVA_RIVALSA);
 
             Swal.fire({
                 title: 'Successo!',
@@ -218,6 +242,39 @@ const ImpostazioniFatturazionePage = () => {
                                     min="0" max="100" step="0.01"
                                 />
                             </div>
+                            <div className="col-md-2 form-group">
+                                <label>Perc. Imponibile (%)</label>
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    value={configs.PERC_IMPONIBILE_RIVALSA.valore}
+                                    onChange={(e) => handleChange('PERC_IMPONIBILE_RIVALSA', e.target.value)}
+                                    min="0" max="100" step="0.01"
+                                />
+                            </div>
+                            <div className="col-md-2 form-group">
+                                <label>Aliquota IVA</label>
+                                <div className="flex-input-group">
+                                    <select
+                                        className="form-control"
+                                        value={configs.ID_ALIQUOTA_IVA_RIVALSA.valore}
+                                        onChange={(e) => handleChange('ID_ALIQUOTA_IVA_RIVALSA', e.target.value)}
+                                    >
+                                        <option value="0">Auto (1° riga)</option>
+                                        {aliquoteIva.map(a => (
+                                            <option key={a.id} value={a.id}>{a.codice} - {a.descrizione}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        type="button"
+                                        className="premium-wrench-btn"
+                                        onClick={() => setShowIvaModal(true)}
+                                        title="Gestione Aliquote IVA"
+                                    >
+                                        <FaWrench />
+                                    </button>
+                                </div>
+                            </div>
                             <div className="col-md-12 form-group mt-2">
                                 <label>Dicitura Legge Rivalsa (automatica in nota)</label>
                                 <input
@@ -262,6 +319,12 @@ const ImpostazioniFatturazionePage = () => {
                     </div>
                 </div>
             </div>
+
+            <AliquoteIvaManagementModal 
+                isOpen={showIvaModal}
+                onClose={() => setShowIvaModal(false)}
+                onSave={() => fetchAliquoteIva()}
+            />
         </div>
     );
 

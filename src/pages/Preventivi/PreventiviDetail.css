@@ -3,7 +3,7 @@
 }
 
 #preventivi-content-header {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -64,7 +64,7 @@
 .nav-tabs>li>a {
     border-radius: 0;
     margin-right: 20px;
-    padding: 15px 0;
+    padding: 10px 0;
     border: none;
     color: #7f8c8d;
     font-weight: 600;
@@ -80,7 +80,7 @@
 }
 
 .tab-content {
-    padding: 30px;
+    padding: 0px 30px 20px 30px;
 }
 
 .form-group label {

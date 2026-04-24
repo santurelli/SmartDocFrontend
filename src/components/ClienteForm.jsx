@@ -73,6 +73,12 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
         loadInitialData();
     }, [onConfigLoaded]);
 
+    useEffect(() => {
+        if (isNew && !data.codice) {
+            generateCodice();
+        }
+    }, [isNew]); // Only trigger once on mount if isNew is true
+
     const handleFormChange = (e) => {
         const { name, value } = e.target;
         onChange({ ...data, [name]: value });
@@ -325,6 +331,9 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                         />
                                     </div>
                                 </div>
+                                <div className="col-md-3">
+                                    <div className="form-group"><label>Codice SDI</label><input type="text" className="form-control" name="codiceUfficio" value={currentAddress.codiceUfficio || ''} onChange={handleAddressChange} maxLength="7" autoComplete="off" placeholder="7 caratteri" /></div>
+                                </div>
                             </div>
                         </div>
 
@@ -359,6 +368,12 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                     <div className="form-group">
                                         <label>Telefono</label>
                                         <input type="text" className="form-control" name="telefono" value={currentContact.telefono || ''} onChange={handleContactChange} autoComplete="off" />
+                                    </div>
+                                </div>
+                                <div className="col-md-4">
+                                    <div className="form-group">
+                                        <label>PEC</label>
+                                        <input type="email" className="form-control" name="pec" value={currentContact.pec || ''} onChange={handleContactChange} autoComplete="off" />
                                     </div>
                                 </div>
                             </div>

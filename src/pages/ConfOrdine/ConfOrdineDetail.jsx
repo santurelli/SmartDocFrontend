@@ -130,6 +130,8 @@ const ConfOrdineDetail = () => {
     const [rivalsaEnabled, setRivalsaEnabled] = useState(false);
     const [dicituraRitenuta, setDicituraRitenuta] = useState('');
     const [dicituraRivalsa, setDicituraRivalsa] = useState('');
+    const [globalConfigs, setGlobalConfigs] = useState(null);
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const [formData, setFormData] = useState({
         numDocumento: '',
@@ -176,7 +178,10 @@ const ConfOrdineDetail = () => {
         percRivalsaInps: 4,
         importoRivalsaInps: 0,
         tipoCassaInps: 'TC22',
-        listaScadenzePagamentiDocumento: []
+        pec: '',
+        codiceUfficioDestinazione: '',
+        listaScadenzePagamentiDocumento: [],
+        statoConfOrdine: 'BO'
     });
 
     const [prodotti, setProdotti] = useState([]);
@@ -216,6 +221,7 @@ const ConfOrdineDetail = () => {
         const loadInitialData = async () => {
             checkCeramica();
             fetchCombos();
+            fetchGlobalConfigs();
             if (!isNew) {
                 fetchData();
             } else if (fromPreventiviId) {
@@ -261,6 +267,15 @@ const ConfOrdineDetail = () => {
         } catch (error) {
             console.error(error);
             Swal.fire('Errore', 'Impossibile caricare i dati di base', 'error');
+        }
+    };
+
+    const fetchGlobalConfigs = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('GLOBAL');
+            if (res.data) setGlobalConfigs(res.data);
+        } catch (err) {
+            console.error("Error loading global configurations:", err);
         }
     };
 
@@ -476,6 +491,9 @@ const ConfOrdineDetail = () => {
                 const header = sedeLegale || sedeOperativa || validMain;
                 const shipping = destinazioneMerce || sedeOperativa || sedeLegale || validMain;
 
+                // Trova la prima PEC disponibile tra i contatti
+                const firstPec = (clientFull.elencoContatti || []).find(c => c.pec)?.pec || '';
+
                 setFormData(prev => ({
                     ...prev,
                     ...(header ? {
@@ -484,6 +502,7 @@ const ConfOrdineDetail = () => {
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
                         nazioneIntestazione: header.nazione || 'Italia',
+                        codiceUfficioDestinazione: header.codiceUfficio || '',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
@@ -495,7 +514,9 @@ const ConfOrdineDetail = () => {
                     // Ensure core fields are populated
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
-                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento
+                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento,
+                    pec: firstPec || clientFull.pecPrincipale || prev.pec || '',
+                    codiceUfficioDestinazione: (header?.codiceUfficio || shipping?.codiceUfficio || indirizzi.find(i => i.codiceUfficio)?.codiceUfficio) || prev.codiceUfficioDestinazione || ''
                 }));
             }
         } catch (error) {
@@ -778,36 +799,6 @@ const ConfOrdineDetail = () => {
         return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val);
     };
 
-    const tableSelectStyles = {
-        control: (base) => ({
-            ...base,
-            minHeight: '34px',
-            height: '34px',
-            fontSize: '13px',
-            borderColor: '#dee2e6',
-            boxShadow: 'none',
-            '&:hover': { borderColor: '#ced4da' }
-        }),
-        valueContainer: (base) => ({
-            ...base,
-            height: '34px',
-            padding: '0 8px'
-        }),
-        input: (base) => ({
-            ...base,
-            margin: '0px'
-        }),
-        indicatorsContainer: (base) => ({
-            ...base,
-            height: '34px'
-        }),
-        menu: (base) => ({
-            ...base,
-            fontSize: '13px',
-            zIndex: 9999
-        })
-    };
-
     return (
         <div className="conf-ordine-detail-container entity-form-shared">
             <div id="confordine-content-header">
@@ -927,19 +918,22 @@ const ConfOrdineDetail = () => {
                                         widthClass="w-lg"
                                     />
                                 </div>
-                                <div className="compact-col compact-col-md">
-                                    <EntitySelectGroup
-                                        label="Agente"
-                                        isAsync={false}
-                                        options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                        value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
-                                        onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
-                                        ModalComponent={AgentiManagementModal}
-                                        title="Gestione Agenti"
-                                        placeholder="Seleziona agente..."
-                                        widthClass="w-md"
-                                    />
-                                </div>
+                                {isEnabledGlobal('AGENTI') && (
+                                    <div className="compact-col compact-col-md">
+                                        <EntitySelectGroup
+                                            label="Agente"
+                                            isAsync={false}
+                                            options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
+                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
+                                            onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
+                                            ModalComponent={AgentiManagementModal}
+                                            title="Gestione Agenti"
+                                            placeholder="Seleziona agente..."
+                                            widthClass="w-md"
+                                            disabled={isLocked}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             <hr />

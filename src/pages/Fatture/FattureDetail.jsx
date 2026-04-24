@@ -136,10 +136,15 @@ const FattureDetail = () => {
         percRivalsaInps: 4,
         importoRivalsaInps: 0,
         tipoCassaInps: 'TC22',
+        percImponibileRivalsa: 100,
+        idAliquotaIvaRivalsa: 0,
         sconto: 0,
         listaScadenzePagamentiDocumento: [],
         statoFatturaElettronica: 'BO'
     });
+
+    const [globalConfigs, setGlobalConfigs] = useState(null);
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const [prodotti, setProdotti] = useState([]);
 
@@ -204,6 +209,7 @@ const FattureDetail = () => {
     useEffect(() => {
         checkCeramica();
         fetchCombos();
+        fetchGlobalConfigs();
         if (!isNew) {
             fetchData();
         } else {
@@ -269,6 +275,15 @@ const FattureDetail = () => {
         }
     };
 
+    const fetchGlobalConfigs = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('GLOBAL');
+            if (res.data) setGlobalConfigs(res.data);
+        } catch (err) {
+            console.error("Error loading global configurations:", err);
+        }
+    };
+
     const fetchFatturazionePreferences = async () => {
         try {
             const res = await ConfigurazioneService.getByDomain('FATTURAZIONE');
@@ -296,6 +311,8 @@ const FattureDetail = () => {
                         tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta,
                         flRivalsaInps: isRivalsa ? 1 : prev.flRivalsaInps,
                         percRivalsaInps: prefs.PERC_RIVALSA_INPS ? parseFloat(prefs.PERC_RIVALSA_INPS) : prev.percRivalsaInps,
+                        percImponibileRivalsa: prefs.PERC_IMPONIBILE_RIVALSA ? parseFloat(prefs.PERC_IMPONIBILE_RIVALSA) : 100,
+                        idAliquotaIvaRivalsa: prefs.ID_ALIQUOTA_IVA_RIVALSA ? parseInt(prefs.ID_ALIQUOTA_IVA_RIVALSA) : 0,
                         tipoCassaInps: prefs.TIPO_CASSA_INPS ? prefs.TIPO_CASSA_INPS : prev.tipoCassaInps
                     };
 
@@ -638,6 +655,9 @@ const FattureDetail = () => {
                 const header = sedeLegale || sedeOperativa || validMain;
                 const shipping = destinazioneMerce || sedeOperativa || sedeLegale || validMain;
 
+                // Trova la prima PEC disponibile tra i contatti
+                const firstPec = (clientFull.elencoContatti || []).find(c => c.pec)?.pec || '';
+
                 setFormData(prev => ({
                     ...prev,
                     ...(header ? {
@@ -646,6 +666,7 @@ const FattureDetail = () => {
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
                         nazioneIntestazione: header.nazione || 'Italia',
+                        codiceUfficioDestinazione: header.codiceUfficio || '',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
@@ -657,7 +678,7 @@ const FattureDetail = () => {
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
                     idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento,
-                    pec: clientFull.pecPrincipale || (clientFull.elencoContatti?.find(c => c.pec)?.pec) || prev.pec || '',
+                    pec: firstPec || clientFull.pecPrincipale || prev.pec || '',
                     codiceUfficioDestinazione: (header?.codiceUfficio || shipping?.codiceUfficio || indirizzi.find(i => i.codiceUfficio)?.codiceUfficio) || prev.codiceUfficioDestinazione || ''
                 }));
             }
@@ -715,9 +736,12 @@ const FattureDetail = () => {
         const prodTotal = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).total || 0), 0);
         const rivalsa = calculateRivalsaInps();
         
-        // Find VAT rate for rivalsa (fallback to 22 if not found)
+        // Find VAT rate for rivalsa
         let aliquotaIvaRivalsa = 22;
-        if (prodotti.length > 0) {
+        if (formData.idAliquotaIvaRivalsa > 0) {
+            const selectedIva = combos.aliquoteIva.find(a => a.id === formData.idAliquotaIvaRivalsa);
+            if (selectedIva) aliquotaIvaRivalsa = selectedIva.imposta;
+        } else if (prodotti.length > 0) {
             const firstRowIva = (combos.aliquoteIva || []).find(ai => ai.id === prodotti[0].idAliquotaIva);
             if (firstRowIva) aliquotaIvaRivalsa = firstRowIva.imposta;
         }
@@ -752,7 +776,8 @@ const FattureDetail = () => {
         const base = prodotti
             .filter(row => row.tipo !== 'N' && (row.flRitenuta === 1 || row.flRitenuta === undefined))
             .reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
-        return (base * (formData.percRivalsaInps || 0)) / 100;
+        const baseProporzionale = (base * (formData.percImponibileRivalsa || 100)) / 100;
+        return (baseProporzionale * (formData.percRivalsaInps || 0)) / 100;
     };
 
     const calculateRitenutaAcconto = () => {
@@ -773,7 +798,10 @@ const FattureDetail = () => {
             const totalIva = prodotti.reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).iva || 0), 0);
             const rivalsa = calculateRivalsaInps();
             let aliquotaIvaRivalsa = 22;
-            if (prodotti.length > 0) {
+            if (formData.idAliquotaIvaRivalsa > 0) {
+                const selectedIva = combos.aliquoteIva.find(a => a.id === formData.idAliquotaIvaRivalsa);
+                if (selectedIva) aliquotaIvaRivalsa = selectedIva.imposta;
+            } else if (prodotti.length > 0) {
                 const firstRowIva = (combos.aliquoteIva || []).find(ai => ai.id === prodotti[0].idAliquotaIva);
                 if (firstRowIva) aliquotaIvaRivalsa = firstRowIva.imposta;
             }
@@ -1208,20 +1236,22 @@ const FattureDetail = () => {
                                             disabled={isLocked}
                                         />
                                     </div>
-                                    <div className="compact-col compact-col-md">
-                                        <EntitySelectGroup
-                                            label="Agente"
-                                            isAsync={false}
-                                            options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
-                                            onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
-                                            ModalComponent={AgentiManagementModal}
-                                            title="Gestione Agenti"
-                                            placeholder="Seleziona agente..."
-                                            widthClass="w-md"
-                                            disabled={isLocked}
-                                        />
-                                    </div>
+                                    {isEnabledGlobal('AGENTI') && (
+                                        <div className="compact-col compact-col-md">
+                                            <EntitySelectGroup
+                                                label="Agente"
+                                                isAsync={false}
+                                                options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
+                                                value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
+                                                onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
+                                                ModalComponent={AgentiManagementModal}
+                                                title="Gestione Agenti"
+                                                placeholder="Seleziona agente..."
+                                                widthClass="w-md"
+                                                disabled={isLocked}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -1525,6 +1555,37 @@ const FattureDetail = () => {
                                                         max="100"
                                                         step="0.01"
                                                     />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-2">
+                                                <div className="form-group mb-0">
+                                                    <label className="premium-label">Perc. Imponibile (%)</label>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control premium-input text-right"
+                                                        name="percImponibileRivalsa"
+                                                        value={formData.percImponibileRivalsa ?? 100}
+                                                        onChange={handleHeaderChange}
+                                                        min="0"
+                                                        max="100"
+                                                        step="0.01"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-3">
+                                                <div className="form-group mb-0">
+                                                    <label className="premium-label">Aliquota IVA Rivalsa</label>
+                                                    <select
+                                                        className="form-control premium-input"
+                                                        name="idAliquotaIvaRivalsa"
+                                                        value={formData.idAliquotaIvaRivalsa || 0}
+                                                        onChange={handleHeaderChange}
+                                                    >
+                                                        <option value="0">Auto (1° riga)</option>
+                                                        {combos.aliquoteIva.map(a => (
+                                                            <option key={a.id} value={a.id}>{a.codice} - {a.descrizione}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                             </div>
                                         </>

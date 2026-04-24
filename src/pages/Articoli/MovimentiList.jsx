@@ -235,6 +235,7 @@ const MovimentiList = () => {
                                 <tr>
                                     <th>DATA</th>
                                     <th>ARTICOLO</th>
+                                    <th>DOC</th>
                                     <th>CLIENTE / FORNITORE</th>
                                     <th className="text-right" style={{ textAlign: 'right' }}>CARICATO</th>
                                     <th className="text-right" style={{ textAlign: 'right' }}>SCARICATO</th>
@@ -251,6 +252,7 @@ const MovimentiList = () => {
                                         <tr key={m.id || index}>
                                             <td>{m.dataMovimento}</td>
                                             <td>{m.descrizioneProdotto}</td>
+                                            <td>{m.numeroDocumento}</td>
                                             <td>{m.clienteFornitore}</td>
                                             <td className="text-right">{m.quantitaCarico ? m.quantitaCarico.toFixed(2) : ''}</td>
                                             <td className="text-right">{m.quantitaScarico ? m.quantitaScarico.toFixed(2) : ''}</td>

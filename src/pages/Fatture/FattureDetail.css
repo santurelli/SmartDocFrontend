@@ -9,7 +9,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
 }
 
 #fatture-content-header h1 {
@@ -89,7 +89,7 @@
 
 .nav-tabs-custom li a {
     border: none !important;
-    padding: 15px 25px;
+    padding: 10px 25px;
     color: #888;
     font-weight: 600;
     font-size: 14px;
@@ -122,7 +122,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .compact-col {

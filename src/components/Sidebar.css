@@ -24,7 +24,6 @@
 #nav-col {
     position: fixed;
     width: 220px;
-    height: 100%;
     bottom: 0;
     left: 0;
     top: 50px;
@@ -226,3 +225,7 @@ li.open>a>.drop-icon {
     overflow-y: auto;
     overflow-x: hidden;
 }
+#col-left-inner::-webkit-scrollbar { width: 5px; }
+#col-left-inner::-webkit-scrollbar-track { background: transparent; }
+#col-left-inner::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+#col-left-inner::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }

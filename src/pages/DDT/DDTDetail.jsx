@@ -155,6 +155,8 @@ const DDTDetail = () => {
         percRivalsaInps: 4,
         importoRivalsaInps: 0,
         tipoCassaInps: 'TC22',
+        pec: '',
+        codiceUfficioDestinazione: '',
         listaScadenzePagamentiDocumento: []
     });
 
@@ -170,8 +172,12 @@ const DDTDetail = () => {
         unitaMisura: [],
         vettori: [],
         agenti: [],
-        progetti: []
+        progetti: [],
+        idMagazzino: 0
     });
+
+    const [globalConfigs, setGlobalConfigs] = useState(null);
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
     const [showAddressModal, setShowAddressModal] = useState(false);
@@ -184,6 +190,7 @@ const DDTDetail = () => {
     useEffect(() => {
         checkCeramica();
         fetchCombos();
+        fetchGlobalConfigs();
         if (!isNew) {
             fetchData();
         } else if (fromConfermeId) {
@@ -233,6 +240,15 @@ const DDTDetail = () => {
             }
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const fetchGlobalConfigs = async () => {
+        try {
+            const res = await ConfigurazioneService.getByDomain('GLOBAL');
+            if (res.data) setGlobalConfigs(res.data);
+        } catch (err) {
+            console.error("Error loading global configurations:", err);
         }
     };
 
@@ -527,6 +543,9 @@ const DDTDetail = () => {
                 const header = sedeLegale || sedeOperativa || validMain;
                 const shipping = destinazioneMerce || sedeOperativa || sedeLegale || validMain;
 
+                // Trova la prima PEC disponibile tra i contatti
+                const firstPec = (clientFull.elencoContatti || []).find(c => c.pec)?.pec || '';
+
                 setFormData(prev => ({
                     ...prev,
                     ...(header ? {
@@ -535,6 +554,7 @@ const DDTDetail = () => {
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
                         nazioneIntestazione: header.nazione || 'Italia',
+                        codiceUfficioDestinazione: header.codiceUfficio || '',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
@@ -545,7 +565,9 @@ const DDTDetail = () => {
                     } : {}),
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
-                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento
+                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento,
+                    pec: firstPec || clientFull.pecPrincipale || prev.pec || '',
+                    codiceUfficioDestinazione: (header?.codiceUfficio || shipping?.codiceUfficio || indirizzi.find(i => i.codiceUfficio)?.codiceUfficio) || prev.codiceUfficioDestinazione || ''
                 }));
             }
         } catch (error) {
@@ -960,19 +982,22 @@ const DDTDetail = () => {
                                             widthClass="w-lg"
                                         />
                                     </div>
-                                    <div className="compact-col compact-col-md">
-                                        <EntitySelectGroup
-                                            label="Agente"
-                                            isAsync={false}
-                                            options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
-                                            onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
-                                            ModalComponent={AgentiManagementModal}
-                                            title="Gestione Agenti"
-                                            placeholder="Seleziona agente..."
-                                            widthClass="w-md"
-                                        />
-                                    </div>
+                                    {isEnabledGlobal('AGENTI') && (
+                                        <div className="compact-col compact-col-md">
+                                            <EntitySelectGroup
+                                                label="Agente"
+                                                isAsync={false}
+                                                options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
+                                                value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
+                                                onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
+                                                ModalComponent={AgentiManagementModal}
+                                                title="Gestione Agenti"
+                                                placeholder="Seleziona agente..."
+                                                widthClass="w-md"
+                                                disabled={isLocked}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <hr />

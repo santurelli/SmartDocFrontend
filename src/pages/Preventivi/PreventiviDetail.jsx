@@ -208,8 +208,16 @@ const PreventiviDetail = () => {
         percRivalsaInps: 4,
         importoRivalsaInps: 0,
         tipoCassaInps: 'TC22',
+        pec: '',
+        codiceUfficioDestinazione: '',
+        percImponibileRivalsa: 100,
+        idAliquotaIvaRivalsa: 0,
+        idMagazzino: 0,
         listaScadenzePagamentiDocumento: []
     });
+
+    const [globalConfigs, setGlobalConfigs] = useState(null);
+    const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const [clientIndirizzi, setClientIndirizzi] = useState([]);
 
@@ -353,6 +361,9 @@ const PreventiviDetail = () => {
             console.log('----------------------');
 
             setIsCeramica(ceramica);
+            
+            // Also load global configs for general feature enabling
+            setGlobalConfigs(data);
         } catch (error) {
             console.error("Error fetching combos:", error);
         }
@@ -382,6 +393,9 @@ const PreventiviDetail = () => {
                         tipoRitenuta: prefs.TIPO_RITENUTA ? prefs.TIPO_RITENUTA : prev.tipoRitenuta,
                         flRivalsaInps: isRivalsa ? 1 : prev.flRivalsaInps,
                         percRivalsaInps: prefs.PERC_RIVALSA_INPS ? parseFloat(prefs.PERC_RIVALSA_INPS) : prev.percRivalsaInps,
+                        percImponibileRivalsa: prefs.PERC_IMPONIBILE_RIVALSA ? parseFloat(prefs.PERC_IMPONIBILE_RIVALSA) : 100,
+                        idAliquotaIvaRivalsa: prefs.ID_ALIQUOTA_IVA_RIVALSA ? parseInt(prefs.ID_ALIQUOTA_IVA_RIVALSA) : 0,
+                        idTipoPagamento: prev.idTipoPagamento || (prefs.DEFAULT_TIPO_PAGAMENTO ? parseInt(prefs.DEFAULT_TIPO_PAGAMENTO) : prev.idTipoPagamento),
                         tipoCassaInps: prefs.TIPO_CASSA_INPS ? prefs.TIPO_CASSA_INPS : prev.tipoCassaInps
                     };
 
@@ -480,6 +494,9 @@ const PreventiviDetail = () => {
                 const header = sedeLegale || sedeOperativa || validMain;
                 const shipping = destinazioneMerce || sedeOperativa || sedeLegale || validMain;
 
+                // Trova la prima PEC disponibile tra i contatti
+                const firstPec = (clientFull.elencoContatti || []).find(c => c.pec)?.pec || '';
+
                 setFormData(prev => ({
                     ...prev,
                     ...(header ? {
@@ -488,6 +505,7 @@ const PreventiviDetail = () => {
                         capIntestazione: header.cap || '',
                         provinciaIntestazione: header.provincia || '',
                         nazioneIntestazione: header.nazione || 'Italia',
+                        codiceUfficioDestinazione: header.codiceUfficio || '',
                     } : {}),
                     ...(shipping ? {
                         indirizzoDestinazione: shipping.indirizzo || '',
@@ -496,11 +514,11 @@ const PreventiviDetail = () => {
                         provinciaDestinazione: shipping.provincia || '',
                         nazioneDestinazione: shipping.nazione || 'Italia',
                     } : {}),
-                    // Ensure core fields are populated if missing from suggestion
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
-                    // Update payment method if not already set or if we want to enforce client's default
-                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento
+                    idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento,
+                    pec: firstPec || clientFull.pecPrincipale || prev.pec || '',
+                    codiceUfficioDestinazione: (header?.codiceUfficio || shipping?.codiceUfficio || indirizzi.find(i => i.codiceUfficio)?.codiceUfficio) || prev.codiceUfficioDestinazione || ''
                 }));
             }
         } catch (error) {
@@ -556,8 +574,11 @@ const PreventiviDetail = () => {
 
         const rivalsa = calculateRivalsaInps();
         let aliquotaIvaRivalsa = 22;
-        if (prodotti.length > 0) {
-            const firstRowIva = (combos.aliquoteIva || []).find(ai => ai.id === prodotti[0].idAliquotaIva);
+        if (formData.idAliquotaIvaRivalsa > 0) {
+            const selectedIva = combos.aliquoteIva.find(a => a.id === formData.idAliquotaIvaRivalsa);
+            if (selectedIva) aliquotaIvaRivalsa = selectedIva.imposta;
+        } else if (prodotti.length > 0) {
+            const firstRowIva = combos.aliquoteIva.find(a => a.id === prodotti[0].idAliquotaIva);
             if (firstRowIva) aliquotaIvaRivalsa = firstRowIva.imposta;
         }
         const ivaRivalsa = (rivalsa * aliquotaIvaRivalsa) / 100;
@@ -567,16 +588,17 @@ const PreventiviDetail = () => {
             iva: (tot - imp) + ivaRivalsa,
             totale: tot + rivalsa + ivaRivalsa,
             rivalsa: rivalsa,
-            ritenuta: calculateRitenutaAcconto()
+            percRivalsaInps: formData.percRivalsaInps,
+            percImponibileRivalsa: formData.percImponibileRivalsa,
+            idAliquotaIvaRivalsa: formData.idAliquotaIvaRivalsa
         });
-    }, [prodotti, combos.aliquoteIva, formData.flRivalsaInps, formData.percRivalsaInps, formData.flRitenutaAcconto, formData.percRitenutaAcconto]);
+    }, [prodotti, combos.aliquoteIva, formData.flRivalsaInps, formData.percRivalsaInps, formData.percImponibileRivalsa, formData.idAliquotaIvaRivalsa, formData.flRitenutaAcconto, formData.percRitenutaAcconto]);
 
     const calculateRivalsaInps = () => {
         if (formData.flRivalsaInps !== 1) return 0;
-        const base = prodotti
-            .filter(row => row.tipo !== 'N' && (row.flRitenuta === 1 || row.flRitenuta === undefined))
-            .reduce((acc, row) => acc + (getRowValues(row, combos.aliquoteIva).imponibile || 0), 0);
-        return (base * (formData.percRivalsaInps || 0)) / 100;
+        const base = prodotti.reduce((acc, curr) => acc + (curr.prezzoImponibile || 0), 0);
+        const baseProporzionale = (base * (formData.percImponibileRivalsa || 100)) / 100;
+        return (baseProporzionale * (formData.percRivalsaInps || 0)) / 100;
     };
 
     const calculateRitenutaAcconto = () => {
@@ -944,19 +966,21 @@ const PreventiviDetail = () => {
                                             widthClass="w-lg"
                                         />
                                     </div>
-                                    <div className="compact-col compact-col-md">
-                                        <EntitySelectGroup
-                                            label="Agente"
-                                            isAsync={false}
-                                            options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
-                                            value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
-                                            onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
-                                            ModalComponent={AgentiManagementModal}
-                                            title="Gestione Agenti"
-                                            placeholder="Seleziona agente..."
-                                            widthClass="w-md"
-                                        />
-                                    </div>
+                                    {isEnabledGlobal('AGENTI') && (
+                                        <div className="compact-col compact-col-md">
+                                            <EntitySelectGroup
+                                                label="Agente"
+                                                isAsync={false}
+                                                options={(combos.agenti || []).map(a => ({ value: a.id, label: a.denominazione }))}
+                                                value={formData.idAgente ? { value: formData.idAgente, label: formData.nomeAgente || formData.agente || formData.descAgente } : null}
+                                                onChange={(opt) => setFormData(prev => ({ ...prev, idAgente: opt?.value, nomeAgente: opt?.label }))}
+                                                ModalComponent={AgentiManagementModal}
+                                                title="Gestione Agenti"
+                                                placeholder="Seleziona agente..."
+                                                widthClass="w-md"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 <hr />
@@ -1148,7 +1172,7 @@ const PreventiviDetail = () => {
                                         </div>
                                         {formData.flRivalsaInps === 1 && (
                                             <>
-                                                <div className="col-md-4">
+                                                <div className="col-md-5">
                                                     <div className="form-group mb-0">
                                                         <label className="premium-label">Tipo Cassa</label>
                                                         <select
@@ -1195,6 +1219,37 @@ const PreventiviDetail = () => {
                                                             max="100"
                                                             step="0.01"
                                                         />
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-2">
+                                                    <div className="form-group mb-0">
+                                                        <label className="premium-label">Perc. Imponibile (%)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control premium-input text-right"
+                                                            name="percImponibileRivalsa"
+                                                            value={formData.percImponibileRivalsa ?? 100}
+                                                            onChange={handleHeaderChange}
+                                                            min="0"
+                                                            max="100"
+                                                            step="0.01"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="col-md-3">
+                                                    <div className="form-group mb-0">
+                                                        <label className="premium-label">Aliquota IVA</label>
+                                                        <select
+                                                            className="form-control premium-input"
+                                                            name="idAliquotaIvaRivalsa"
+                                                            value={formData.idAliquotaIvaRivalsa || 0}
+                                                            onChange={handleHeaderChange}
+                                                        >
+                                                            <option value="0">Auto (1° riga)</option>
+                                                            {combos.aliquoteIva.map(a => (
+                                                                <option key={a.id} value={a.id}>{a.codice} - {a.descrizione}</option>
+                                                            ))}
+                                                        </select>
                                                     </div>
                                                 </div>
                                             </>
