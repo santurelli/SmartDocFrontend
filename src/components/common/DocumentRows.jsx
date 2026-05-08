@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AsyncSelect from 'react-select/async';
-import { FaTrash, FaPlus } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import ArticoliService from '../../services/ArticoliService';
 import { getRowValues } from '../../utils/documentUtils';
+import ArticoliManagementModal from '../modals/ArticoliManagementModal';
 
 const formatCurrency = (val) => {
     return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val || 0);
@@ -63,8 +64,8 @@ const DocumentRows = (props) => {
         children
     } = props;
 
-    // Debug log for isCeramica
-    console.log('[DocumentRows] isCeramica prop:', isCeramica);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [activeRowIdx, setActiveRowIdx] = useState(null);
 
     const loadArticoli = (inputValue, callback) => {
         if (!inputValue || inputValue.length < 3) return callback([]);
@@ -171,6 +172,31 @@ const DocumentRows = (props) => {
         });
     };
 
+    const openArticoliModal = (idx) => {
+        setActiveRowIdx(idx);
+        setModalOpen(true);
+    };
+
+    const handleModalSelect = (opt) => {
+        if (activeRowIdx !== null) {
+            const a = opt.data || {};
+            onRowUpdate(activeRowIdx, {
+                idProdotto: opt.value,
+                codiceProdotto: a.codiceProdotto || '',
+                descProdotto: a.descProdotto || '',
+                prezzo: a.prezzo || 0,
+                idUnitaMisura: a.idUnitaMisura,
+                idAliquotaIva: a.idAliquotaIva,
+                descrFormato: a.descrFormato,
+                descrScelta: a.descrScelta,
+                descrTono: a.descrTono,
+                descrCalibro: a.descrCalibro
+            });
+        }
+        setModalOpen(false);
+        setActiveRowIdx(null);
+    };
+
     return (
         <div className="table-responsive">
             <table className="table table-hover table-items">
@@ -200,42 +226,57 @@ const DocumentRows = (props) => {
                                 <td colSpan={row.tipo === 'N' ? 7 : 1}>
                                     {row.tipo === 'A' ? (
                                         <>
-                                            <AsyncSelect
-                                                isClearable
-                                                cacheOptions
-                                                loadOptions={loadArticoli}
-                                                formatOptionLabel={formatArticleOptionLabel}
-                                                styles={tableSelectStyles}
-                                                placeholder="Cerca art..."
-                                                noOptionsMessage={() => "Nessun risultato"}
-                                                loadingMessage={() => "Caricamento..."}
-                                                menuPortalTarget={document.body}
-                                                value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
-                                                onChange={(opt) => {
-                                                    const a = opt?.data || {};
-                                                    onRowUpdate(idx, {
-                                                        idProdotto: opt?.value,
-                                                        codiceProdotto: a.codiceProdotto || '',
-                                                        descProdotto: a.descProdotto || '',
-                                                        prezzo: a.prezzo || 0,
-                                                        idUnitaMisura: a.idUnitaMisura,
-                                                        idAliquotaIva: a.idAliquotaIva,
-                                                        descrFormato: a.descrFormato,
-                                                        descrScelta: a.descrScelta,
-                                                        descrTono: a.descrTono,
-                                                        descrCalibro: a.descrCalibro
-                                                    });
-                                                    
-                                                    if (opt?.value) {
-                                                        ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
-                                                            if (res.data && res.data.prezzo !== undefined) {
-                                                                onRowChange(idx, 'prezzo', res.data.prezzo);
+                                            <div style={{ display: 'flex', gap: '5px' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <AsyncSelect
+                                                        isClearable
+                                                        cacheOptions
+                                                        loadOptions={loadArticoli}
+                                                        formatOptionLabel={formatArticleOptionLabel}
+                                                        styles={tableSelectStyles}
+                                                        placeholder="Cerca art..."
+                                                        noOptionsMessage={() => "Nessun risultato"}
+                                                        loadingMessage={() => "Caricamento..."}
+                                                        menuPortalTarget={document.body}
+                                                        value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
+                                                        onChange={(opt) => {
+                                                            const a = opt?.data || {};
+                                                            onRowUpdate(idx, {
+                                                                idProdotto: opt?.value,
+                                                                codiceProdotto: a.codiceProdotto || '',
+                                                                descProdotto: a.descProdotto || '',
+                                                                prezzo: a.prezzo || 0,
+                                                                idUnitaMisura: a.idUnitaMisura,
+                                                                idAliquotaIva: a.idAliquotaIva,
+                                                                descrFormato: a.descrFormato,
+                                                                descrScelta: a.descrScelta,
+                                                                descrTono: a.descrTono,
+                                                                descrCalibro: a.descrCalibro
+                                                            });
+
+                                                            if (opt?.value) {
+                                                                ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
+                                                                    if (res.data && res.data.prezzo !== undefined) {
+                                                                        onRowChange(idx, 'prezzo', res.data.prezzo);
+                                                                    }
+                                                                }).catch(err => console.error("Error fetching dynamic price:", err));
                                                             }
-                                                        }).catch(err => console.error("Error fetching dynamic price:", err));
-                                                    }
-                                                }}
-                                                isDisabled={readOnly}
-                                            />
+                                                        }}
+                                                        isDisabled={readOnly}
+                                                    />
+                                                </div>
+                                                {!readOnly && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-default btn-sm"
+                                                        style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '32px', padding: '0' }}
+                                                        onClick={() => openArticoliModal(idx)}
+                                                        title="Sfoglia elenco articoli"
+                                                    >
+                                                        <FaSearch />
+                                                    </button>
+                                                )}
+                                            </div>
                                             {showRitenuta && (
                                                 <div className="ritenuta-inline-box" style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#d32f2f' }}>
                                                     <input
@@ -342,6 +383,13 @@ const DocumentRows = (props) => {
                     )}
                 </tbody>
             </table>
+
+            <ArticoliManagementModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onSelect={handleModalSelect}
+                idListino={idListino}
+            />
         </div >
     );
 };

@@ -247,7 +247,7 @@ const FornitoriList = () => {
                                                 <tr key={fornitore.id}>
                                                     <td>{fornitore.codice}</td>
                                                     <td>{fornitore.denominazione}</td>
-                                                    <td>{fornitore.elencoIndirizzi && fornitore.elencoIndirizzi.length > 0 ? fornitore.elencoIndirizzi[0].citta : ''}</td>
+                                                    <td>{fornitore.citta}</td>
                                                     <td>{fornitore.referente}</td>
                                                     <td>{fornitore.partitaIva || fornitore.codiceFiscale}</td>
                                                     {/* <td>{fornitore.ultimoDocAcquisto || '-'}</td> */}

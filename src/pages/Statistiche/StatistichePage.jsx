@@ -129,7 +129,7 @@ const StatistichePage = () => {
                 res = await StatisticheService.getPagamenti(params);
             }
 
-            setData(res.data || []);
+            setData(res.data.payload || []);
         } catch (err) {
             console.error("Error fetching stats:", err);
             Swal.fire('Errore', 'Impossibile recuperare i dati statistici', 'error');

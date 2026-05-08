@@ -515,6 +515,7 @@ const ConfOrdineDetail = () => {
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
                     idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento,
+                    idListino: clientFull.idListino || prev.idListino || '',
                     pec: firstPec || clientFull.pecPrincipale || prev.pec || '',
                     codiceUfficioDestinazione: (header?.codiceUfficio || shipping?.codiceUfficio || indirizzi.find(i => i.codiceUfficio)?.codiceUfficio) || prev.codiceUfficioDestinazione || ''
                 }));
@@ -560,6 +561,66 @@ const ConfOrdineDetail = () => {
         const newP = [...prodotti];
         newP.splice(idx, 1);
         setProdotti(newP);
+    };
+
+    const handleListinoChange = (opt) => {
+        const newListinoId = opt?.value || '';
+        const oldListinoId = formData.idListino;
+
+        if (newListinoId === oldListinoId) return;
+
+        setFormData(prev => ({ ...prev, idListino: newListinoId }));
+
+        const productRows = prodotti.filter(p => p.idProdotto);
+        if (productRows.length > 0) {
+            Swal.fire({
+                title: 'Aggiornare i prezzi?',
+                text: "Hai cambiato il listino. Vuoi aggiornare i prezzi degli articoli già inseriti?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#03a9f4',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'Sì, aggiorna',
+                cancelButtonText: 'No, mantieni'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    recalculatePrices(newListinoId);
+                }
+            });
+        }
+    };
+
+    const recalculatePrices = async (listinoId) => {
+        setLoading(true);
+        try {
+            const newProdotti = [...prodotti];
+            for (let i = 0; i < newProdotti.length; i++) {
+                const p = newProdotti[i];
+                if (p.idProdotto) {
+                    try {
+                        const res = await ArticoliService.getArticlePrice(p.idProdotto, listinoId);
+                        if (res.data && res.data.prezzo !== undefined) {
+                            newProdotti[i] = { ...newProdotti[i], prezzo: res.data.prezzo };
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching price for product ${p.idProdotto}:`, err);
+                    }
+                }
+            }
+            setProdotti(newProdotti);
+            Swal.fire({
+                title: 'Aggiornati!',
+                text: 'I prezzi sono stati aggiornati correttamente.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error("Error recalculating prices:", error);
+            Swal.fire('Errore', 'Si è verificato un errore durante il ricalcolo dei prezzi.', 'error');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleRowChange = (idx, field, value) => {
@@ -1239,7 +1300,7 @@ const ConfOrdineDetail = () => {
                                         isAsync={false}
                                         options={(combos.listini || []).map(l => ({ value: l.id, label: l.descrizione }))}
                                         value={formData.idListino ? { value: formData.idListino, label: (combos.listini || []).find(l => l.id === formData.idListino)?.descrizione } : null}
-                                        onChange={(opt) => setFormData(prev => ({ ...prev, idListino: opt?.value || '' }))}
+                                        onChange={handleListinoChange}
                                         ModalComponent={ListiniManagementModal}
                                         title="Gestione Listini"
                                         placeholder="Predefinito"

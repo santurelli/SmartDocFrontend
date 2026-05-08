@@ -12,6 +12,7 @@ import VettoriService from '../services/VettoriService';
 import RisorseService from '../services/RisorseService';
 import { parseIban } from '../utils/ibanUtils';
 import { FaWrench } from 'react-icons/fa';
+import ListiniService from '../services/ListiniService';
 import './EntityForms.css';
 
 // Sub-modals
@@ -20,6 +21,7 @@ import NoteDocumentiManagementModal from './modals/NoteDocumentiManagementModal'
 import TipiPortoManagementModal from './modals/TipiPortoManagementModal';
 import VettoriManagementModal from './modals/VettoriManagementModal';
 import RisorseManagementModal from './modals/RisorseManagementModal';
+import ListiniManagementModal from './modals/ListiniManagementModal';
 import NazioneSelect from './common/NazioneSelect';
 
 const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
@@ -34,6 +36,7 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const [tipiPortoList, setTipiPortoList] = useState([]);
     const [vettoriList, setVettoriList] = useState([]);
     const [bancheList, setBancheList] = useState([]);
+    const [listiniList, setListiniList] = useState([]);
 
     // Sub-modal states
     const [showAvvisiModal, setShowAvvisiModal] = useState(false);
@@ -41,17 +44,19 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const [showPortoModal, setShowPortoModal] = useState(false);
     const [showVettoriModal, setShowVettoriModal] = useState(false);
     const [showRisorseModal, setShowRisorseModal] = useState(false);
+    const [showListiniModal, setShowListiniModal] = useState(false);
 
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                const [avvisi, notes, porto, vect, banks, config] = await Promise.all([
+                const [avvisi, notes, porto, vect, banks, config, listini] = await Promise.all([
                     AvvisiService.getAll(),
                     NoteDocumentiService.getAll(),
                     TipiPortoService.getAllForCombo(),
                     VettoriService.getAllForCombo(),
                     RisorseService.getAllForCombo('BA'),
-                    ConfigurazioneService.getByDomain('CLIENTI')
+                    ConfigurazioneService.getByDomain('CLIENTI'),
+                    ListiniService.getAll()
                 ]);
 
                 if (avvisi.data) setAvvisiList(avvisi.data.filter(a => a.descrizione && a.descrizione.trim() !== ''));
@@ -59,6 +64,7 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                 if (porto.data) setTipiPortoList(porto.data);
                 if (vect.data) setVettoriList(vect.data);
                 if (banks.data) setBancheList(banks.data);
+                if (listini) setListiniList(Array.isArray(listini) ? listini : (listini.payload || []));
 
                 if (config.data) {
                     const val = config.data['ABILITA_DATI_COMMERCIALI'] || config.data['ABILITA_DATICOMMERCIALI'];
@@ -188,6 +194,10 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const refreshBanche = async () => {
         const res = await RisorseService.getAllForCombo('BA');
         if (res.data) setBancheList(res.data);
+    };
+    const refreshListini = async () => {
+        const res = await ListiniService.getAll();
+        if (res) setListiniList(Array.isArray(res) ? res : (res.payload || []));
     };
 
     const currentAddress = data.elencoIndirizzi[activeAddressIndex] || {};
@@ -468,6 +478,20 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                 </div>
                             </div>
                         )}
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-lg">
+                                <div className="form-group">
+                                    <label>Listino Predefinito</label>
+                                    <div className="flex-input-group">
+                                        <select className="form-control" name="idListino" value={data.idListino || ''} onChange={handleFormChange}>
+                                            <option value="">Seleziona...</option>
+                                            {listiniList.map(l => <option key={l.id} value={l.id}>{l.descrizione}</option>)}
+                                        </select>
+                                        <button type="button" className="btn btn-default" onClick={() => setShowListiniModal(true)} title="Gestione listini"><FaWrench /></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div className="row">
                             <div className="col-md-12">
                                 <div className="form-group">
@@ -486,6 +510,7 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
             {showPortoModal && createPortal(<TipiPortoManagementModal onClose={() => { setShowPortoModal(false); refreshPorto(); }} style={{ zIndex: 1300 }} />, document.body)}
             {showVettoriModal && createPortal(<VettoriManagementModal onClose={() => { setShowVettoriModal(false); refreshVettori(); }} style={{ zIndex: 1300 }} />, document.body)}
             {showRisorseModal && createPortal(<RisorseManagementModal onClose={() => { setShowRisorseModal(false); refreshBanche(); }} style={{ zIndex: 1300 }} />, document.body)}
+            {showListiniModal && createPortal(<ListiniManagementModal isOpen={true} onClose={() => { setShowListiniModal(false); refreshListini(); }} onSelect={(opt) => handleFormChange({ target: { name: 'idListino', value: opt.value } })} style={{ zIndex: 1300 }} />, document.body)}
         </div>
     );
 };

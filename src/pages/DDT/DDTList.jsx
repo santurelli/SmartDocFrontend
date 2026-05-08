@@ -46,7 +46,7 @@ const DDTList = () => {
     const [filters, setFilters] = useState({
         idCliente: initialState.idCliente,
         idAgente: initialState.idAgente,
-        dataDA: initialState.dtFrom || defaultRange.dataDa,
+        dataDa: initialState.dtFrom || defaultRange.dataDa,
         dataA: initialState.dtTo || defaultRange.dataA
     });
 
@@ -94,7 +94,7 @@ const DDTList = () => {
         storageHelper.saveState(MODULE_NAME, {
             idCliente: filters.idCliente,
             idAgente: filters.idAgente,
-            dtFrom: filters.dataDA,
+            dtFrom: filters.dataDa,
             dtTo: filters.dataA,
             currentPage,
             pageSize,
@@ -176,7 +176,7 @@ const DDTList = () => {
     };
 
     const handleReset = () => {
-        setFilters({ idCliente: '', idAgente: '', dataDA: '', dataA: '' });
+        setFilters({ idCliente: '', idAgente: '', dataDa: '', dataA: '' });
         setSelectedCliente(null);
         setSelectedAgente(null);
         setCurrentPage(0);
@@ -363,6 +363,8 @@ const DDTList = () => {
                                 }
                                 loadingMessage={() => "Caricamento in corso..."}
                                 isClearable
+                                menuPortalTarget={document.body}
+                                styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                             />
                         </div>
                         <div className="filter-field">
@@ -370,8 +372,8 @@ const DDTList = () => {
                             <input
                                 type="date"
                                 className="form-control"
-                                value={filters.dataDA}
-                                onChange={(e) => setFilters({ ...filters, dataDA: e.target.value })}
+                                value={filters.dataDa}
+                                onChange={(e) => setFilters({ ...filters, dataDa: e.target.value })}
                             />
                         </div>
                         <div className="filter-field">
@@ -397,6 +399,8 @@ const DDTList = () => {
                                     placeholder="Tutti..."
                                     noOptionsMessage={() => "Nessun risultato trovato"}
                                     loadingMessage={() => "Caricamento..."}
+                                    menuPortalTarget={document.body}
+                                    styles={{ menuPortal: base => ({ ...base, zIndex: 9999 }) }}
                                 />
                             </div>
                         )}

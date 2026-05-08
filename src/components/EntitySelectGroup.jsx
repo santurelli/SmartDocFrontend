@@ -110,6 +110,7 @@ const EntitySelectGroup = ({
                         modalProps={modalProps}
                         title={title}
                         onClose={onModalClose}
+                        onSelect={onChange}
                         disabled={isDisabled}
                     />
                 )}

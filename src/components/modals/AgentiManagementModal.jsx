@@ -4,7 +4,7 @@ import AgentiService from '../../services/AgentiService';
 import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
 import AgenteEditModal from './AgenteEditModal';
 
-const AgentiManagementModal = ({ onClose }) => {
+const AgentiManagementModal = ({ isOpen, onClose, onSelect }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10);
@@ -76,6 +76,8 @@ const AgentiManagementModal = ({ onClose }) => {
     const totalPages = Math.ceil(totalItems / pageSize);
     const startIdx = (currentPage - 1) * pageSize;
 
+    if (!isOpen) return null;
+
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
             <div className="modal-dialog modal-lg">
@@ -130,7 +132,7 @@ const AgentiManagementModal = ({ onClose }) => {
                                     <th style={{ verticalAlign: 'middle' }}>DENOMINAZIONE</th>
                                     <th style={{ verticalAlign: 'middle' }}>EMAIL</th>
                                     <th style={{ verticalAlign: 'middle' }}>% PROVV.</th>
-                                    <th style={{ width: '150px', verticalAlign: 'middle', textAlign: 'center' }}>AZIONI</th>
+                                    <th style={{ width: onSelect ? '200px' : '150px', verticalAlign: 'middle', textAlign: 'center' }}>AZIONI</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -142,7 +144,20 @@ const AgentiManagementModal = ({ onClose }) => {
                                             <td style={{ verticalAlign: 'middle' }}>{item.percProvvigione}%</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                                    {onSelect && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-success btn-sm"
+                                                            onClick={() => {
+                                                                onSelect({ value: item.id, label: item.denominazione, data: item });
+                                                                onClose();
+                                                            }}
+                                                        >
+                                                            Seleziona
+                                                        </button>
+                                                    )}
                                                     <button
+                                                        type="button"
                                                         className="btn btn-primary btn-sm"
                                                         onClick={() => handleEdit(item)}
                                                         title="Modifica"
@@ -150,6 +165,7 @@ const AgentiManagementModal = ({ onClose }) => {
                                                         <FaPencilAlt />
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         className="btn btn-danger btn-sm"
                                                         onClick={() => handleDelete(item.id)}
                                                         title="Elimina"

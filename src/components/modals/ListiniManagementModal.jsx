@@ -4,7 +4,7 @@ import ListiniService from '../../services/ListiniService';
 import ListinoEditModal from './ListinoEditModal';
 import Swal from 'sweetalert2';
 
-const ListiniManagementModal = ({ isOpen, onClose }) => {
+const ListiniManagementModal = ({ isOpen, onClose, onSelect }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
@@ -132,7 +132,7 @@ const ListiniManagementModal = ({ isOpen, onClose }) => {
                                         <th style={{ padding: '15px' }}>DESCRIZIONE</th>
                                         <th style={{ padding: '15px' }}>DERIVAZIONE</th>
                                         <th style={{ textAlign: 'center', padding: '15px' }}>PREDEF.</th>
-                                        <th style={{ width: '120px', textAlign: 'center', padding: '15px' }}>AZIONI</th>
+                                        <th style={{ width: onSelect ? '180px' : '120px', textAlign: 'center', padding: '15px' }}>AZIONI</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -160,6 +160,17 @@ const ListiniManagementModal = ({ isOpen, onClose }) => {
                                             </td>
                                             <td className="text-center" style={{ verticalAlign: 'middle', padding: '15px' }}>
                                                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                                                    {onSelect && (
+                                                        <button
+                                                            className="btn btn-success btn-sm"
+                                                            onClick={() => {
+                                                                onSelect({ value: item.id, label: item.descrizione });
+                                                                onClose();
+                                                            }}
+                                                        >
+                                                            Seleziona
+                                                        </button>
+                                                    )}
                                                     <button className="btn btn-info btn-sm" onClick={() => handleEdit(item)} title="Modifica">
                                                         <FaEdit />
                                                     </button>

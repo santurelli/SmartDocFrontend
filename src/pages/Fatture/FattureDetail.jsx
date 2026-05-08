@@ -678,6 +678,7 @@ const FattureDetail = () => {
                     partitaIva: clientFull.partitaIva || prev.partitaIva || '',
                     codiceFiscale: clientFull.codiceFiscale || prev.codiceFiscale || '',
                     idTipoPagamento: clientFull.idTipoPagamento || prev.idTipoPagamento,
+                    idListino: clientFull.idListino || prev.idListino || '',
                     pec: firstPec || clientFull.pecPrincipale || prev.pec || '',
                     codiceUfficioDestinazione: (header?.codiceUfficio || shipping?.codiceUfficio || indirizzi.find(i => i.codiceUfficio)?.codiceUfficio) || prev.codiceUfficioDestinazione || ''
                 }));
@@ -721,6 +722,66 @@ const FattureDetail = () => {
             }
             return nextData;
         });
+    };
+
+    const handleListinoChange = (opt) => {
+        const newListinoId = opt?.value || '';
+        const oldListinoId = formData.idListino;
+
+        if (newListinoId === oldListinoId) return;
+
+        setFormData(prev => ({ ...prev, idListino: newListinoId }));
+
+        const productRows = prodotti.filter(p => p.idProdotto);
+        if (productRows.length > 0) {
+            Swal.fire({
+                title: 'Aggiornare i prezzi?',
+                text: "Hai cambiato il listino. Vuoi aggiornare i prezzi degli articoli già inseriti?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#03a9f4',
+                cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'Sì, aggiorna',
+                cancelButtonText: 'No, mantieni'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    recalculatePrices(newListinoId);
+                }
+            });
+        }
+    };
+
+    const recalculatePrices = async (listinoId) => {
+        setLoading(true);
+        try {
+            const newProdotti = [...prodotti];
+            for (let i = 0; i < newProdotti.length; i++) {
+                const p = newProdotti[i];
+                if (p.idProdotto) {
+                    try {
+                        const res = await ArticoliService.getArticlePrice(p.idProdotto, listinoId);
+                        if (res.data && res.data.prezzo !== undefined) {
+                            newProdotti[i] = { ...newProdotti[i], prezzo: res.data.prezzo };
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching price for product ${p.idProdotto}:`, err);
+                    }
+                }
+            }
+            setProdotti(newProdotti);
+            Swal.fire({
+                title: 'Aggiornati!',
+                text: 'I prezzi sono stati aggiornati correttamente.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } catch (error) {
+            console.error("Error recalculating prices:", error);
+            Swal.fire('Errore', 'Si è verificato un errore durante il ricalcolo dei prezzi.', 'error');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleRowChange = (index, field, value) => {
@@ -1310,21 +1371,21 @@ const FattureDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Cit<span>tà</span></label>
-                                                    <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Pr<span>ov</span>.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="new-password" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
@@ -1340,11 +1401,11 @@ const FattureDetail = () => {
                                             <div className="row">
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Partita IVA</label>
-                                                    <input type="text" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="partitaIva" value={formData.partitaIva || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                                 <div className="col-md-6">
                                                     <label className="premium-label">Codice Fiscale</label>
-                                                    <input type="text" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="codiceFiscale" value={formData.codiceFiscale || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                             </div>
                                         </div>
@@ -1360,21 +1421,21 @@ const FattureDetail = () => {
                                             <div className="row mb-4">
                                                 <div className="col-md-12">
                                                     <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                    <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
                                                 <div className="col-md-7">
                                                     <label className="premium-label">Cit<span>tà</span></label>
-                                                    <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                                 <div className="col-md-2">
                                                     <label className="premium-label">Pr<span>ov</span>.</label>
-                                                    <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione || ''} onChange={handleHeaderChange} maxLength="2" autoComplete="new-password" />
                                                 </div>
                                                 <div className="col-md-3">
                                                     <label className="premium-label">C<span>AP</span></label>
-                                                    <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="off" />
+                                                    <input type="search" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione || ''} onChange={handleHeaderChange} autoComplete="new-password" />
                                                 </div>
                                             </div>
                                             <div className="row mb-4">
@@ -1656,7 +1717,7 @@ const FattureDetail = () => {
                                             isAsync={false}
                                             options={(combos.listini || []).map(l => ({ value: l.id, label: l.descrizione }))}
                                             value={formData.idListino ? { value: formData.idListino, label: (combos.listini || []).find(l => l.id === formData.idListino)?.descrizione } : null}
-                                            onChange={(opt) => setFormData(prev => ({ ...prev, idListino: opt?.value || '' }))}
+                                            onChange={handleListinoChange}
                                             ModalComponent={ListiniManagementModal}
                                             title="Gestione Listini"
                                             placeholder="Predefinito"

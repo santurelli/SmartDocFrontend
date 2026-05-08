@@ -27,6 +27,12 @@ const ScadenzeTable = ({
     
     const initialScadenzeLoaded = useRef(false);
     const prevDeps = useRef({ id: null, tot: null, data: null });
+    const scadenzeRef = useRef([]);
+
+    // Keep scadenzeRef updated with current state
+    useEffect(() => {
+        scadenzeRef.current = scadenze;
+    }, [scadenze]);
 
     useEffect(() => {
         const loadModalita = async () => {
@@ -166,15 +172,42 @@ const ScadenzeTable = ({
 
         setIsLoading(true);
         try {
-            const response = await TipiPagamentoService.getScadenzeDocumento(idTipoPagamento, dataDocumento, totaleDocumento);
-            if (response.data) {
-                const rounded = response.data.map(s => ({
-                    ...s,
-                    importo: Math.round((s.importo + Number.EPSILON) * 100) / 100
-                }));
-                setScadenze(rounded);
-                if (isManualTrigger) setIsManualMode(false);
+            // Smart logic: preserve paid scadenze
+            const currentScadenze = scadenzeRef.current || [];
+            const paidScadenze = currentScadenze.filter(s => s.saldato === 1);
+            const totalPaid = paidScadenze.reduce((acc, s) => acc + (s.importo || 0), 0);
+            
+            let finalScadenze = [];
+            
+            if (paidScadenze.length > 0) {
+                const amountToSchedule = Math.round((totaleDocumento - totalPaid + Number.EPSILON) * 100) / 100;
+                
+                if (amountToSchedule > 0) {
+                    const response = await TipiPagamentoService.getScadenzeDocumento(idTipoPagamento, dataDocumento, amountToSchedule);
+                    if (response.data) {
+                        const newScadenze = response.data.map(s => ({
+                            ...s,
+                            importo: Math.round((s.importo + Number.EPSILON) * 100) / 100
+                        }));
+                        finalScadenze = [...paidScadenze, ...newScadenze];
+                    }
+                } else {
+                    // Total already covered (or exceeded) by paid scadenze
+                    finalScadenze = paidScadenze;
+                }
+            } else {
+                // No paid scadenze, proceed as usual
+                const response = await TipiPagamentoService.getScadenzeDocumento(idTipoPagamento, dataDocumento, totaleDocumento);
+                if (response.data) {
+                    finalScadenze = response.data.map(s => ({
+                        ...s,
+                        importo: Math.round((s.importo + Number.EPSILON) * 100) / 100
+                    }));
+                }
             }
+
+            setScadenze(finalScadenze);
+            if (isManualTrigger) setIsManualMode(false);
         } catch (error) {
             console.error("Errore nel calcolo delle scadenze", error);
             if (isManualTrigger) {

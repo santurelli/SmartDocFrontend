@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
-import ClientiService from '../../services/ClientiService';
-import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
-import ClienteEditModal from './ClienteEditModal';
+import ArticoliService from '../../services/ArticoliService';
+import { FaPencilAlt, FaTrash, FaPlus, FaCheck } from 'react-icons/fa';
 
-const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
+const ArticoliManagementModal = ({ isOpen, onClose, onSelect, idListino }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10);
@@ -12,12 +11,11 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
     const [loading, setLoading] = useState(false);
     const [totalItems, setTotalItems] = useState(0);
 
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedId, setSelectedId] = useState(null);
-
     useEffect(() => {
-        loadData();
-    }, [currentPage, pageSize, searchTerm]);
+        if (isOpen) {
+            loadData();
+        }
+    }, [isOpen, currentPage, pageSize, searchTerm]);
 
     const loadData = async () => {
         setLoading(true);
@@ -26,51 +24,53 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
                 search: searchTerm,
                 start: (currentPage - 1) * pageSize,
                 length: pageSize,
-                orderColumn: 1, // Sort by Denominazione
+                orderColumn: 1, // Sort by Descrizione
                 orderDir: 'asc'
             };
-            const res = await ClientiService.getList(params);
+            const res = await ArticoliService.getList(params);
             if (res.data) {
                 setList(res.data.list || []);
                 setTotalItems(res.data.totalCount || 0);
             }
         } catch (error) {
-            console.error("Error loading clienti:", error);
-            Swal.fire('Errore', 'Impossibile caricare i clienti', 'error');
+            console.error("Error loading articoli:", error);
+            Swal.fire('Errore', 'Impossibile caricare gli articoli', 'error');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDelete = async (id) => {
-        const result = await Swal.fire({
-            title: 'Sei sicuro?',
-            text: "Il cliente verrà eliminato.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sì, elimina',
-            cancelButtonText: 'Annulla'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await ClientiService.delete(id);
-                loadData();
-                Swal.fire('Eliminato!', 'Cliente eliminato.', 'success');
-            } catch (error) {
-                Swal.fire('Errore', "Errore durante l'eliminazione", 'error');
+    const handleSelect = async (item) => {
+        try {
+            // Fetch price if listino is provided
+            let finalPrice = item.prezzo || 0;
+            if (idListino) {
+                const resPrice = await ArticoliService.getArticlePrice(item.id, idListino);
+                if (resPrice.data && resPrice.data.prezzo !== undefined) {
+                    finalPrice = resPrice.data.prezzo;
+                }
             }
+
+            onSelect({
+                value: item.id,
+                label: `${item.codice} - ${item.descrizione}`,
+                data: {
+                    ...item,
+                    codiceProdotto: item.codice,
+                    descProdotto: item.descrizione,
+                    prezzo: finalPrice
+                }
+            });
+            // Keep modal open if user wants to add more? 
+            // The user said "a fianco di ogni articolo dovrebbe avere anche un bottone per inserire l'articolo nel documento"
+            // If they want to add multiple, we shouldn't close. 
+            // But usually "Seleziona" closes. 
+            // I'll add a "Seleziona" button that closes and maybe a "+" button that adds without closing?
+            // For now, let's just close as per standard selection modals in this app.
+            onClose();
+        } catch (error) {
+            console.error("Error selecting articolo:", error);
         }
-    };
-
-    const handleEdit = (item) => {
-        setSelectedId(item.id);
-        setShowEditModal(true);
-    };
-
-    const handleAdd = () => {
-        setSelectedId(null);
-        setShowEditModal(true);
     };
 
     const totalPages = Math.ceil(totalItems / pageSize);
@@ -80,15 +80,15 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
 
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
-            <div className="modal-dialog modal-lg">
+            <div className="modal-dialog modal-xl">
                 <div className="modal-content">
                     <div className="modal-header">
                         <button type="button" className="close" onClick={onClose} aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        <h4 className="modal-title">Gestione Clienti</h4>
+                        <h4 className="modal-title">Ricerca Articoli</h4>
                     </div>
-                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+                    <div className="modal-body" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
                         {/* Toolbar */}
                         <div className="modal-toolbar">
                             <div className="toolbar-left">
@@ -113,15 +113,12 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
                                     <input
                                         type="text"
                                         className="form-control"
-                                        placeholder="Cerca cliente..."
+                                        placeholder="Cerca per codice o descrizione..."
                                         value={searchTerm}
                                         onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                                     />
                                     <i className="fa fa-search"></i>
                                 </div>
-                                <button className="btn btn-primary" onClick={handleAdd}>
-                                    <FaPlus /> Nuovo Cliente
-                                </button>
                             </div>
                         </div>
 
@@ -131,54 +128,46 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
                                 <thead>
                                     <tr style={{ background: '#f8f9fa' }}>
                                         <th style={{ border: 'none', borderRadius: '10px 0 0 10px', padding: '12px 15px' }}>CODICE</th>
-                                        <th style={{ border: 'none', padding: '12px 15px' }}>DENOMINAZIONE</th>
-                                        <th style={{ border: 'none', borderRadius: '0 100px 100px 0', padding: '12px 15px', width: onSelect ? '180px' : '120px', textAlign: 'center' }}>AZIONI</th>
+                                        <th style={{ border: 'none', padding: '12px 15px' }}>DESCRIZIONE</th>
+                                        <th style={{ border: 'none', padding: '12px 15px' }}>U.M.</th>
+                                        <th style={{ border: 'none', padding: '12px 15px', textAlign: 'right' }}>PREZZO BASE</th>
+                                        <th style={{ border: 'none', borderRadius: '0 10px 10px 0', padding: '12px 15px', width: '150px', textAlign: 'center' }}>AZIONI</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {list.length > 0 ? (
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="5" className="text-center" style={{ padding: '30px' }}>Caricamento...</td>
+                                        </tr>
+                                    ) : list.length > 0 ? (
                                         list.map(item => (
                                             <tr key={item.id} style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderRadius: '10px' }}>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px', fontWeight: '500' }}>{item.codice}</td>
-                                                <td style={{ border: 'none', padding: '15px', background: '#fff' }}>{item.denominazione}</td>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '10px 0 0 10px', fontWeight: '600', color: '#03a9f4' }}>{item.codice}</td>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff' }}>
+                                                    <div style={{ fontWeight: '500' }}>{item.descrizione}</div>
+                                                    {item.descrFormato && <small style={{ color: '#777', marginRight: '10px' }}>F: {item.descrFormato}</small>}
+                                                    {item.descrScelta && <small style={{ color: '#777', marginRight: '10px' }}>S: {item.descrScelta}</small>}
+                                                </td>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff' }}>{item.descrUnitaMisura || item.idUnitaMisura}</td>
+                                                <td style={{ border: 'none', padding: '15px', background: '#fff', textAlign: 'right', fontWeight: '500' }}>
+                                                    {new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(item.prezzo || 0)}
+                                                </td>
                                                 <td style={{ border: 'none', padding: '15px', background: '#fff', borderRadius: '0 10px 10px 0' }} className="text-center">
-                                                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                                                        {onSelect && (
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-success btn-sm"
-                                                                onClick={() => {
-                                                                    onSelect({ value: item.id, label: item.denominazione, data: item });
-                                                                    onClose();
-                                                                }}
-                                                                title="Seleziona"
-                                                            >
-                                                                Seleziona
-                                                            </button>
-                                                        )}
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-primary btn-sm"
-                                                            onClick={() => handleEdit(item)}
-                                                            title="Modifica"
-                                                        >
-                                                            <FaPencilAlt />
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-danger btn-sm"
-                                                            onClick={() => handleDelete(item.id)}
-                                                            title="Elimina"
-                                                        >
-                                                            <FaTrash />
-                                                        </button>
-                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-success btn-sm btn-premium"
+                                                        onClick={() => handleSelect(item)}
+                                                        title="Inserisci nel documento"
+                                                        style={{ display: 'flex', alignItems: 'center', gap: '5px', margin: '0 auto' }}
+                                                    >
+                                                        <FaCheck /> Inserisci
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))
                                     ) : (
                                         <tr>
-                                            <td colSpan="3" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun cliente trovato</td>
+                                            <td colSpan="5" className="text-center" style={{ padding: '30px', color: '#999' }}>Nessun articolo trovato</td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -186,7 +175,7 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
                         </div>
 
                         {/* Pagination */}
-                        {totalItems > 0 && (
+                        {!loading && totalItems > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '0 10px' }}>
                                 <small style={{ color: '#777' }}>Visualizzati {startIdx + 1} - {Math.min(startIdx + pageSize, totalItems)} di {totalItems}</small>
                                 <nav>
@@ -210,21 +199,14 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
                                 </nav>
                             </div>
                         )}
-
                     </div>
                     <div className="modal-footer" style={{ borderTop: '1px solid #f0f0f0', padding: '15px 25px' }}>
-                        <button type="button" className="btn btn-default" onClick={onClose}>Chiudi</button>
+                        <button type="button" className="btn btn-default" onClick={onClose}>Annulla</button>
                     </div>
-                </div >
-            </div >
-            <ClienteEditModal
-                isOpen={showEditModal}
-                onClose={() => setShowEditModal(false)}
-                clienteId={selectedId}
-                onSave={loadData}
-            />
-        </div >
+                </div>
+            </div>
+        </div>
     );
 };
 
-export default ClientiManagementModal;
+export default ArticoliManagementModal;

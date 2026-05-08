@@ -4,7 +4,7 @@ import FornitoriService from '../../services/FornitoriService';
 import { FaPencilAlt, FaTrash, FaPlus } from 'react-icons/fa';
 import FornitoreEditModal from './FornitoreEditModal';
 
-const FornitoriManagementModal = ({ onClose }) => {
+const FornitoriManagementModal = ({ isOpen, onClose, onSelect }) => {
     const [list, setList] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(10); // Default to smaller page size for modal
@@ -78,6 +78,8 @@ const FornitoriManagementModal = ({ onClose }) => {
     const totalPages = Math.ceil(totalItems / pageSize);
     const startIdx = (currentPage - 1) * pageSize;
 
+    if (!isOpen) return null;
+
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1100 }}>
             <div className="modal-dialog modal-lg">
@@ -141,7 +143,20 @@ const FornitoriManagementModal = ({ onClose }) => {
                                             <td style={{ verticalAlign: 'middle' }}>{item.denominazione}</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                                    {onSelect && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-success btn-sm"
+                                                            onClick={() => {
+                                                                onSelect({ value: item.id, label: item.denominazione, data: item });
+                                                                onClose();
+                                                            }}
+                                                        >
+                                                            Seleziona
+                                                        </button>
+                                                    )}
                                                     <button
+                                                        type="button"
                                                         className="btn btn-primary btn-sm"
                                                         onClick={() => handleEdit(item)}
                                                         title="Modifica"
@@ -149,6 +164,7 @@ const FornitoriManagementModal = ({ onClose }) => {
                                                         <FaPencilAlt />
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         className="btn btn-danger btn-sm"
                                                         onClick={() => handleDelete(item.id)}
                                                         title="Elimina"

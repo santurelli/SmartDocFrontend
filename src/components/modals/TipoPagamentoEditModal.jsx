@@ -147,7 +147,7 @@ const TipoPagamentoEditModal = ({ isOpen, onClose, tipoPagamentoId, onSave }) =>
 
     return (
         <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }} tabIndex="-1" role="dialog">
-            <div className="modal-dialog modal-lg" role="document">
+            <div className="modal-dialog" role="document" style={{ maxWidth: '1000px', width: '95%' }}>
                 <div className="modal-content">
                     <form onSubmit={handleSubmit}>
                         <div className="modal-header">
@@ -160,7 +160,7 @@ const TipoPagamentoEditModal = ({ isOpen, onClose, tipoPagamentoId, onSave }) =>
                         </div>
                         <div className="modal-body" style={{ maxHeight: 'calc(100vh - 210px)', overflowY: 'auto' }}>
                             <div className="row">
-                                <div className="col-md-9">
+                                <div className="col-md-8">
                                     <div className="form-group">
                                         <label className="required">Descrizione</label>
                                         <input
@@ -172,9 +172,9 @@ const TipoPagamentoEditModal = ({ isOpen, onClose, tipoPagamentoId, onSave }) =>
                                         />
                                     </div>
                                 </div>
-                                <div className="col-md-3">
+                                <div className="col-md-4">
                                     <div className="form-group">
-                                        <label>Modalità (E-Fattura)</label>
+                                        <label style={{ whiteSpace: 'nowrap' }}>Modalità (E-Fattura)</label>
                                         <select
                                             className="form-control"
                                             value={formData.modalita || 'MP01'}

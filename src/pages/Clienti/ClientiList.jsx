@@ -208,6 +208,7 @@ const ClientiList = () => {
                                             <th onClick={() => handleSort(2)} style={{ cursor: 'pointer' }}>CITTÀ {renderSortIcon(2)}</th>
                                             <th onClick={() => handleSort(3)} style={{ cursor: 'pointer' }}>REFERENTE {renderSortIcon(3)}</th>
                                             <th onClick={() => handleSort(4)} style={{ cursor: 'pointer' }}>P. IVA / CF {renderSortIcon(4)}</th>
+                                            <th>SDI</th>
                                             <th>ULTIMO DOC.</th>
                                             <th style={{ width: '1%' }}></th>
                                         </tr>
@@ -215,20 +216,21 @@ const ClientiList = () => {
                                     <tbody>
                                         {loading ? (
                                             <tr>
-                                                <td colSpan="7" className="text-center" style={{ padding: '20px', color: '#777' }}>Caricamento...</td>
+                                                <td colSpan="8" className="text-center" style={{ padding: '20px', color: '#777' }}>Caricamento...</td>
                                             </tr>
                                         ) : clienti.length === 0 ? (
                                             <tr>
-                                                <td colSpan="7" style={{ padding: '20px', color: '#777' }}>Nessun dato presente nella tabella</td>
+                                                <td colSpan="8" style={{ padding: '20px', color: '#777' }}>Nessun dato presente nella tabella</td>
                                             </tr>
                                         ) : (
                                             clienti.map(cliente => (
                                                 <tr key={cliente.id}>
                                                     <td>{cliente.codice}</td>
                                                     <td>{cliente.denominazione}</td>
-                                                    <td>{cliente.elencoIndirizzi && cliente.elencoIndirizzi.length > 0 ? cliente.elencoIndirizzi[0].citta : ''}</td>
+                                                    <td>{cliente.citta}</td>
                                                     <td>{cliente.referente}</td>
                                                     <td>{cliente.partitaIva || cliente.codiceFiscale}</td>
+                                                    <td>{cliente.codiceSdi || '-'}</td>
                                                     <td>{cliente.ultimoDocVendita || '-'}</td>
                                                     <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                         <button
