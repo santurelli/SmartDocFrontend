@@ -18,7 +18,8 @@ const ImpostazioniFatturazionePage = () => {
         DICITURA_RITENUTA: { chiave: 'DICITURA_RITENUTA', valore: 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73', dominio: 'FATTURAZIONE' },
         DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' },
         PERC_IMPONIBILE_RIVALSA: { chiave: 'PERC_IMPONIBILE_RIVALSA', valore: '100.00', dominio: 'FATTURAZIONE' },
-        ID_ALIQUOTA_IVA_RIVALSA: { chiave: 'ID_ALIQUOTA_IVA_RIVALSA', valore: '0', dominio: 'FATTURAZIONE' }
+        ID_ALIQUOTA_IVA_RIVALSA: { chiave: 'ID_ALIQUOTA_IVA_RIVALSA', valore: '0', dominio: 'FATTURAZIONE' },
+        ABILITA_BOLLO_AUTOMATICO: { chiave: 'ABILITA_BOLLO_AUTOMATICO', valore: '0', dominio: 'FATTURAZIONE' }
     });
     const [aliquoteIva, setAliquoteIva] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -48,7 +49,8 @@ const ImpostazioniFatturazionePage = () => {
                     DICITURA_RITENUTA: { chiave: 'DICITURA_RITENUTA', valore: response.data.DICITURA_RITENUTA || 'Soggetto a ritenuta d\'acconto ai sensi del DPR 600/73', dominio: 'FATTURAZIONE' },
                     DICITURA_RIVALSA: { chiave: 'DICITURA_RIVALSA', valore: response.data.DICITURA_RIVALSA || 'Contributo previdenziale 4% ex art. 2 comma 26 Legge 335/95', dominio: 'FATTURAZIONE' },
                     PERC_IMPONIBILE_RIVALSA: { chiave: 'PERC_IMPONIBILE_RIVALSA', valore: response.data.PERC_IMPONIBILE_RIVALSA || '100.00', dominio: 'FATTURAZIONE' },
-                    ID_ALIQUOTA_IVA_RIVALSA: { chiave: 'ID_ALIQUOTA_IVA_RIVALSA', valore: response.data.ID_ALIQUOTA_IVA_RIVALSA || '0', dominio: 'FATTURAZIONE' }
+                    ID_ALIQUOTA_IVA_RIVALSA: { chiave: 'ID_ALIQUOTA_IVA_RIVALSA', valore: response.data.ID_ALIQUOTA_IVA_RIVALSA || '0', dominio: 'FATTURAZIONE' },
+                    ABILITA_BOLLO_AUTOMATICO: { chiave: 'ABILITA_BOLLO_AUTOMATICO', valore: response.data.ABILITA_BOLLO_AUTOMATICO || '0', dominio: 'FATTURAZIONE' }
                 }));
             }
         } catch (err) {
@@ -93,6 +95,7 @@ const ImpostazioniFatturazionePage = () => {
             await ConfigurazioneService.save(configs.DICITURA_RIVALSA);
             await ConfigurazioneService.save(configs.PERC_IMPONIBILE_RIVALSA);
             await ConfigurazioneService.save(configs.ID_ALIQUOTA_IVA_RIVALSA);
+            await ConfigurazioneService.save(configs.ABILITA_BOLLO_AUTOMATICO);
 
             Swal.fire({
                 title: 'Successo!',
@@ -308,6 +311,33 @@ const ImpostazioniFatturazionePage = () => {
                             </select>
                             <p className="help-block" style={{ fontSize: '12px', color: '#777', marginTop: '5px' }}>
                                 Definisce il tipo di fattura che viene proposto automaticamente quando generi una fattura da un Preventivo, DDT o Conferma d'Ordine.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="section-title mt-5">
+                        <FaFileInvoiceDollar /> Opzioni Fatturazione
+                    </div>
+                    <p className="section-description" style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                        Impostazioni avanzate per la generazione delle fatture.
+                    </p>
+
+                    <div className="row mt-4">
+                        <div className="col-md-12 form-group">
+                            <div className="checkbox-nice" style={{ display: 'flex', alignItems: 'center' }}>
+                                <input
+                                    type="checkbox"
+                                    id="abilita_bollo_automatico"
+                                    checked={configs.ABILITA_BOLLO_AUTOMATICO.valore === '1'}
+                                    onChange={(e) => handleChange('ABILITA_BOLLO_AUTOMATICO', e.target.checked ? '1' : '0')}
+                                    style={{ margin: 0 }}
+                                />
+                                <label htmlFor="abilita_bollo_automatico" style={{ fontWeight: 'normal', margin: 0, paddingLeft: '8px' }}>
+                                    Bollo in fattura automatico (€ 2.00)
+                                </label>
+                            </div>
+                            <p className="help-block" style={{ fontSize: '12px', color: '#777', marginTop: '5px', paddingLeft: '28px' }}>
+                                Aggiunge automaticamente una riga di bollo da 2€ se l'importo totale delle righe esenti/escluse da IVA supera la soglia di legge (77,47 €).
                             </p>
                         </div>
                     </div>

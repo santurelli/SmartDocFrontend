@@ -93,34 +93,53 @@ const DocumentRows = (props) => {
 
         // Auto-detect ceramic article if format is present, even if global setting is off
         const hasCeramicData = isCeramica || (data.descrFormato && data.descrFormato.length > 0) || (data.descrScelta && data.descrScelta.length > 0);
+        
+        // Calcolo disponibilità (solo se gestito a magazzino)
+        const disponib = (data.quantitaEsistente || 0) - (data.quantitaImpegnata || 0);
+        // Mostriamo la disponibilità solo per "Articolo con magazzino" (AM) o "Articolo con scelte/colori" (AMSC)
+        const showStock = data.tipologia === 'AM' || data.tipologia === 'AMSC';
 
         // For selected value (in the input), show details underneath
         if (context === 'value') {
             return (
                 <div style={{ display: 'flex', flexDirection: 'column', fontSize: '12px', lineHeight: '1.2', padding: '2px 0', overflow: 'hidden' }}>
                     <div style={{ fontWeight: '500', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{label}</div>
-                    {hasCeramicData && (
-                        <div style={{ fontSize: '10px', color: '#666', display: 'flex', gap: '8px', whiteSpace: 'nowrap' }}>
-                            {data.descrFormato && <span>F:<b>{data.descrFormato}</b></span>}
-                            {data.descrScelta && <span>S:<b>{data.descrScelta}</b></span>}
-                            {data.descrTono && <span>T:<b>{data.descrTono}</b></span>}
-                            {data.descrCalibro && <span>C:<b>{data.descrCalibro}</b></span>}
-                        </div>
-                    )}
+                    <div style={{ fontSize: '10px', color: '#666', display: 'flex', gap: '8px', whiteSpace: 'nowrap' }}>
+                        {showStock && (
+                            <span style={{ color: disponib <= 0 ? '#d32f2f' : '#2e7d32' }}>
+                                Disp: <b>{disponib}</b>
+                            </span>
+                        )}
+                        {hasCeramicData && (
+                            <>
+                                {data.descrFormato && <span>F:<b>{data.descrFormato}</b></span>}
+                                {data.descrScelta && <span>S:<b>{data.descrScelta}</b></span>}
+                                {data.descrTono && <span>T:<b>{data.descrTono}</b></span>}
+                                {data.descrCalibro && <span>C:<b>{data.descrCalibro}</b></span>}
+                            </>
+                        )}
+                    </div>
                 </div>
             );
         }
 
         // For dropdown menu options, show full details in column
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', fontSize: '13px', padding: '4px 0', minHeight: '36px', justifyContent: 'center' }}>
-                <div style={{ fontWeight: '500', marginBottom: '2px' }}>{label}</div>
-                {hasCeramicData && (
-                    <div style={{ fontSize: '11px', color: '#666', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        {data.descrFormato && <span>F: <b style={{ color: '#333' }}>{data.descrFormato}</b></span>}
-                        {data.descrScelta && <span>S: <b style={{ color: '#333' }}>{data.descrScelta}</b></span>}
-                        {data.descrTono && <span>T: <b style={{ color: '#333' }}>{data.descrTono}</b></span>}
-                        {data.descrCalibro && <span>C: <b style={{ color: '#333' }}>{data.descrCalibro}</b></span>}
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px', padding: '4px 0', minWidth: '300px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+                    <div style={{ fontWeight: '500', marginBottom: '2px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{label}</div>
+                    {hasCeramicData && (
+                        <div style={{ fontSize: '11px', color: '#666', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            {data.descrFormato && <span>F: <b style={{ color: '#333' }}>{data.descrFormato}</b></span>}
+                            {data.descrScelta && <span>S: <b style={{ color: '#333' }}>{data.descrScelta}</b></span>}
+                            {data.descrTono && <span>T: <b style={{ color: '#333' }}>{data.descrTono}</b></span>}
+                            {data.descrCalibro && <span>C: <b style={{ color: '#333' }}>{data.descrCalibro}</b></span>}
+                        </div>
+                    )}
+                </div>
+                {showStock && (
+                    <div style={{ marginLeft: '15px', padding: '2px 6px', borderRadius: '4px', background: disponib <= 0 ? '#ffebee' : '#e8f5e9', color: disponib <= 0 ? '#c62828' : '#2e7d32', fontWeight: 'bold', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                        Disp: {disponib}
                     </div>
                 )}
             </div>

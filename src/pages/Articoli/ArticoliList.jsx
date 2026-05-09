@@ -568,8 +568,18 @@ const ArticoliList = () => {
                                                 )}
                                             </td>
                                             <td className="text-right">{(art.prezzoFornitore || 0).toFixed(2)}</td>
-                                            <td className="text-right">{(art.quantitaEsistente || 0).toFixed(2)}</td>
-                                            <td className="text-right">{((art.quantitaEsistente || 0) - (art.quantitaImpegnata || 0)).toFixed(2)}</td>
+                                            <td className="text-right">
+                                                { (art.tipologia === 'AM' || art.tipologia === 'AMSC') ? 
+                                                  (art.quantitaEsistente || 0).toFixed(2) : 
+                                                  '-' 
+                                                }
+                                            </td>
+                                            <td className="text-right">
+                                                { (art.tipologia === 'AM' || art.tipologia === 'AMSC') ? 
+                                                  ((art.quantitaEsistente || 0) - (art.quantitaImpegnata || 0)).toFixed(2) : 
+                                                  '-' 
+                                                }
+                                            </td>
                                             <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
                                                 <div className="actions-wrapper">
                                                     <div className="dropdown-container">
@@ -638,6 +648,9 @@ const ArticoliList = () => {
                 (() => {
                     const art = articoli.find(a => a.id === activeDropdownId);
                     if (!art) return null;
+                    
+                    const hasStock = art.tipologia === 'AM' || art.tipologia === 'AMSC';
+
                     return (
                         <div
                             className="custom-dropdown-menu"
@@ -651,12 +664,17 @@ const ArticoliList = () => {
                             }}
                         >
                             <div className="dropdown-item" onClick={() => navigate(`/articoli/${art.id}`)}>Modifica</div>
-                            <div className="dropdown-divider"></div>
-                            <div className="dropdown-item" onClick={() => handleCaricoClick(art)}>Carica</div>
-                            <div className="dropdown-item" onClick={() => handleScaricoClick(art)}>Scarica</div>
-                            <div className="dropdown-item" onClick={() => handleRettificaClick(art)}>Rettifica</div>
-                            <div className="dropdown-divider"></div>
-                            <div className="dropdown-item" onClick={() => navigate('/articoli/movimenti', { state: { filterByArticle: { value: art.id, label: `${art.codice} - ${art.descrizione}` } } })}>Movimenti magazzino</div>
+                            
+                            {hasStock && (
+                                <>
+                                    <div className="dropdown-divider"></div>
+                                    <div className="dropdown-item" onClick={() => handleCaricoClick(art)}>Carica</div>
+                                    <div className="dropdown-item" onClick={() => handleScaricoClick(art)}>Scarica</div>
+                                    <div className="dropdown-item" onClick={() => handleRettificaClick(art)}>Rettifica</div>
+                                    <div className="dropdown-divider"></div>
+                                    <div className="dropdown-item" onClick={() => navigate('/articoli/movimenti', { state: { filterByArticle: { value: art.id, label: `${art.codice} - ${art.descrizione}` } } })}>Movimenti magazzino</div>
+                                </>
+                            )}
                         </div>
                     );
                 })()
