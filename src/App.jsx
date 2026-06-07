@@ -28,6 +28,10 @@ import FattureList from './pages/Fatture/FattureList';
 import FattureDetail from './pages/Fatture/FattureDetail';
 import NoteCreditoList from './pages/NoteCredito/NoteCreditoList';
 import NoteCreditoDetail from './pages/NoteCredito/NoteCreditoDetail';
+import FattureFornitoreList from './pages/FattureFornitore/FattureFornitoreList';
+import FattureFornitoreDetail from './pages/FattureFornitore/FattureFornitoreDetail';
+import NoteCreditoFornitoreList from './pages/NoteCreditoFornitore/NoteCreditoFornitoreList';
+import NoteCreditoFornitoreDetail from './pages/NoteCreditoFornitore/NoteCreditoFornitoreDetail';
 import Dashboard from './pages/Dashboard/Dashboard';
 import ListiniList from './pages/Configurazione/ListiniList';
 import DatiGeneraliPage from './pages/Configurazione/DatiGeneraliPage';
@@ -112,6 +116,10 @@ function App() {
         <Route path="/note-credito" element={<NoteCreditoList />} />
         <Route path="/note-credito/new" element={<NoteCreditoDetail />} />
         <Route path="/note-credito/:id" element={<NoteCreditoDetail />} />
+        <Route path="/fatture-fornitore" element={<FattureFornitoreList />} />
+        <Route path="/fatture-fornitore/:id" element={<FattureFornitoreDetail />} />
+        <Route path="/note-credito-fornitore" element={<NoteCreditoFornitoreList />} />
+        <Route path="/note-credito-fornitore/:id" element={<NoteCreditoFornitoreDetail />} />
         <Route path="/articoli" element={<ArticoliList />} />
         <Route path="/articoli/movimenti" element={<MovimentiList />} />
         <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />

@@ -298,7 +298,10 @@ const DDTList = () => {
             <div className="header-row">
                 <h1>DDT (Documenti di Trasporto)</h1>
                 <div id="total-display-header" className="hidden-xs">
-                    <strong>{formatMoney(totalAmount)}</strong> Totale
+                    <div className="total-display-item total-all">
+                        <span className="total-label">Totale</span>
+                        <strong>{formatMoney(totalAmount)}</strong>
+                    </div>
                 </div>
             </div>
 

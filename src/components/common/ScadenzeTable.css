@@ -3,6 +3,7 @@
 .scadenze-container {
     background: #fff;
     padding: 10px 0;
+    max-width: 1050px; /* Keep table compact and premium instead of stretching excessively */
 }
 
 .scadenze-header {
@@ -115,6 +116,26 @@
 
 .scadenze-table-wrapper th.col-saldato {
     width: 80px;
+    text-align: center;
+}
+
+.scadenze-table-wrapper th.col-data-scadenza {
+    width: 150px;
+    text-align: center;
+}
+
+.scadenze-table-wrapper th.col-importo-rata {
+    width: 140px;
+    text-align: right;
+}
+
+.scadenze-table-wrapper th.col-mod-pag {
+    width: 250px;
+    text-align: center;
+}
+
+.scadenze-table-wrapper th.col-data-pag-conto {
+    width: 380px;
     text-align: center;
 }
 

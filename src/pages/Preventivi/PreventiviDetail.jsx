@@ -1064,21 +1064,21 @@ const PreventiviDetail = () => {
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione} onChange={handleHeaderChange} autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="indirizzoIntestazione" value={formData.indirizzoIntestazione} onChange={handleHeaderChange} autoComplete="new-password" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
                                                         <label className="premium-label">Cit<span>tà</span></label>
-                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione} onChange={handleHeaderChange} autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="cittaIntestazione" value={formData.cittaIntestazione} onChange={handleHeaderChange} autoComplete="new-password" />
                                                     </div>
                                                     <div className="col-md-2">
                                                         <label className="premium-label">Pr<span>ov</span>.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="provinciaIntestazione" value={formData.provinciaIntestazione} onChange={handleHeaderChange} maxLength="2" autoComplete="new-password" />
                                                     </div>
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
-                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="capIntestazione" value={formData.capIntestazione} onChange={handleHeaderChange} autoComplete="new-password" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
@@ -1121,21 +1121,21 @@ const PreventiviDetail = () => {
                                                 <div className="row mb-4">
                                                     <div className="col-md-12">
                                                         <label className="premium-label">Indi<span>riz</span>zo</label>
-                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione} onChange={handleHeaderChange} autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="indirizzoDestinazione" value={formData.indirizzoDestinazione} onChange={handleHeaderChange} autoComplete="new-password" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">
                                                     <div className="col-md-7">
                                                         <label className="premium-label">Cit<span>tà</span></label>
-                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione} onChange={handleHeaderChange} autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="cittaDestinazione" value={formData.cittaDestinazione} onChange={handleHeaderChange} autoComplete="new-password" />
                                                     </div>
                                                     <div className="col-md-2">
                                                         <label className="premium-label">Pr<span>ov</span>.</label>
-                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione} onChange={handleHeaderChange} maxLength="2" autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="provinciaDestinazione" value={formData.provinciaDestinazione} onChange={handleHeaderChange} maxLength="2" autoComplete="new-password" />
                                                     </div>
                                                     <div className="col-md-3">
                                                         <label className="premium-label">C<span>AP</span></label>
-                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} autoComplete="off" />
+                                                        <input type="text" className="form-control premium-input" name="capDestinazione" value={formData.capDestinazione} onChange={handleHeaderChange} autoComplete="new-password" />
                                                     </div>
                                                 </div>
                                                 <div className="row mb-4">

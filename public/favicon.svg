@@ -1,1 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--!Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path fill="#03a9f4" d="M368 48c0-8.8 7.2-16 16-16l192 0c8.8 0 16 7.2 16 16l0 384c0 8.8-7.2 16-16 16l-192 0c-8.8 0-16-7.2-16-16L368 48zM608 0L352 0C334.3 0 320 14.3 320 32l0 448c0 17.7 14.3 32 32 32l256 0c17.7 0 32-14.3 32-32l0-448c0-17.7-14.3-32-32-32zM208 64l0-32 50.7 0c10.4 0 20.3-4.5 27.2-12.4L300.2 1.5 292.1 40c-2.2 10.6-11.5 18.2-22.3 18.2L208 58.2c-3.2 0-6.2 .5-9.1 1.4L188.7 9.8c11-9 25.4-9.9 37.1-2.9L247 19.3l-20.3 33c-3 4.9-3 11 0 16l20.3 33-21.1 12.5L208 97.3l-9.5 28.5L247 131.2l-20.3 33-21.1-13c-2.7-1.7-5.5-2.6-8.2-2.9L208 128l0 128c0 17.7-14.3 32-32 32l-144 0C14.3 288 0 273.7 0 256L0 32C0 14.3 14.3 0 32 0l112 0c17.7 0 32 14.3 32 32l0 32 32 0zM32 240l144 0 0-192-144 0 0 192zM64 64l0 32 80 0 0-32-80 0zm0 64l0 32 80 0 0-32-80 0zm0 64l0 32 80 0 0-32-80 0zM320 352c-17.7 0-32 14.3-32 32s14.3 32 32 32l128 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-128 0z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020d1a" />
+      <stop offset="50%" stop-color="#081e36" />
+      <stop offset="100%" stop-color="#051221" />
+    </linearGradient>
+    
+    <!-- Glowing Blue/Cyan Gradient -->
+    <linearGradient id="glowBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe" />
+      <stop offset="100%" stop-color="#4facfe" />
+    </linearGradient>
+
+    <!-- Glowing Cyan/Green Gradient for Pen/Smart elements -->
+    <linearGradient id="glowSmart" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3af6b0" />
+      <stop offset="100%" stop-color="#00a896" />
+    </linearGradient>
+
+    <!-- Glassmorphic Document Fill -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(15, 32, 54, 0.75)" />
+      <stop offset="100%" stop-color="rgba(8, 22, 38, 0.9)" />
+    </linearGradient>
+    
+    <!-- Subtle glow filter for the ultimate premium look -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect x="24" y="24" width="464" height="464" rx="128" fill="url(#bgGrad)" stroke="#132f54" stroke-width="12" />
+
+  <!-- Glowing background elements for depth -->
+  <circle cx="160" cy="160" r="120" fill="#4facfe" opacity="0.15" filter="url(#neonGlow)" />
+  <circle cx="360" cy="360" r="100" fill="#3af6b0" opacity="0.1" filter="url(#neonGlow)" />
+
+  <!-- Document Sheet -->
+  <rect x="110" y="90" width="240" height="332" rx="28" fill="url(#glassGrad)" stroke="url(#glowBlue)" stroke-width="16" />
+  
+  <!-- Folded Corner Indicator (Clean minimal design) -->
+  <path d="M 290 90 L 350 90 L 350 150 C 350 117 323 90 290 90 Z" fill="url(#glowBlue)" />
+
+  <!-- Document Lines -->
+  <rect x="150" y="160" width="100" height="14" rx="7" fill="url(#glowBlue)" opacity="0.7" />
+  <rect x="150" y="200" width="150" height="14" rx="7" fill="url(#glowBlue)" opacity="0.7" />
+  <rect x="150" y="240" width="120" height="14" rx="7" fill="url(#glowBlue)" opacity="0.7" />
+
+  <!-- Smart Digital Signature (Bezier flow) -->
+  <path d="M 150 330 c 15 -15, 30 15, 45 -5 c 15 -20, 25 15, 40 -10 c 15 -25, 25 20, 45 5 c 20 -15, 35 10, 50 -15" 
+        fill="none" stroke="url(#glowSmart)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonGlow)" />
+
+  <!-- Digital Smart Stylus Pen -->
+  <g transform="rotate(35, 350, 250)">
+    <!-- Pen body -->
+    <rect x="334" y="80" width="32" height="280" rx="16" fill="url(#glowBlue)" />
+    <!-- Pen tip -->
+    <path d="M 334 330 L 350 370 L 366 330 Z" fill="url(#glowSmart)" />
+    <!-- Glowing pen ring -->
+    <rect x="334" y="290" width="32" height="12" fill="#ffffff" opacity="0.8" />
+  </g>
+</svg>

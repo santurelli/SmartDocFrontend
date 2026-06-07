@@ -253,9 +253,9 @@ const ScadenzeTable = ({
     return (
         <div className="scadenze-container mt-3">
             <div className="scadenze-header">
-                <h6 className="m-0 text-primary" style={{ fontWeight: '600', fontSize: '15px' }}>
-                    <FaCalendarAlt className="mr-2" style={{ color: '#007bff' }} /> 
-                    Piano di Pagamento
+                <h6 className="m-0 text-primary" style={{ fontWeight: '600', fontSize: '15px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <FaCalendarAlt style={{ color: '#007bff' }} /> 
+                    <span>Piano di Pagamento</span>
                 </h6>
                 <div className="d-flex align-items-center">
                     {!isActuallyReadOnly && (
@@ -266,7 +266,7 @@ const ScadenzeTable = ({
                                 onClick={addScadenza}
                                 title="Aggiungi una nuova scadenza manuale"
                             >
-                                <FaPlus className="mr-2" /> Aggiungi riga
+                                <FaPlus /> Aggiungi riga
                             </button>
                             <button 
                                 type="button" 
@@ -276,7 +276,7 @@ const ScadenzeTable = ({
                                 disabled={isLoading || !idTipoPagamento}
                                 title="Forza il ricalcolo delle scadenze"
                             >
-                                <FaSyncAlt className={isLoading ? 'fa-spin mr-2' : 'mr-2'} /> Ricalcola
+                                <FaSyncAlt className={isLoading ? 'fa-spin' : ''} /> Ricalcola
                             </button>
                         </>
                     )}
@@ -288,10 +288,10 @@ const ScadenzeTable = ({
                     <thead style={{ backgroundColor: '#f9f9fa', color: '#6c757d', fontSize: '12px', textTransform: 'uppercase' }}>
                         <tr>
                             <th className="col-saldato font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Saldato</th>
-                            <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Data Scadenza</th>
-                            <th className="text-right font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Importo Rata</th>
-                            <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Mod. Pag.</th>
-                            <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Data Pag. / Conto</th>
+                            <th className="col-data-scadenza text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Data Scadenza</th>
+                            <th className="col-importo-rata text-right font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Importo Rata</th>
+                            <th className="col-mod-pag text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Mod. Pag.</th>
+                            <th className="col-data-pag-conto text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px' }}>Data Pag. / Conto</th>
                             {!isActuallyReadOnly && <th className="text-center font-weight-normal" style={{ borderBottom: 'none', padding: '12px', width: '50px' }}></th>}
                         </tr>
                     </thead>
@@ -403,10 +403,14 @@ const ScadenzeTable = ({
                         ) : (
                             <tr>
                                 <td colSpan={isActuallyReadOnly ? 4 : 5} className="text-center text-muted py-4">
-                                    <FaExclamationTriangle className="text-warning mr-2 mb-1" style={{ fontSize: '16px' }} />
-                                    {idTipoPagamento 
-                                        ? "Nessuna scadenza. Aggiungine una o ricalcola." 
-                                        : "Seleziona un tipo di pagamento per visualizzare le scadenze."}
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', verticalAlign: 'middle', justifyContent: 'center' }}>
+                                        <FaExclamationTriangle className="text-warning" style={{ fontSize: '18px', flexShrink: 0 }} />
+                                        <span>
+                                            {idTipoPagamento 
+                                                ? "Nessuna scadenza. Aggiungine una o ricalcola." 
+                                                : "Seleziona un tipo di pagamento per visualizzare le scadenze."}
+                                        </span>
+                                    </span>
                                 </td>
                             </tr>
                         )}
@@ -429,9 +433,11 @@ const ScadenzeTable = ({
                                     <span className="difference-indicator">{formatCurrency(difference)}</span>
                                 </td>
                                 <td colSpan={isActuallyReadOnly ? 2 : 3} className="px-3">
-                                    <span className="difference-text">
-                                        <FaInfoCircle className="mr-2" /> 
-                                        {difference > 0 ? "La somma delle rate supera l'importo da incassare (Maggiorazione)." : "La somma delle rate è inferiore all'importo da incassare (Sconto/Abbuono)."}
+                                    <span className="difference-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                        <FaInfoCircle style={{ fontSize: '14px', flexShrink: 0 }} /> 
+                                        <span>
+                                            {difference > 0 ? "La somma delle rate supera l'importo da incassare (Maggiorazione)." : "La somma delle rate è inferiore all'importo da incassare (Sconto/Abbuono)."}
+                                        </span>
                                     </span>
                                 </td>
                             </tr>
