@@ -79,12 +79,6 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
         loadInitialData();
     }, [onConfigLoaded]);
 
-    useEffect(() => {
-        if (isNew && !data.codice) {
-            generateCodice();
-        }
-    }, [isNew]); // Only trigger once on mount if isNew is true
-
     const handleFormChange = (e) => {
         const { name, value } = e.target;
         onChange({ ...data, [name]: value });

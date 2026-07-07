@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { FaBars, FaCaretDown, FaThLarge, FaEdit, FaUser, FaTruck, FaLock, FaPowerOff, FaCogs, FaFileSignature, FaPlus } from 'react-icons/fa';
 import authService from '../services/authService';
+import authStorage from '../services/authStorage';
 import ConfigurazioneService from '../services/ConfigurazioneService';
 import ChangePasswordModal from './modals/ChangePasswordModal';
 import './Header.css';
@@ -36,13 +37,20 @@ const Header = ({ user, onLogout, toggleSidebar }) => {
     };
 
     const userName = user ? `${user.nome} ${user.cognome}` : 'Utente';
+    const appConfig = authService.getConfig();
+    const enteLabel = appConfig?.enteLabel || '';
 
     return (
         <header className="navbar" id="header-navbar">
             <div className="container">
                 <div className="navbar-brand" id="logo">
                     <FaFileSignature style={{ fontSize: '1.5em', marginRight: '10px' }} />
-                    <span className="logo-text">SmartDOC</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                        <span className="logo-text">SmartDOC</span>
+                        {enteLabel && (
+                            <span style={{ fontSize: '0.65em', color: '#a0b4c3', fontWeight: 400, letterSpacing: '0.02em' }}>{enteLabel}</span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="clearfix">

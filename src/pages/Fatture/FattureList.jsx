@@ -7,7 +7,7 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport, FaFileCode } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport, FaFileCode, FaBolt } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import { getDefaultSearchRange } from '../../utils/dateUtils';
@@ -343,6 +343,29 @@ const FattureList = () => {
                 title: 'Errore',
                 text: 'Si è verificato un errore durante l\'invio a SDI.'
             });
+        }
+    };
+
+    const handleInviaOra = async (id) => {
+        try {
+            Swal.fire({
+                title: 'Invio a SDI...',
+                text: 'Attendere prego',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            await FattureService.inviaOra(id);
+            Swal.fire({
+                icon: 'success',
+                title: 'Invio avviato',
+                text: 'La fattura è stata inviata allo SDI. L\'esito sarà disponibile a breve.',
+                timer: 2500,
+                showConfirmButton: false
+            }).then(() => { handleSearch(); });
+            setActiveActionMenu(null);
+        } catch (err) {
+            console.error('Errore durante l\'invio a SDI:', err);
+            Swal.fire({ icon: 'error', title: 'Errore', text: 'Si è verificato un errore durante l\'invio a SDI.' });
         }
     };
 
@@ -766,8 +789,13 @@ const FattureList = () => {
                                                 <td>{f.dataDocumento}</td>
                                                 <td className="column-tipo">{formatTipoFattura(f.tipoFattura)}</td>
                                                 <td>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <strong>{f.numDocumento}</strong>{f.particella ? ` / ${f.particella}` : ''}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                        <strong>{f.numDocumento}</strong>
+                                                        {f.numeroDocumento && f.numeroDocumento !== f.numDocumento && (
+                                                            <span className="internal-status-badge badge-particella">
+                                                                {f.numeroDocumento.replace(f.numDocumento, '').replace(/^[\s/]+/, '')}
+                                                            </span>
+                                                        )}
                                                         {renderInternalBadge(f)}
                                                     </div>
                                                 </td>
@@ -816,6 +844,11 @@ const FattureList = () => {
                                                                 <button className="action-dropdown-item" onClick={() => handleExportPdfItem(docId, f.numDocumento)}>
                                                                     <FaFilePdf /> Esporta PDF
                                                                 </button>
+                                                                {f.flFatturaElettronica === 1 && (f.statoFatturaElettronica === 'DI' || f.descrizioneStatoFatturaElettronica === 'Da inviare') && (
+                                                                    <button className="action-dropdown-item" onClick={() => handleInviaOra(docId)}>
+                                                                        <FaBolt /> Invia ora a SDI
+                                                                    </button>
+                                                                )}
                                                                 {f.flFatturaElettronica === 1 && f.statoFatturaElettronica === 'NS' && (
                                                                     <button className="action-dropdown-item" onClick={() => handleSendSdi(docId)}>
                                                                         <FaPaperPlane /> Reinvia a SDI

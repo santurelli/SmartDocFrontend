@@ -26,8 +26,9 @@ const ClientiManagementModal = ({ isOpen, onClose, onSelect }) => {
                 search: searchTerm,
                 start: (currentPage - 1) * pageSize,
                 length: pageSize,
-                orderColumn: 1, // Sort by Denominazione
-                orderDir: 'asc'
+                orderColumn: 1,
+                orderDir: 'asc',
+                light: true
             };
             const res = await ClientiService.getList(params);
             if (res.data) {

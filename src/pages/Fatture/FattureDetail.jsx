@@ -392,30 +392,29 @@ const FattureDetail = () => {
             setProdotti(allProdotti);
 
             if (firstDDTData) {
+                await loadClientAddresses(firstDDTData.idCliente, true);
                 setFormData(prev => ({
                     ...prev,
                     idCliente: firstDDTData.idCliente,
-                    soggetto: firstDDTData.soggetto,
+                    denominazioneCliente: firstDDTData.denominazioneCliente || '',
+                    soggetto: firstDDTData.soggetto || (firstDDTData.idCliente ? { value: firstDDTData.idCliente, label: firstDDTData.denominazioneCliente || '' } : null),
                     idAgente: firstDDTData.idAgente,
                     agente: firstDDTData.agente,
-                    idTipoPagamento: firstDDTData.idTipoPagamento,
-                    // Note: tipoFattura will be set by fetchFatturazionePreferences or defaults to 'FATTURA'
+                    idTipoPagamento: firstDDTData.idTipoPagamento || prev.idTipoPagamento,
                     idProgetto: firstDDTData.idProgetto,
                     nomeProgetto: firstDDTData.nomeProgetto,
-                    idListino: firstDDTData.idListino || '',
-                    cittaIntestazione: firstDDTData.cittaIntestazione,
-                    indirizzoIntestazione: firstDDTData.indirizzoIntestazione,
-                    capIntestazione: firstDDTData.capIntestazione,
-                    provinciaIntestazione: firstDDTData.provinciaIntestazione,
-                    codiceFiscale: firstDDTData.codiceFiscale || '',
-                    partitaIva: firstDDTData.partitaIva || '',
-                    cittaDestinazione: firstDDTData.cittaDestinazione,
-                    indirizzoDestinazione: firstDDTData.indirizzoDestinazione,
-                    capDestinazione: firstDDTData.capDestinazione,
-                    provinciaDestinazione: firstDDTData.provinciaDestinazione
+                    idListino: firstDDTData.idListino || prev.idListino || '',
+                    codiceFiscale: firstDDTData.codiceFiscale || prev.codiceFiscale || '',
+                    partitaIva: firstDDTData.partitaIva || prev.partitaIva || '',
+                    ...(firstDDTData.indirizzoIntestazione ? { indirizzoIntestazione: firstDDTData.indirizzoIntestazione } : {}),
+                    ...(firstDDTData.cittaIntestazione ? { cittaIntestazione: firstDDTData.cittaIntestazione } : {}),
+                    ...(firstDDTData.capIntestazione ? { capIntestazione: firstDDTData.capIntestazione } : {}),
+                    ...(firstDDTData.provinciaIntestazione ? { provinciaIntestazione: firstDDTData.provinciaIntestazione } : {}),
+                    ...(firstDDTData.indirizzoDestinazione ? { indirizzoDestinazione: firstDDTData.indirizzoDestinazione } : {}),
+                    ...(firstDDTData.cittaDestinazione ? { cittaDestinazione: firstDDTData.cittaDestinazione } : {}),
+                    ...(firstDDTData.capDestinazione ? { capDestinazione: firstDDTData.capDestinazione } : {}),
+                    ...(firstDDTData.provinciaDestinazione ? { provinciaDestinazione: firstDDTData.provinciaDestinazione } : {}),
                 }));
-                loadClientAddresses(firstDDTData.idCliente, false);
-                fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
             }
         } catch (error) {
             console.error(error);
@@ -471,32 +470,33 @@ const FattureDetail = () => {
             setProdotti(allProdotti);
 
             if (firstPrevData) {
+                // Load client addresses first (autoFill=true for defaults),
+                // then overlay with any non-null address values from the preventivo
+                await loadClientAddresses(firstPrevData.idCliente, true);
                 setFormData(prev => ({
                     ...prev,
                     idCliente: firstPrevData.idCliente,
-                    soggetto: firstPrevData.soggetto,
+                    denominazioneCliente: firstPrevData.denominazioneCliente || '',
+                    soggetto: firstPrevData.soggetto || (firstPrevData.idCliente ? { value: firstPrevData.idCliente, label: firstPrevData.denominazioneCliente || '' } : null),
                     idAgente: firstPrevData.idAgente,
                     agente: firstPrevData.agente,
-                    idTipoPagamento: firstPrevData.idTipoPagamento,
-                    // Note: tipoFattura will be set by fetchFatturazionePreferences or defaults to 'FATTURA'
+                    idTipoPagamento: firstPrevData.idTipoPagamento || prev.idTipoPagamento,
                     idProgetto: firstPrevData.idProgetto,
                     nomeProgetto: firstPrevData.nomeProgetto,
-                    idListino: firstPrevData.idListino || '',
-                    cittaIntestazione: firstPrevData.cittaIntestazione,
-                    indirizzoIntestazione: firstPrevData.indirizzoIntestazione,
-                    capIntestazione: firstPrevData.capIntestazione,
-                    provinciaIntestazione: firstPrevData.provinciaIntestazione,
-                    nazioneIntestazione: firstPrevData.nazioneIntestazione || 'Italia',
-                    codiceFiscale: firstPrevData.codiceFiscale || '',
-                    partitaIva: firstPrevData.partitaIva || '',
-                    cittaDestinazione: firstPrevData.cittaDestinazione,
-                    indirizzoDestinazione: firstPrevData.indirizzoDestinazione,
-                    capDestinazione: firstPrevData.capDestinazione,
-                    provinciaDestinazione: firstPrevData.provinciaDestinazione,
-                    nazioneDestinazione: firstPrevData.nazioneDestinazione || 'Italia'
+                    idListino: firstPrevData.idListino || prev.idListino || '',
+                    codiceFiscale: firstPrevData.codiceFiscale || prev.codiceFiscale || '',
+                    partitaIva: firstPrevData.partitaIva || prev.partitaIva || '',
+                    ...(firstPrevData.indirizzoIntestazione ? { indirizzoIntestazione: firstPrevData.indirizzoIntestazione } : {}),
+                    ...(firstPrevData.cittaIntestazione ? { cittaIntestazione: firstPrevData.cittaIntestazione } : {}),
+                    ...(firstPrevData.capIntestazione ? { capIntestazione: firstPrevData.capIntestazione } : {}),
+                    ...(firstPrevData.provinciaIntestazione ? { provinciaIntestazione: firstPrevData.provinciaIntestazione } : {}),
+                    ...(firstPrevData.nazioneIntestazione ? { nazioneIntestazione: firstPrevData.nazioneIntestazione } : {}),
+                    ...(firstPrevData.indirizzoDestinazione ? { indirizzoDestinazione: firstPrevData.indirizzoDestinazione } : {}),
+                    ...(firstPrevData.cittaDestinazione ? { cittaDestinazione: firstPrevData.cittaDestinazione } : {}),
+                    ...(firstPrevData.capDestinazione ? { capDestinazione: firstPrevData.capDestinazione } : {}),
+                    ...(firstPrevData.provinciaDestinazione ? { provinciaDestinazione: firstPrevData.provinciaDestinazione } : {}),
+                    ...(firstPrevData.nazioneDestinazione ? { nazioneDestinazione: firstPrevData.nazioneDestinazione } : {}),
                 }));
-                loadClientAddresses(firstPrevData.idCliente, false);
-                fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
             }
         } catch (error) {
             console.error(error);
@@ -552,32 +552,31 @@ const FattureDetail = () => {
             setProdotti(allProdotti);
 
             if (firstConfData) {
+                await loadClientAddresses(firstConfData.idCliente, true);
                 setFormData(prev => ({
                     ...prev,
                     idCliente: firstConfData.idCliente,
-                    soggetto: firstConfData.soggetto,
+                    denominazioneCliente: firstConfData.denominazioneCliente || '',
+                    soggetto: firstConfData.soggetto || (firstConfData.idCliente ? { value: firstConfData.idCliente, label: firstConfData.denominazioneCliente || '' } : null),
                     idAgente: firstConfData.idAgente,
                     agente: firstConfData.agente,
-                    idTipoPagamento: firstConfData.idTipoPagamento,
-                    // Note: tipoFattura will be set by fetchFatturazionePreferences or defaults to 'FATTURA'
+                    idTipoPagamento: firstConfData.idTipoPagamento || prev.idTipoPagamento,
                     idProgetto: firstConfData.idProgetto,
                     nomeProgetto: firstConfData.nomeProgetto,
-                    idListino: firstConfData.idListino || '',
-                    cittaIntestazione: firstConfData.cittaIntestazione,
-                    indirizzoIntestazione: firstConfData.indirizzoIntestazione,
-                    capIntestazione: firstConfData.capIntestazione,
-                    provinciaIntestazione: firstConfData.provinciaIntestazione,
-                    nazioneIntestazione: firstConfData.nazioneIntestazione || 'Italia',
-                    codiceFiscale: firstConfData.codiceFiscale || '',
-                    partitaIva: firstConfData.partitaIva || '',
-                    cittaDestinazione: firstConfData.cittaDestinazione,
-                    indirizzoDestinazione: firstConfData.indirizzoDestinazione,
-                    capDestinazione: firstConfData.capDestinazione,
-                    provinciaDestinazione: firstConfData.provinciaDestinazione,
-                    nazioneDestinazione: firstConfData.nazioneDestinazione || 'Italia'
+                    idListino: firstConfData.idListino || prev.idListino || '',
+                    codiceFiscale: firstConfData.codiceFiscale || prev.codiceFiscale || '',
+                    partitaIva: firstConfData.partitaIva || prev.partitaIva || '',
+                    ...(firstConfData.indirizzoIntestazione ? { indirizzoIntestazione: firstConfData.indirizzoIntestazione } : {}),
+                    ...(firstConfData.cittaIntestazione ? { cittaIntestazione: firstConfData.cittaIntestazione } : {}),
+                    ...(firstConfData.capIntestazione ? { capIntestazione: firstConfData.capIntestazione } : {}),
+                    ...(firstConfData.provinciaIntestazione ? { provinciaIntestazione: firstConfData.provinciaIntestazione } : {}),
+                    ...(firstConfData.nazioneIntestazione ? { nazioneIntestazione: firstConfData.nazioneIntestazione } : {}),
+                    ...(firstConfData.indirizzoDestinazione ? { indirizzoDestinazione: firstConfData.indirizzoDestinazione } : {}),
+                    ...(firstConfData.cittaDestinazione ? { cittaDestinazione: firstConfData.cittaDestinazione } : {}),
+                    ...(firstConfData.capDestinazione ? { capDestinazione: firstConfData.capDestinazione } : {}),
+                    ...(firstConfData.provinciaDestinazione ? { provinciaDestinazione: firstConfData.provinciaDestinazione } : {}),
+                    ...(firstConfData.nazioneDestinazione ? { nazioneDestinazione: firstConfData.nazioneDestinazione } : {}),
                 }));
-                loadClientAddresses(firstConfData.idCliente, false);
-                fetchNextNum(formData.dataDocumento, (tipoParam === 'FATTURA_PROFORMA') ? 0 : 1, tipoParam || 'FATTURA');
             }
         } catch (error) {
             console.error(error);
@@ -628,6 +627,7 @@ const FattureDetail = () => {
     };
 
     const loadClientAddresses = async (clientId, autoFill = true) => {
+        if (!clientId) return;
         try {
             const [resIndirizzi, resClient] = await Promise.all([
                 ClientiService.getIndirizzi(clientId),

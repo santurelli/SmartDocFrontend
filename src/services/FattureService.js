@@ -39,6 +39,10 @@ const FattureService = {
         return api.put(`/fatture/${id}/send-sdi`);
     },
 
+    inviaOra: (id) => {
+        return api.get(`/batch/run-invio-fattura/${id}`);
+    },
+
     importXml: (file) => {
         const formData = new FormData();
         formData.append('file', file);
