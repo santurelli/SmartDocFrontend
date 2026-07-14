@@ -521,7 +521,7 @@ const DDTList = () => {
 
                     <div className="pagination-container">
                         <span className="pagination-info">Visualizzati {ddts.length} di {total} risultati</span>
-                        <div className="btn-group">
+                        <div className="btn-group" style={{ display: 'flex', alignItems: 'center' }}>
                             <button className="btn btn-paginate" disabled={currentPage === 0} onClick={() => setCurrentPage(c => c - 1)}><FaChevronLeft /></button>
                             <span style={{ padding: '6px 12px', color: '#555', fontSize: '0.9em' }}>Pag. {currentPage + 1} / {Math.ceil(total / pageSize) || 1}</span>
                             <button className="btn btn-paginate" disabled={(currentPage + 1) * pageSize >= total} onClick={() => setCurrentPage(c => c + 1)}><FaChevronRight /></button>

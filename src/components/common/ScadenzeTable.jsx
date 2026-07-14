@@ -25,9 +25,16 @@ const ScadenzeTable = ({
     const [modalitaList, setModalitaList] = useState([]);
     const [isManualMode, setIsManualMode] = useState(false);
     
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 1050);
     const initialScadenzeLoaded = useRef(false);
     const prevDeps = useRef({ id: null, tot: null, data: null });
     const scadenzeRef = useRef([]);
+
+    useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth <= 1050);
+        window.addEventListener('resize', handler);
+        return () => window.removeEventListener('resize', handler);
+    }, []);
 
     // Keep scadenzeRef updated with current state
     useEffect(() => {
@@ -249,6 +256,164 @@ const ScadenzeTable = ({
 
     const sumScadenze = scadenze.reduce((acc, s) => acc + (s.importo || 0), 0);
     const difference = parseFloat((sumScadenze - totaleDocumento).toFixed(2));
+    const totaleComplessivo = scadenze.reduce((acc, s) => acc + (s.importo || 0) + (s.importoSpeseIncasso || 0), 0);
+
+    if (isMobile) {
+        return (
+            <div className="scadenze-container mt-3">
+                <div className="scadenze-header">
+                    <h6 className="m-0 text-primary" style={{ fontWeight: '600', fontSize: '15px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <FaCalendarAlt style={{ color: '#007bff' }} />
+                        <span>Piano di Pagamento</span>
+                    </h6>
+                    <div className="d-flex align-items-center">
+                        {!isActuallyReadOnly && (
+                            <>
+                                <button type="button" className="btn-premium-add" onClick={addScadenza}>
+                                    <FaPlus /> Aggiungi riga
+                                </button>
+                                <button type="button" className="btn-premium-sync" style={{ marginLeft: '10px' }}
+                                    onClick={() => calcolaScadenze(true)} disabled={isLoading || !idTipoPagamento}>
+                                    <FaSyncAlt className={isLoading ? 'fa-spin' : ''} /> Ricalcola
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {scadenze.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <FaExclamationTriangle className="text-warning" />
+                        <span>{idTipoPagamento ? "Nessuna scadenza. Aggiungine una o ricalcola." : "Seleziona un tipo di pagamento per visualizzare le scadenze."}</span>
+                    </div>
+                ) : (
+                    scadenze.map((s, index) => (
+                        <div key={s.id || index} style={{
+                            background: s.saldato === 1 ? '#f0fdf4' : '#fff',
+                            border: `1px solid ${s.saldato === 1 ? '#86efac' : '#e5e7eb'}`,
+                            borderRadius: '10px',
+                            padding: '12px 14px',
+                            marginBottom: '10px',
+                        }}>
+                            {/* Header: saldato + data scadenza + importo + elimina */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                <input type="checkbox" className="custom-checkbox"
+                                    checked={s.saldato === 1}
+                                    onChange={(e) => handleSaldatoChange(index, e.target.checked ? 1 : 0)}
+                                    disabled={isActuallyReadOnly}
+                                    title="Saldato"
+                                />
+                                {isActuallyReadOnly ? (
+                                    <span style={{ fontWeight: 700, color: '#333', fontSize: '14px' }}>{s.dtScadenza}</span>
+                                ) : (
+                                    <input type="date" className="form-control form-control-sm"
+                                        style={{ flex: '0 0 auto', width: 'auto' }}
+                                        value={formatDateForInput(s.dtScadenza)}
+                                        onChange={(e) => handleDateChange(index, e.target.value)}
+                                    />
+                                )}
+                                <div style={{ flex: 1 }} />
+                                {isActuallyReadOnly ? (
+                                    <span style={{ fontWeight: 700, color: '#17a2b8', fontSize: '15px', whiteSpace: 'nowrap' }}>{formatCurrency(s.importo)}</span>
+                                ) : (
+                                    <input type="number" step="0.01" className="form-control form-control-sm text-right"
+                                        style={{ color: '#17a2b8', fontWeight: 700, width: '90px', flexShrink: 0 }}
+                                        value={s.importo != null ? Math.round((s.importo + Number.EPSILON) * 100) / 100 : ''}
+                                        onChange={(e) => handleImportoChange(index, e.target.value)}
+                                    />
+                                )}
+                                {!isActuallyReadOnly && (
+                                    <button type="button" className="btn btn-link text-danger p-0" style={{ flexShrink: 0 }}
+                                        onClick={() => deleteScadenza(index)} title="Elimina">
+                                        <FaTrash />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Modalità Pagamento */}
+                            <div style={{ marginBottom: s.saldato === 1 ? '10px' : 0 }}>
+                                <label style={{ fontSize: '10px', color: '#aaa', textTransform: 'uppercase', marginBottom: '3px', display: 'block', fontWeight: 600 }}>Mod. Pagamento</label>
+                                {isActuallyReadOnly ? (
+                                    <span style={{ fontSize: '13px', padding: '4px 8px', color: '#495057', backgroundColor: '#f8f9fa', border: '1px solid #ddd', borderRadius: '4px', display: 'inline-block' }}>
+                                        {s.modalitaPagamento || '-'}
+                                    </span>
+                                ) : (
+                                    <select className="form-control form-control-sm"
+                                        value={s.modalitaPagamento || 'MP01'}
+                                        onChange={(e) => handleModalitaChange(index, e.target.value)}>
+                                        {modalitaList.map(m => (
+                                            <option key={m.codiceSdi} value={m.codiceSdi}>{m.descrizione}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+
+                            {/* Data Pagamento + Conto (solo se saldato) */}
+                            {s.saldato === 1 && (
+                                <div style={{ borderTop: '1px solid #d1fae5', paddingTop: '10px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                                    <div style={{ flex: '0 0 auto' }}>
+                                        <label style={{ fontSize: '10px', color: '#aaa', textTransform: 'uppercase', marginBottom: '3px', display: 'block', fontWeight: 600 }}>Data Pag.</label>
+                                        <input type="date" className="form-control form-control-sm"
+                                            value={formatDateForInput(s.dtPagamento)}
+                                            onChange={(e) => handleDataPagamentoChange(index, e.target.value)}
+                                            disabled={isActuallyReadOnly}
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <label style={{ fontSize: '10px', color: '#aaa', textTransform: 'uppercase', marginBottom: '3px', display: 'block', fontWeight: 600 }}>Conto</label>
+                                        <div className="flex-input-group">
+                                            <select className="form-control form-control-sm"
+                                                style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 0 }}
+                                                value={s.idRisorsa || ''}
+                                                onChange={(e) => handleContoChange(index, e.target.value)}
+                                                disabled={isActuallyReadOnly}>
+                                                <option value="">Conto...</option>
+                                                {conti.map(c => (
+                                                    <option key={c.id} value={c.id}>{c.descrizione}</option>
+                                                ))}
+                                            </select>
+                                            {!isActuallyReadOnly && (
+                                                <WrenchModalButton
+                                                    ModalComponent={RisorseManagementModal}
+                                                    modalProps={{ initialTipologia: 'BA' }}
+                                                    title="Gestione Conti"
+                                                    onClose={onRefreshConti}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+
+                {/* Footer mobile */}
+                <div style={{ borderTop: '2px solid #ebedf2', paddingTop: '12px', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 2px 8px' }}>
+                        <span style={{ color: '#555', fontWeight: 600 }}>Subtotale:</span>
+                        <span style={{ fontWeight: 700, color: difference !== 0 ? '#dc3545' : '#28a745' }}>{formatCurrency(sumScadenze)}</span>
+                    </div>
+                    {difference !== 0 && (
+                        <div style={{ background: '#fff8f8', borderRadius: '8px', padding: '8px 12px', marginBottom: '8px', border: '1px solid #ffe0e0' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                <span style={{ color: '#dc3545', fontWeight: 600, fontSize: '13px' }}>Differenza (Abbuono/Magg.):</span>
+                                <span style={{ color: '#dc3545', fontWeight: 700 }}>{formatCurrency(difference)}</span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#dc3545', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <FaInfoCircle style={{ flexShrink: 0 }} />
+                                <span>{difference > 0 ? "La somma delle rate supera l'importo da incassare (Maggiorazione)." : "La somma delle rate è inferiore all'importo da incassare (Sconto/Abbuono)."}</span>
+                            </div>
+                        </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0f4f8', borderRadius: '8px', padding: '10px 14px' }}>
+                        <span style={{ fontWeight: 700, color: '#333', fontSize: '14px' }}>TOTALE COMPLESSIVO:</span>
+                        <span style={{ fontWeight: 700, color: '#0056b3', fontSize: '18px' }}>{formatCurrency(totaleComplessivo)}</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="scadenze-container mt-3">

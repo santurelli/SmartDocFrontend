@@ -654,6 +654,20 @@ body #root div.infographic-box.purple-bg.colored {
   color: #fff !important;
 }
 
+/* ── Tab Pagamento: stack cols on tablet/mobile ────────────────────────── */
+@media (max-width: 1050px) {
+  .tab-padding-wrapper .row > [class*="col-md-"] {
+    width: 100% !important;
+    float: none !important;
+    margin-bottom: 8px;
+  }
+  .pagamento-col {
+    width: 100% !important;
+    float: none !important;
+    margin-bottom: 8px;
+  }
+}
+
 @media (max-width: 576px) {
   .pagination-container {
     flex-wrap: wrap;
@@ -665,96 +679,3 @@ body #root div.infographic-box.purple-bg.colored {
   }
 }
 
-/* ── Document rows: card layout on mobile ─────────────────────────────── */
-@media (max-width: 767px) {
-  .table-items thead {
-    display: none;
-  }
-
-  .table-items tbody tr {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 4px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    padding: 8px 6px 6px;
-    background: #fff;
-  }
-
-  .table-items tbody tr td {
-    border: none !important;
-    padding: 2px 3px !important;
-    vertical-align: middle;
-  }
-
-  /* Row 1: [tipo badge] — [descrizione, expands] — [delete btn] */
-  .table-items tbody tr td.cell-tipo {
-    order: 1;
-    width: 46px;
-    flex-shrink: 0;
-  }
-
-  .table-items tbody tr td:nth-child(2) {
-    order: 2;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .table-items tbody tr td:last-child {
-    order: 3;
-    width: 36px;
-    flex-shrink: 0;
-  }
-
-  /* Row 2: numeric fields — each with a tiny label above */
-  .table-items tbody tr.row-a td:nth-child(n+3):nth-child(-n+8),
-  .table-items tbody tr.row-f td:nth-child(n+3):nth-child(-n+8) {
-    order: 4;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 0;
-    flex: 1;
-  }
-
-  .table-items tbody tr.row-a td:nth-child(n+3):nth-child(-n+8)::before,
-  .table-items tbody tr.row-f td:nth-child(n+3):nth-child(-n+8)::before {
-    font-size: 9px;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    line-height: 1;
-    margin-bottom: 2px;
-  }
-
-  .table-items tbody tr.row-a td:nth-child(3)::before,
-  .table-items tbody tr.row-f td:nth-child(3)::before { content: 'Q.tà'; }
-  .table-items tbody tr.row-a td:nth-child(4)::before,
-  .table-items tbody tr.row-f td:nth-child(4)::before { content: 'U.M.'; }
-  .table-items tbody tr.row-a td:nth-child(5)::before,
-  .table-items tbody tr.row-f td:nth-child(5)::before { content: 'Prezzo'; }
-  .table-items tbody tr.row-a td:nth-child(6)::before,
-  .table-items tbody tr.row-f td:nth-child(6)::before { content: 'Sconto'; }
-  .table-items tbody tr.row-a td:nth-child(7)::before,
-  .table-items tbody tr.row-f td:nth-child(7)::before { content: 'IVA'; }
-  .table-items tbody tr.row-a td:nth-child(8)::before,
-  .table-items tbody tr.row-f td:nth-child(8)::before { content: 'Totale'; }
-
-  .table-items tbody tr.row-a td:nth-child(8),
-  .table-items tbody tr.row-f td:nth-child(8) {
-    font-weight: 600;
-    font-size: 13px;
-  }
-
-  /* Full width on very small screens */
-  .table-items .form-control,
-  .table-items select.form-control {
-    font-size: 12px !important;
-    padding: 2px 4px !important;
-    height: 28px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-  }
-}

@@ -1753,7 +1753,7 @@ const FattureDetail = () => {
                         <div className={`tab-pane ${activeTab === 'pagamento' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
                                 <div className="row mb-4">
-                                    <div className="col-md-5">
+                                    <div className="col-md-5 pagamento-col">
                                         <EntitySelectGroup
                                             label="Tipo Pagamento"
                                             isAsync={false}
@@ -1766,7 +1766,7 @@ const FattureDetail = () => {
                                             onModalClose={fetchCombos}
                                         />
                                     </div>
-                                    <div className="col-md-4">
+                                    <div className="col-md-4 pagamento-col">
                                         <EntitySelectGroup
                                             label="Nostra Banca"
                                             isAsync={false}
@@ -1780,7 +1780,7 @@ const FattureDetail = () => {
                                             onModalClose={fetchCombos}
                                         />
                                     </div>
-                                    <div className="col-md-3">
+                                    <div className="col-md-3 pagamento-col">
                                         <EntitySelectGroup
                                             label="Listino"
                                             isAsync={false}

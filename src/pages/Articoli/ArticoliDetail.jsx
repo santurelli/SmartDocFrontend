@@ -240,6 +240,16 @@ const ArticoliDetail = () => {
     };
 
     const handleSave = async () => {
+        if (!formData.codice?.trim()) {
+            const Swal = (await import('sweetalert2')).default;
+            Swal.fire({ title: 'Campo obbligatorio', text: 'Il Codice è obbligatorio.', icon: 'warning' });
+            return;
+        }
+        if (!formData.descrizione?.trim()) {
+            const Swal = (await import('sweetalert2')).default;
+            Swal.fire({ title: 'Campo obbligatorio', text: 'La Descrizione è obbligatoria.', icon: 'warning' });
+            return;
+        }
         setSaving(true);
         let res;
         try {

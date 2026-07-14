@@ -109,22 +109,29 @@ const ListiniList = () => {
                             </div>
                             
                             <div className="listino-body">
-                                <div className="derivation-info">
-                                    {getDerivationIcon(l.derivationSource)}
-                                    <span className="derivation-source">
-                                        {!l.derivationSource || l.derivationSource === 'NONE' ? 'Manuale' :
-                                         l.derivationSource === 'LISTINO' ? (l.descrizioneParent || 'Radice') :
-                                         l.derivationSource === 'ULTIMO_ACQUISTO' ? 'Ultimo Acquisto' : 'Medio Acquisto'}
-                                    </span>
-                                </div>
-                                
-                                <div className="derivation-info">
-                                    {l.derivationType === 'PERCENTAGE' ? <FaPercentage size={12} /> : <FaEuroSign size={12} />}
-                                    <span className="derivation-rule">{getRuleText(l)}</span>
-                                    {l.roundingRule > 0 && (
-                                        <span className="text-muted ml-2">(arr. {l.roundingRule})</span>
-                                    )}
-                                </div>
+                                {(!l.derivationSource || l.derivationSource === 'NONE') ? (
+                                    <div className="derivation-info">
+                                        <FaEuroSign size={14} />
+                                        <span className="derivation-source">Prezzi Manuali</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="derivation-info">
+                                            {getDerivationIcon(l.derivationSource)}
+                                            <span className="derivation-source">
+                                                {l.derivationSource === 'LISTINO' ? (l.descrizioneParent || 'Radice') :
+                                                 l.derivationSource === 'ULTIMO_ACQUISTO' ? 'Ultimo Acquisto' : 'Medio Acquisto'}
+                                            </span>
+                                        </div>
+                                        <div className="derivation-info">
+                                            {l.derivationType === 'PERCENTAGE' ? <FaPercentage size={12} /> : <FaEuroSign size={12} />}
+                                            <span className="derivation-rule">{getRuleText(l)}</span>
+                                            {l.roundingRule > 0 && (
+                                                <span className="text-muted ml-2">(arr. {l.roundingRule})</span>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <div className="listino-card-footer">

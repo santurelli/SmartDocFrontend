@@ -336,8 +336,7 @@
     display: flex !important;
     align-items: stretch !important;
     width: 100%;
-    min-width: 120px;
-    /* Prevent squashing */
+    min-width: 60px;
 }
 
 /* Ensure harmonics in table cells */

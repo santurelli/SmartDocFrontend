@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AsyncSelect from 'react-select/async';
 import { FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
 import Swal from 'sweetalert2';
@@ -66,6 +66,13 @@ const DocumentRows = (props) => {
 
     const [modalOpen, setModalOpen] = useState(false);
     const [activeRowIdx, setActiveRowIdx] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 1050);
+
+    useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth <= 1050);
+        window.addEventListener('resize', handler);
+        return () => window.removeEventListener('resize', handler);
+    }, []);
 
     const loadArticoli = (inputValue, callback) => {
         if (!inputValue || inputValue.length < 3) return callback([]);
@@ -216,6 +223,120 @@ const DocumentRows = (props) => {
         setActiveRowIdx(null);
     };
 
+    const renderDescriptionContent = (row, idx) => {
+        if (row.tipo === 'A') return (
+            <>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                    <div style={{ flex: 1 }}>
+                        <AsyncSelect
+                            isClearable cacheOptions
+                            loadOptions={loadArticoli}
+                            formatOptionLabel={formatArticleOptionLabel}
+                            styles={tableSelectStyles}
+                            placeholder="Cerca art..."
+                            noOptionsMessage={() => "Nessun risultato"}
+                            loadingMessage={() => "Caricamento..."}
+                            menuPortalTarget={document.body}
+                            value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
+                            onChange={(opt) => {
+                                const a = opt?.data || {};
+                                onRowUpdate(idx, { idProdotto: opt?.value, codiceProdotto: a.codiceProdotto || '', descProdotto: a.descProdotto || '', prezzo: a.prezzo || 0, idUnitaMisura: a.idUnitaMisura, idAliquotaIva: a.idAliquotaIva, descrFormato: a.descrFormato, descrScelta: a.descrScelta, descrTono: a.descrTono, descrCalibro: a.descrCalibro });
+                                if (opt?.value) {
+                                    ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
+                                        if (res.data && res.data.prezzo !== undefined) onRowChange(idx, 'prezzo', res.data.prezzo);
+                                    }).catch(() => {});
+                                }
+                            }}
+                            isDisabled={readOnly}
+                        />
+                    </div>
+                    {!readOnly && <button type="button" className="btn btn-default btn-sm" style={{ height: '32px', display: 'flex', alignItems: 'center', minWidth: '32px', padding: '0', justifyContent: 'center' }} onClick={() => openArticoliModal(idx)}><FaSearch /></button>}
+                </div>
+                {showRitenuta && <div className="ritenuta-inline-box" style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#d32f2f' }}><input type="checkbox" id={`ritenuta-${idx}`} checked={row.flRitenuta === 1} onChange={(e) => onRowChange(idx, 'flRitenuta', e.target.checked ? 1 : 0)} disabled={readOnly} style={{ cursor: 'pointer', margin: 0, width: '15px', height: '15px' }} /><label htmlFor={`ritenuta-${idx}`} style={{ cursor: 'pointer', fontWeight: 500, margin: 0 }}>Soggetto a Ritenuta</label></div>}
+            </>
+        );
+        if (row.tipo === 'F') return (
+            <div className="flex-column gap-1">
+                <input type="text" className="form-control" value={row.fmDescrizione || ''} onChange={(e) => onRowChange(idx, 'fmDescrizione', e.target.value)} placeholder="Descrizione libera..." disabled={readOnly} />
+                {isCeramica && <div className="d-flex gap-2 mt-1"><input type="text" className="form-control form-control-xs" value={row.fmScelta || ''} onChange={(e) => onRowChange(idx, 'fmScelta', e.target.value)} placeholder="Scelta" style={{ width: '50%' }} disabled={readOnly} /><input type="text" className="form-control form-control-xs" value={row.fmTono || ''} onChange={(e) => onRowChange(idx, 'fmTono', e.target.value)} placeholder="Tono" style={{ width: '50%' }} disabled={readOnly} /></div>}
+                {showRitenuta && <div className="ritenuta-inline-box" style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#d32f2f' }}><input type="checkbox" id={`ritenuta-${idx}`} checked={row.flRitenuta === 1} onChange={(e) => onRowChange(idx, 'flRitenuta', e.target.checked ? 1 : 0)} disabled={readOnly} style={{ cursor: 'pointer', margin: 0, width: '15px', height: '15px' }} /><label htmlFor={`ritenuta-${idx}`} style={{ cursor: 'pointer', fontWeight: 500, margin: 0 }}>Soggetto a Ritenuta</label></div>}
+            </div>
+        );
+        return <input type="text" className="form-control" value={row.nota || row.fmDescrizione || row.descrizione || ''} onChange={(e) => onRowChange(idx, 'nota', e.target.value)} placeholder="Testo della nota..." disabled={readOnly} />;
+    };
+
+    const renderNumericFields = (row, idx) => {
+        const vals = getRowValues(row, combos.aliquoteIva);
+        return (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px', alignItems: 'flex-end' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '70px', flex: '1' }}>
+                    <label style={{ fontSize: '10px', color: '#999', marginBottom: '2px', textTransform: 'uppercase' }}>Q.tà</label>
+                    <input type="number" step="0.01" className="form-control text-right" value={row.quantita} onChange={(e) => onRowChange(idx, 'quantita', e.target.value)} disabled={readOnly} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '70px', flex: '1' }}>
+                    <label style={{ fontSize: '10px', color: '#999', marginBottom: '2px', textTransform: 'uppercase' }}>U.M.</label>
+                    <select className="form-control" value={row.idUnitaMisura || ''} onChange={(e) => onRowChange(idx, 'idUnitaMisura', e.target.value)} disabled={readOnly}>
+                        <option value="">-</option>
+                        {(combos.unitaMisura || []).map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
+                    </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '80px', flex: '2' }}>
+                    <label style={{ fontSize: '10px', color: '#999', marginBottom: '2px', textTransform: 'uppercase' }}>Prezzo</label>
+                    <input type="number" step="0.01" className="form-control text-right" value={row.prezzo} onChange={(e) => onRowChange(idx, 'prezzo', e.target.value)} disabled={readOnly} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '60px', flex: '1' }}>
+                    <label style={{ fontSize: '10px', color: '#999', marginBottom: '2px', textTransform: 'uppercase' }}>Sconto</label>
+                    <input type="text" className="form-control text-right" value={row.sconto || ''} onChange={(e) => onRowChange(idx, 'sconto', e.target.value)} disabled={readOnly} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', minWidth: '70px', flex: '1' }}>
+                    <label style={{ fontSize: '10px', color: '#999', marginBottom: '2px', textTransform: 'uppercase' }}>IVA</label>
+                    <select className="form-control" value={row.idAliquotaIva || ''} onChange={(e) => onRowChange(idx, 'idAliquotaIva', e.target.value)} disabled={readOnly}>
+                        <option value="">-</option>
+                        {(combos.aliquoteIva || []).map(a => <option key={a.id} value={a.id}>{a.codice}</option>)}
+                    </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flex: '2' }}>
+                    <label style={{ fontSize: '10px', color: '#999', marginBottom: '2px', textTransform: 'uppercase' }}>Totale</label>
+                    <span style={{ fontWeight: 600, fontSize: '14px', lineHeight: '34px' }}>{formatCurrency(vals.total)}</span>
+                </div>
+            </div>
+        );
+    };
+
+    if (isMobile) return (
+        <div>
+            {rows.map((row, idx) => (
+                <div key={idx} style={{ border: '1px solid #ddd', borderRadius: '6px', padding: '10px 12px', marginBottom: '8px', background: '#fff' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <div style={{ flexShrink: 0, paddingTop: '4px' }}>
+                            {row.tipo === 'A' && <span className="label label-primary">ART</span>}
+                            {row.tipo === 'F' && <span className="label label-info">F.M.</span>}
+                            {row.tipo === 'N' && <span className="label label-default">NOTA</span>}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            {renderDescriptionContent(row, idx)}
+                        </div>
+                        {!readOnly && (
+                            <button type="button" className="btn-delete-row" onClick={() => handleDelete(idx)} tabIndex="-1" style={{ flexShrink: 0 }}>
+                                <FaTrash />
+                            </button>
+                        )}
+                    </div>
+                    {row.tipo !== 'N' && renderNumericFields(row, idx)}
+                </div>
+            ))}
+            {onAddRow && !readOnly && (
+                <div className="table-row-add-toolbar">
+                    <button type="button" className="btn-add-inline" onClick={() => addRow('A')}><FaPlus /> ARTICOLO</button>
+                    <button type="button" className="btn-add-inline fm" onClick={() => addRow('F')}><FaPlus /> FUORI MAGAZZINO</button>
+                    <button type="button" className="btn-add-inline note" onClick={() => addRow('N')}><FaPlus /> NOTA</button>
+                </div>
+            )}
+            {children}
+            <ArticoliManagementModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSelect={handleModalSelect} idListino={idListino} />
+        </div>
+    );
+
     return (
         <div className="table-responsive">
             <table className="table table-hover table-items">
@@ -243,108 +364,16 @@ const DocumentRows = (props) => {
                                     {row.tipo === 'N' && <span className="label label-default">NOTA</span>}
                                 </td>
                                 <td colSpan={row.tipo === 'N' ? 7 : 1}>
-                                    {row.tipo === 'A' ? (
-                                        <>
-                                            <div style={{ display: 'flex', gap: '5px' }}>
-                                                <div style={{ flex: 1 }}>
-                                                    <AsyncSelect
-                                                        isClearable
-                                                        cacheOptions
-                                                        loadOptions={loadArticoli}
-                                                        formatOptionLabel={formatArticleOptionLabel}
-                                                        styles={tableSelectStyles}
-                                                        placeholder="Cerca art..."
-                                                        noOptionsMessage={() => "Nessun risultato"}
-                                                        loadingMessage={() => "Caricamento..."}
-                                                        menuPortalTarget={document.body}
-                                                        value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
-                                                        onChange={(opt) => {
-                                                            const a = opt?.data || {};
-                                                            onRowUpdate(idx, {
-                                                                idProdotto: opt?.value,
-                                                                codiceProdotto: a.codiceProdotto || '',
-                                                                descProdotto: a.descProdotto || '',
-                                                                prezzo: a.prezzo || 0,
-                                                                idUnitaMisura: a.idUnitaMisura,
-                                                                idAliquotaIva: a.idAliquotaIva,
-                                                                descrFormato: a.descrFormato,
-                                                                descrScelta: a.descrScelta,
-                                                                descrTono: a.descrTono,
-                                                                descrCalibro: a.descrCalibro
-                                                            });
-
-                                                            if (opt?.value) {
-                                                                ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
-                                                                    if (res.data && res.data.prezzo !== undefined) {
-                                                                        onRowChange(idx, 'prezzo', res.data.prezzo);
-                                                                    }
-                                                                }).catch(err => console.error("Error fetching dynamic price:", err));
-                                                            }
-                                                        }}
-                                                        isDisabled={readOnly}
-                                                    />
-                                                </div>
-                                                {!readOnly && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-default btn-sm"
-                                                        style={{ height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '32px', padding: '0' }}
-                                                        onClick={() => openArticoliModal(idx)}
-                                                        title="Sfoglia elenco articoli"
-                                                    >
-                                                        <FaSearch />
-                                                    </button>
-                                                )}
-                                            </div>
-                                            {showRitenuta && (
-                                                <div className="ritenuta-inline-box" style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#d32f2f' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`ritenuta-${idx}`}
-                                                        checked={row.flRitenuta === 1}
-                                                        onChange={(e) => onRowChange(idx, 'flRitenuta', e.target.checked ? 1 : 0)}
-                                                        disabled={readOnly}
-                                                        style={{ cursor: 'pointer', margin: 0, width: '15px', height: '15px' }}
-                                                    />
-                                                    <label htmlFor={`ritenuta-${idx}`} style={{ cursor: 'pointer', fontWeight: 500, margin: 0 }}>Soggetto a Ritenuta</label>
-                                                </div>
-                                            )}
-                                        </>
-                                    ) : row.tipo === 'F' ? (
-                                        <div className="flex-column gap-1">
-                                            <input type="text" className="form-control" value={row.fmDescrizione || ''} onChange={(e) => onRowChange(idx, 'fmDescrizione', e.target.value)} placeholder="Descrizione libera..." disabled={readOnly} />
-                                            {isCeramica && (
-                                                <div className="d-flex gap-2 mt-1">
-                                                    <input type="text" className="form-control form-control-xs" value={row.fmScelta || ''} onChange={(e) => onRowChange(idx, 'fmScelta', e.target.value)} placeholder="Scelta" style={{ width: '50%' }} disabled={readOnly} />
-                                                    <input type="text" className="form-control form-control-xs" value={row.fmTono || ''} onChange={(e) => onRowChange(idx, 'fmTono', e.target.value)} placeholder="Tono" style={{ width: '50%' }} disabled={readOnly} />
-                                                </div>
-                                            )}
-                                            {showRitenuta && (
-                                                <div className="ritenuta-inline-box" style={{ marginTop: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#d32f2f' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        id={`ritenuta-${idx}`}
-                                                        checked={row.flRitenuta === 1}
-                                                        onChange={(e) => onRowChange(idx, 'flRitenuta', e.target.checked ? 1 : 0)}
-                                                        disabled={readOnly}
-                                                        style={{ cursor: 'pointer', margin: 0, width: '15px', height: '15px' }}
-                                                    />
-                                                    <label htmlFor={`ritenuta-${idx}`} style={{ cursor: 'pointer', fontWeight: 500, margin: 0 }}>Soggetto a Ritenuta</label>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <input type="text" className="form-control" value={row.nota || row.fmDescrizione || row.descrizione || ''} onChange={(e) => onRowChange(idx, 'nota', e.target.value)} placeholder="Testo della nota..." disabled={readOnly} />
-                                    )}
+                                    {renderDescriptionContent(row, idx)}
                                 </td>
 
                                 {
                                     row.tipo !== 'N' ? (
                                         <>
-                                            <td><input type="number" step="0.01" className="form-control text-right" value={row.quantita} onChange={(e) => onRowChange(idx, 'quantita', e.target.value)} disabled={readOnly} /></td>
-                                            <td>
+                                            <td style={{ width: '110px', minWidth: '110px' }}><input type="number" step="0.01" className="form-control text-right" value={row.quantita} onChange={(e) => onRowChange(idx, 'quantita', e.target.value)} disabled={readOnly} style={{ width: '100%' }} /></td>
+                                            <td style={{ width: '70px', minWidth: '70px' }}>
                                                 <div className="cell-select-group">
-                                                    <select className="form-control input-sm" value={row.idUnitaMisura || ''} onChange={(e) => onRowChange(idx, 'idUnitaMisura', e.target.value)} disabled={readOnly}>
+                                                    <select className="form-control input-sm" value={row.idUnitaMisura || ''} onChange={(e) => onRowChange(idx, 'idUnitaMisura', e.target.value)} disabled={readOnly} style={{ width: '100%' }}>
                                                         <option value="">-</option>
                                                         {(combos.unitaMisura || []).map(u => <option key={u.id} value={u.id}>{u.descrizione}</option>)}
                                                     </select>
