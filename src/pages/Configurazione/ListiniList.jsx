@@ -64,12 +64,13 @@ const ListiniList = () => {
         switch (source) {
             case 'ULTIMO_ACQUISTO': return <FaHistory title="Ultimo Acquisto" />;
             case 'MEDIO_ACQUISTO': return <FaCalculator title="Medio Acquisto" />;
-            default: return <FaSitemap title="Da Listino Padre" />;
+            case 'LISTINO': return <FaSitemap title="Da Listino Padre" />;
+            default: return <FaEuroSign title="Prezzo Manuale" />;
         }
     };
 
     const getRuleText = (listino) => {
-        if (listino.derivationType === 'NONE') return 'Prezzi Manuali';
+        if (!listino.derivationType || listino.derivationType === 'NONE') return 'Prezzi Manuali';
         const sign = listino.derivationValue >= 0 ? '+' : '';
         const unit = listino.derivationType === 'PERCENTAGE' ? '%' : '€';
         return `${sign}${listino.derivationValue}${unit}`;
@@ -111,7 +112,8 @@ const ListiniList = () => {
                                 <div className="derivation-info">
                                     {getDerivationIcon(l.derivationSource)}
                                     <span className="derivation-source">
-                                        {l.derivationSource === 'LISTINO' ? (l.descrizioneParent || 'Radice') : 
+                                        {!l.derivationSource || l.derivationSource === 'NONE' ? 'Manuale' :
+                                         l.derivationSource === 'LISTINO' ? (l.descrizioneParent || 'Radice') :
                                          l.derivationSource === 'ULTIMO_ACQUISTO' ? 'Ultimo Acquisto' : 'Medio Acquisto'}
                                     </span>
                                 </div>

@@ -681,8 +681,8 @@ const ArticoliDetail = () => {
                                         <tbody>
                                             {allListini.map(listino => {
                                                 const currentPrezzo = prezzi.find(p => p.idListino === listino.id);
-                                                const isManual = listino.derivationType === 'NONE';
-                                                
+                                                const isManual = !listino.derivationType || listino.derivationType === 'NONE';
+
                                                 return (
                                                     <tr key={listino.id} className={!isManual ? 'text-muted' : ''}>
                                                         <td style={{ verticalAlign: 'middle' }}>
@@ -690,8 +690,8 @@ const ArticoliDetail = () => {
                                                             {listino.flDefault === 1 && <span className="label label-primary" style={{ marginLeft: '10px' }}>Predefinito</span>}
                                                         </td>
                                                         <td style={{ verticalAlign: 'middle' }}>
-                                                            {listino.derivationType === 'NONE' ? 'Manuale' : 
-                                                             listino.derivationType === 'PERCENTAGE' ? `Ricarico ${listino.derivationValue}%` : 
+                                                            {isManual ? 'Manuale' :
+                                                             listino.derivationType === 'PERCENTAGE' ? `Ricarico ${listino.derivationValue}%` :
                                                              `Ricarico fisso €${listino.derivationValue}`}
                                                         </td>
                                                         <td style={{ verticalAlign: 'middle' }}>

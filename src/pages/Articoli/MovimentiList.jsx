@@ -26,6 +26,7 @@ const MovimentiList = () => {
     });
 
     const [movimenti, setMovimenti] = useState([]);
+    const [totalCount, setTotalCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [page, setPage] = useState(initialState.page);
@@ -105,8 +106,10 @@ const MovimentiList = () => {
             // Yes, GenericResponseDto.payload
             if (response.payload) {
                 setMovimenti(response.payload);
+                setTotalCount(response.payload.length > 0 ? (response.payload[0].total || 0) : 0);
             } else {
                 setMovimenti([]);
+                setTotalCount(0);
             }
         } catch (error) {
             console.error("Error fetching movimenti", error);
@@ -264,19 +267,21 @@ const MovimentiList = () => {
                         </table>
                     </div>
 
-                    <div className="pagination-container">
-                        {/* Simple pagination: Previous / Next. Since backend list doesn't return total count in this query yet, we just rely on "Results returned < pageSize" to disable Next? 
-                            Actually MOVIMENTIMAGAZZINO_S01 just returns rows. It doesn't return total count.
-                            Legacy UI had server-side pagination with count. 
-                            I only implemented S01 list. I didn't verify if it returns count. (It doesn't, it's just a select).
-                            For now I will show Previous/Next buttons. Disable "Next" if current page has < pageSize items.
-                         */}
+                    <div className="pagination-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                        <small style={{ color: '#777' }}>
+                            {totalCount > 0
+                                ? `Visualizzati ${page * pageSize + 1} - ${Math.min((page + 1) * pageSize, totalCount)} di ${totalCount} risultati`
+                                : movimenti.length === 0 ? '' : `${movimenti.length} risultati`}
+                        </small>
                         <nav>
-                            <ul className="pagination">
+                            <ul className="pagination" style={{ margin: 0 }}>
                                 <li className={page === 0 ? 'disabled' : ''}>
                                     <a href="#" onClick={(e) => { e.preventDefault(); if (page > 0) setPage(page - 1); }}>
                                         <FaChevronLeft />
                                     </a>
+                                </li>
+                                <li className="disabled" style={{ padding: '6px 12px', color: '#555' }}>
+                                    Pag. {page + 1}{totalCount > 0 ? ` / ${Math.ceil(totalCount / pageSize)}` : ''}
                                 </li>
                                 <li className={movimenti.length < pageSize ? 'disabled' : ''}>
                                     <a href="#" onClick={(e) => { e.preventDefault(); if (movimenti.length === pageSize) setPage(page + 1); }}>

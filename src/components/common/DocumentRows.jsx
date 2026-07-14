@@ -223,8 +223,8 @@ const DocumentRows = (props) => {
                     <tr>
                         <th style={{ width: '60px', textAlign: 'center' }}>Tipo</th>
                         <th>Descrizione / Articolo</th>
-                        <th style={{ width: '80px' }}>Q.tà</th>
-                        <th style={{ width: '80px' }}>U.M.</th>
+                        <th style={{ width: '110px' }}>Q.tà</th>
+                        <th style={{ width: '70px' }}>U.M.</th>
                         <th style={{ width: '120px' }}>Prezzo</th>
                         <th style={{ width: '100px' }}>Sconto</th>
                         <th style={{ width: '100px' }}>IVA</th>
