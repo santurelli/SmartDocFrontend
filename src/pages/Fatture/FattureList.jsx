@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import Select from 'react-select';
@@ -53,6 +53,7 @@ const FattureList = () => {
     // Filters
     const [filters, setFilters] = useState({
         numDocumento: initialState.numDocumento || '',
+        particella: initialState.particella || '',
         dataDa: initialState.dataDa || defaultRange.dataDa,
         dataA: initialState.dataA || defaultRange.dataA,
         idCliente: initialState.idCliente || null,
@@ -139,6 +140,7 @@ const FattureList = () => {
                 idAgente: filters.idAgente,
                 stato: filters.idStato,
                 numDocumento: filters.numDocumento,
+                particella: filters.particella,
                 orderColumn: filters.orderBy || 'data_fattura',
                 orderDir: filters.orderDir || 'DESC',
                 start: (e ? 0 : currentPage) * pageSize,
@@ -666,6 +668,16 @@ const FattureList = () => {
                             value={filters.numDocumento}
                             onChange={(e) => setFilters({ ...filters, numDocumento: e.target.value })}
                             placeholder="Cerca numero..."
+                        />
+                    </div>
+                    <div className="filter-field" style={{ maxWidth: '140px' }}>
+                        <label>Suffisso:</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={filters.particella}
+                            onChange={(e) => setFilters({ ...filters, particella: e.target.value })}
+                            placeholder="Suffisso..."
                         />
                     </div>
                     <div className="filter-field" style={{ minWidth: '300px' }}>
