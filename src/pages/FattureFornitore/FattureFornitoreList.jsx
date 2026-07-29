@@ -1,10 +1,11 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaTrash, FaPlus, FaEllipsisV, FaSearch, FaSync, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaEllipsisV, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaEnvelopeOpenText } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import AsyncSelect from 'react-select/async';
 import FattureFornitoreService from '../../services/FattureFornitoreService';
 import FornitoriService from '../../services/FornitoriService';
+import ComunicazioniDocumentoModal from '../../components/modals/ComunicazioniDocumentoModal';
 import '../Fatture/FattureList.css';
 
 const FattureFornitoreList = () => {
@@ -15,6 +16,7 @@ const FattureFornitoreList = () => {
     const [total, setTotal] = useState(0);
     const [totali, setTotali] = useState({ f: 0, s: 0, d: 0 }); // f = totale, s = pagato, d = da saldare
     const [activeActionMenu, setActiveActionMenu] = useState(null);
+    const [comunicazioniDoc, setComunicazioniDoc] = useState(null);
 
     // Filters
     const [filters, setFilters] = useState({
@@ -284,12 +286,60 @@ const FattureFornitoreList = () => {
                                     </tr>
                                 ) : (
                                     fatture.map(item => (
-                                        <tr key={item.id}>
+                                        <tr key={item.id} style={item.tipoDocumentoSdi ? { borderLeft: '3px solid #f59e0b' } : { borderLeft: '3px solid transparent' }}>
                                             <td>{item.dataDocumento}</td>
                                             <td>{item.numDocumento}</td>
                                             <td>{item.dataDocumentoFornitore}</td>
                                             <td>{item.numeroDocumentoFornitore}</td>
-                                            <td>{item.descFornitore || item.fornitoreDto?.denominazione || 'N/D'}</td>
+                                            <td>
+                                                <div>{item.descFornitore || item.fornitoreDto?.denominazione || 'N/D'}</div>
+                                                {item.tipoDocumentoSdi && (
+                                                    <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                                                        <span style={{
+                                                            display: 'inline-block',
+                                                            padding: '1px 7px',
+                                                            borderRadius: '3px',
+                                                            fontSize: '10px',
+                                                            fontWeight: 700,
+                                                            letterSpacing: '0.4px',
+                                                            textTransform: 'uppercase',
+                                                            background: '#fffbeb',
+                                                            color: '#92400e',
+                                                            border: '1px solid #fde68a'
+                                                        }}>
+                                                            {item.tipoDocumentoSdi} · Autofattura
+                                                        </span>
+                                                        {item.statoFatturaElettronica === 'DI' && (
+                                                            <span style={{
+                                                                display: 'inline-block',
+                                                                padding: '1px 7px',
+                                                                borderRadius: '3px',
+                                                                fontSize: '10px',
+                                                                fontWeight: 700,
+                                                                letterSpacing: '0.4px',
+                                                                textTransform: 'uppercase',
+                                                                background: '#fff7ed',
+                                                                color: '#c2410c',
+                                                                border: '1px solid #fed7aa'
+                                                            }}>In coda SDI</span>
+                                                        )}
+                                                        {item.statoFatturaElettronica === 'IN' && (
+                                                            <span style={{
+                                                                display: 'inline-block',
+                                                                padding: '1px 7px',
+                                                                borderRadius: '3px',
+                                                                fontSize: '10px',
+                                                                fontWeight: 700,
+                                                                letterSpacing: '0.4px',
+                                                                textTransform: 'uppercase',
+                                                                background: '#f0fdf4',
+                                                                color: '#166534',
+                                                                border: '1px solid #bbf7d0'
+                                                            }}>Inviata</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </td>
                                             <td className="text-right">€ {item.totale?.toFixed(2) || item.totaleDocumento?.toFixed(2) || '0.00'}</td>
                                             <td className="text-right">€ {item.totaleDaPagare?.toFixed(2) || item.totaleDaSaldare?.toFixed(2) || '0.00'}</td>
                                             <td className="text-right">
@@ -308,6 +358,9 @@ const FattureFornitoreList = () => {
                                                         <div className="action-dropdown-menu">
                                                             <button className="action-dropdown-item" onClick={() => navigate(`/fatture-fornitore/${item.id}`)}>
                                                                 <FaEdit /> Modifica
+                                                            </button>
+                                                            <button className="action-dropdown-item" onClick={() => { setActiveActionMenu(null); setComunicazioniDoc(item); }}>
+                                                                <FaEnvelopeOpenText /> Comunicazioni inviate
                                                             </button>
                                                             <div className="action-dropdown-divider"></div>
                                                             <button className="action-dropdown-item text-danger" onClick={() => handleDelete(item.id)}>
@@ -334,6 +387,15 @@ const FattureFornitoreList = () => {
                     </div>
                 </div>
             </div>
+
+            <ComunicazioniDocumentoModal
+                isOpen={!!comunicazioniDoc}
+                onClose={() => setComunicazioniDoc(null)}
+                idDocumento={comunicazioniDoc?.id}
+                tipo="fatturaFornitore"
+                titolo={`Fattura fornitore ${comunicazioniDoc?.numeroDocumentoFornitore || comunicazioniDoc?.numDocumento || ''}`}
+                sottotitolo={comunicazioniDoc?.descFornitore || comunicazioniDoc?.fornitoreDto?.denominazione}
+            />
         </div>
     );
 };

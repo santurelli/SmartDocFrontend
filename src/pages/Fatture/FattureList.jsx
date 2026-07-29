@@ -7,7 +7,8 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport, FaFileCode, FaBolt } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight, FaCaretDown, FaSort, FaSortUp, FaSortDown, FaExclamationTriangle, FaInfoCircle, FaPaperPlane, FaFileImport, FaFileCode, FaBolt, FaEnvelopeOpenText } from 'react-icons/fa';
+import ComunicazioniDocumentoModal from '../../components/modals/ComunicazioniDocumentoModal';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import { getDefaultSearchRange } from '../../utils/dateUtils';
@@ -47,6 +48,7 @@ const FattureList = () => {
     const [totali, setTotali] = useState({ f: 0, s: 0, d: 0 }); // f = fatturato, s = saldato, d = da saldare
     const [selectedIds, setSelectedIds] = useState([]);
     const [activeActionMenu, setActiveActionMenu] = useState(null);
+    const [comunicazioniDoc, setComunicazioniDoc] = useState(null);
     const [docConfigs, setDocConfigs] = useState(null);
     const [globalConfigs, setGlobalConfigs] = useState(null);
 
@@ -850,6 +852,9 @@ const FattureList = () => {
                                                                         <FaArrowRight /> Genera Nota Credito
                                                                     </button>
                                                                 )}
+                                                                <button className="action-dropdown-item" onClick={() => { setActiveActionMenu(null); setComunicazioniDoc(f); }}>
+                                                                    <FaEnvelopeOpenText /> Comunicazioni inviate
+                                                                </button>
                                                                 <button className="action-dropdown-item" onClick={() => handlePrintItem(docId)}>
                                                                     <FaPrint /> Stampa
                                                                 </button>
@@ -897,6 +902,15 @@ const FattureList = () => {
                     </div>
                 </div>
             </div>
+
+            <ComunicazioniDocumentoModal
+                isOpen={!!comunicazioniDoc}
+                onClose={() => setComunicazioniDoc(null)}
+                idDocumento={comunicazioniDoc?.id}
+                tipo="fattura"
+                titolo={`Fattura ${comunicazioniDoc?.numeroDocumento || comunicazioniDoc?.numDocumento || ''}`}
+                sottotitolo={comunicazioniDoc?.denominazioneCliente}
+            />
         </div>
     );
 };

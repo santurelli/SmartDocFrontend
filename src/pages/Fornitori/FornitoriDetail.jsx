@@ -103,13 +103,13 @@ const FornitoriDetail = () => {
 
             <h1>{isNew ? 'Nuovo fornitore' : 'Modifica fornitore'}</h1>
 
-            <form onSubmit={handleSubmit} style={{ padding: '0 20px 20px 20px' }}>
+            <div style={{ padding: '0 20px 20px 20px' }}>
                 <FornitoreForm data={fornitore} onChange={setFornitore} isNew={isNew} />
                 <div className="form-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
                     <button type="button" className="btn btn-default" onClick={() => navigate('/fornitori')}>Annulla</button>
-                    <button type="submit" className="btn btn-primary-custom" disabled={loading}>Salva</button>
+                    <button type="button" className="btn btn-primary-custom" disabled={loading} onClick={handleSubmit}>Salva</button>
                 </div>
-            </form>
+            </div>
         </div>
     );
 };

@@ -4,7 +4,7 @@ import ConfigurazioneService from '../services/ConfigurazioneService';
 import authService from '../services/authService';
 import {
     FaTachometerAlt, FaThLarge, FaCubes, FaAngleRight, FaAngleDown,
-    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaLock, FaUser, FaCircle, FaFileAlt
+    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaLock, FaUser, FaCircle, FaFileAlt, FaBell
 } from 'react-icons/fa';
 import TipiPagamentoManagementModal from './modals/TipiPagamentoManagementModal';
 import UnitaMisuraManagementModal from './modals/UnitaMisuraManagementModal';
@@ -154,6 +154,20 @@ const Sidebar = ({ user }) => {
                                 <NavLink to="/registri-iva">
                                     <span className="icon-container"><FaGavel /></span>
                                     <span className="text">Registri IVA</span>
+                                </NavLink>
+                            </li>
+
+                            <li>
+                                <NavLink to="/ritenute/770">
+                                    <span className="icon-container"><FaFileAlt /></span>
+                                    <span className="text">Prospetto 770</span>
+                                </NavLink>
+                            </li>
+
+                            <li>
+                                <NavLink to="/scadenzario/promemoria">
+                                    <span className="icon-container"><FaBell /></span>
+                                    <span className="text">Promemoria Scadenze</span>
                                 </NavLink>
                             </li>
 

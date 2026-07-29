@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import authService from '../services/authService';
 import './Login.css';
-import { FaUser, FaKey, FaBuilding, FaFileSignature } from 'react-icons/fa';
+import { FaUser, FaKey, FaBuilding, FaFileSignature, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -11,6 +11,7 @@ const Login = () => {
     const [ente, setEnte] = useState(null); // Selected option object: { value, label, dbName }
     const [error, setError] = useState('');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     // Load options for AsyncSelect
@@ -181,12 +182,15 @@ const Login = () => {
                                                         onChange={(e) => setUsername(e.target.value)}
                                                         onKeyDown={(e) => handleKeyDown(e, passwordRef)}
                                                         autoFocus
+                                                        autoCapitalize="none"
+                                                        autoCorrect="off"
+                                                        spellCheck="false"
                                                     />
                                                 </div>
                                                 <div className="flex-input-group" id="grp_password">
                                                     <span className="input-group-addon"><FaKey /></span>
                                                     <input
-                                                        type="password"
+                                                        type={showPassword ? 'text' : 'password'}
                                                         className="form-control"
                                                         id="frm_password"
                                                         placeholder="Password"
@@ -195,6 +199,16 @@ const Login = () => {
                                                         ref={passwordRef}
                                                         onKeyDown={(e) => handleKeyDown(e, aziendaRef)}
                                                     />
+                                                    <button
+                                                        type="button"
+                                                        className="input-group-addon"
+                                                        onClick={() => setShowPassword(v => !v)}
+                                                        tabIndex="-1"
+                                                        style={{ cursor: 'pointer', background: 'none', border: 'none', color: '#888' }}
+                                                        title={showPassword ? 'Nascondi password' : 'Mostra password'}
+                                                    >
+                                                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                                                    </button>
                                                 </div>
                                                 <div className="flex-input-group" id="grp_azienda">
                                                     <span className="input-group-addon"><FaBuilding /></span>

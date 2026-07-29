@@ -13,6 +13,7 @@ import RisorseService from '../services/RisorseService';
 import { parseIban } from '../utils/ibanUtils';
 import { FaWrench } from 'react-icons/fa';
 import ListiniService from '../services/ListiniService';
+import ComunicazioniTimeline from './ComunicazioniTimeline';
 import './EntityForms.css';
 
 // Sub-modals
@@ -114,9 +115,10 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     };
 
     const handleContactChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
+        const val = type === 'checkbox' ? (checked ? 1 : 0) : value;
         const updatedContatti = [...data.elencoContatti];
-        updatedContatti[activeContactIndex] = { ...updatedContatti[activeContactIndex], [name]: value };
+        updatedContatti[activeContactIndex] = { ...updatedContatti[activeContactIndex], [name]: val };
         if (name === 'referente' && activeContactIndex === 0) {
             onChange({ ...data, referente: value, elencoContatti: updatedContatti });
         } else {
@@ -211,6 +213,11 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                 <li className={activeTab === 'other' ? 'active' : ''}>
                     <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('other'); }}>Altre informazioni</a>
                 </li>
+                {!isNew && (
+                    <li className={activeTab === 'comunicazioni' ? 'active' : ''}>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('comunicazioni'); }}>Comunicazioni inviate</a>
+                    </li>
+                )}
             </ul>
 
             <div className="tab-content" style={{ padding: '20px 0' }}>
@@ -381,6 +388,23 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                     </div>
                                 </div>
                             </div>
+                            <div className="row">
+                                <div className="col-md-12">
+                                    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '5px' }}>
+                                        <input
+                                            type="checkbox"
+                                            id="flUsaPerSolleciti"
+                                            name="flUsaPerSolleciti"
+                                            checked={!!currentContact.flUsaPerSolleciti}
+                                            onChange={handleContactChange}
+                                            style={{ width: '16px', height: '16px' }}
+                                        />
+                                        <label htmlFor="flUsaPerSolleciti" style={{ margin: 0, fontWeight: 'normal', cursor: 'pointer' }}>
+                                            Usa per l'invio dei solleciti di pagamento automatici
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -494,6 +518,12 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'comunicazioni' && !isNew && (
+                    <div className="tab-pane active">
+                        <ComunicazioniTimeline idDocumento={data.id} tipo="cliente" />
                     </div>
                 )}
             </div>

@@ -1,200 +1,308 @@
-.registri-container {
-    padding: 20px;
-}
+/* ===== REGISTRI IVA — stile coerente con il resto dell'app ===== */
 
-.form-control.premium-select, .form-control.premium-input {
-    height: 42px;
-    border-radius: 8px;
-    border: 1px solid #dce4ec;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-control.premium-select:focus, .form-control.premium-input:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-.btn-filter {
-    height: 42px;
+/* Pulsante LIPE nella filter-bar */
+.btn-lipe-filter {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6);
+    color: white;
+    border: none;
+    height: 38px;
     padding: 0 20px;
-    border-radius: 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    font-size: 13px;
+}
+.btn-lipe-filter:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7d3c98, #8e44ad);
+    box-shadow: 0 3px 10px rgba(142,68,173,0.35);
+}
+.btn-lipe-filter:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Tab strip */
+.ri-tabs {
+    display: flex;
+    gap: 0;
+}
+
+.ri-tab {
+    padding: 9px 20px;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    font-size: 13px;
+    color: #888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+.ri-tab:hover { color: #333; }
+
+.ri-tab.active        { color: #03a9f4; border-bottom-color: #03a9f4; }
+.ri-tab.active.vendite   { color: #27ae60; border-bottom-color: #27ae60; }
+.ri-tab.active.differita { color: #f39c12; border-bottom-color: #f39c12; }
+.ri-tab.active.acquisti  { color: #e74c3c; border-bottom-color: #e74c3c; }
+
+.ri-tab-count {
+    background: #e0e0e0;
+    color: #555;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 10px;
+}
+.ri-tab.active .ri-tab-count {
+    background: #03a9f4;
+    color: #fff;
+}
+.ri-tab.active.vendite .ri-tab-count   { background: #27ae60; }
+.ri-tab.active.differita .ri-tab-count { background: #f39c12; }
+.ri-tab.active.acquisti .ri-tab-count  { background: #e74c3c; }
+
+/* Intestazione tabella */
+.ri-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f2f7;
+    background: #f9fafb;
+}
+.ri-table-title {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 600;
-}
-
-.registri-content {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.registro-section {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-}
-
-.registro-header {
-    background: #f8f9fa;
-    padding: 15px 20px;
-    border-bottom: 1px solid #ebeef5;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.registro-header.vendite {
-    border-left: 5px solid #2ecc71;
-}
-
-.registro-header.acquisti {
-    border-left: 5px solid #e74c3c;
-}
-
-.registro-title {
-    margin: 0;
-    font-size: 1.5rem;
     font-weight: 700;
-    color: #2c3e50;
+    font-size: 13px;
+    color: #444;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.table-responsive {
-    overflow-x: auto;
+/* Riga totale */
+.ri-total-row td {
+    background: #f9fafb;
+    font-weight: 700 !important;
+    font-size: 13px;
+    border-top: 2px solid #e9ecef;
 }
 
-.premium-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.premium-table th {
-    background: #f8fbfd;
-    padding: 16px 20px;
+/* Badge esigibilità differita */
+.ri-badge-differita {
+    background: #f39c12;
+    color: white;
+    font-size: 9px;
     font-weight: 700;
-    color: #7f8c8d;
-    font-size: 1rem;
-    text-transform: uppercase;
-    border-bottom: 2px solid #ebeef5;
-    text-align: left;
-}
-
-.premium-table td {
-    padding: 16px 20px;
-    border-bottom: 1px solid #f1f4f8;
-    color: #34495e;
-    font-size: 1.1rem;
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-left: 5px;
     vertical-align: middle;
+    letter-spacing: 0.3px;
 }
 
-.premium-table tbody tr:hover {
-    background-color: #fcfdfe;
-}
-
-.amount-cell {
-    text-align: right !important;
-    font-family: 'Consolas', 'Courier New', monospace;
-    font-weight: 600;
-}
-
-.total-row td {
-    background: #f8fbfd;
-    font-weight: 700;
-    border-top: 2px solid #dce4ec;
-    font-size: 1.25rem;
-}
-
-.badge-differita {
-    background-color: #f39c12;
-    color: white;
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-left: 8px;
-}
-
-/* Tab System */
-.tabs-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 0;
-    border-bottom: 2px solid #ebeef5;
-    padding: 0 10px;
-}
-
-.registro-tab {
-    padding: 12px 25px;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    font-weight: 600;
-    color: #7f8c8d;
-    transition: all 0.3s ease;
-    border-bottom: 3px solid transparent;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 1.05rem;
-    position: relative;
-    bottom: -2px;
-}
-
-.registro-tab:hover {
-    color: #2c3e50;
-    background: #f8fbfd;
-}
-
-.registro-tab.active {
-    color: #3498db;
-    border-bottom: 3px solid #3498db;
-}
-
-.tab-badge {
-    background: #bdc3c7;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    transition: all 0.3s ease;
-}
-
-.registro-tab.active .tab-badge {
-    background: #3498db;
-}
-
-.registro-tab.vendite.active { color: #2ecc71; border-bottom-color: #2ecc71; }
-.registro-tab.vendite.active .tab-badge { background: #2ecc71; }
-
-.registro-tab.differita.active { color: #f1c40f; border-bottom-color: #f1c40f; }
-.registro-tab.differita.active .tab-badge { background: #f1c40f; }
-
-.registro-tab.acquisti.active { color: #e74c3c; border-bottom-color: #e74c3c; }
-.registro-tab.acquisti.active .tab-badge { background: #e74c3c; }
-
-.empty-state {
+/* Empty state dentro tab */
+.ri-empty {
     text-align: center;
-    padding: 60px 20px;
-    color: #95a5a6;
+    padding: 50px 20px;
+    color: #bdc3c7;
+    background: #fff;
+    border: 1px solid #e7ebee;
+    border-top: none;
 }
+.ri-empty p { color: #95a5a6; margin-top: 10px; }
 
-.empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 15px;
+/* Empty state pagina intera */
+.ri-empty-state {
+    text-align: center;
+    padding: 80px 20px;
     color: #bdc3c7;
 }
+.ri-empty-state h3 { color: #7f8c8d; margin: 15px 0 8px; }
+.ri-empty-state p  { color: #95a5a6; margin: 0; }
 
-.empty-state h3 {
-    margin: 0 0 10px 0;
-    color: #7f8c8d;
+/* ===== PANNELLO LIPE ===== */
+
+.lipe-panel {
+    background: #fff;
+    border: 1px solid #e7ebee;
+    border-left: 4px solid #8e44ad;
+    border-radius: 3px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    overflow: hidden;
 }
 
-.empty-state p {
-    margin: 0;
+.lipe-panel-header {
+    background: #f9fafb;
+    border-bottom: 1px solid #e7ebee;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
+
+.lipe-close-btn {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+.lipe-close-btn:hover { background: #f1f2f7; color: #333; }
+
+.lipe-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 15px;
+    color: #666;
+    font-size: 13px;
+}
+
+.lipe-body {
+    padding: 15px;
+}
+
+.lipe-columns {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.lipe-col {
+    flex: 1;
+    min-width: 280px;
+}
+
+.lipe-col-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #8e44ad;
+    border-bottom: 1px solid #f1f2f7;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+}
+
+.lipe-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    gap: 12px;
+}
+.lipe-field.readonly  { background: #f9fafb; }
+.lipe-field.editable  { background: #fdf8ff; }
+.lipe-field.highlight { border: 1px solid #d7bde2; }
+
+.lipe-field-label {
+    font-size: 12px;
+    color: #555;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lipe-sign {
+    font-weight: 800;
+    font-size: 13px;
+    width: 14px;
+    text-align: center;
+    display: inline-block;
+}
+.lipe-sign.plus  { color: #e74c3c; }
+.lipe-sign.minus { color: #27ae60; }
+
+.lipe-field-value {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    color: #333;
+    min-width: 110px;
+    text-align: right;
+}
+.lipe-field-value.green  { color: #27ae60; }
+.lipe-field-value.red    { color: #e74c3c; }
+.lipe-field-value.orange { color: #e67e22; }
+.lipe-field-value.blue   { color: #2980b9; }
+
+.lipe-input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 120px;
+}
+.lipe-euro {
+    padding: 0 7px;
+    background: #f5eafa;
+    color: #8e44ad;
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 30px;
+    border-right: 1px solid #ddd;
+}
+.lipe-input {
+    border: none;
+    outline: none;
+    padding: 4px 7px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    width: 90px;
+    text-align: right;
+    color: #333;
+    background: #fff;
+}
+.lipe-input:focus { background: #fdf8ff; }
+
+.lipe-result {
+    background: #f9fafb;
+    border: 1px solid #e7ebee;
+    border-radius: 3px;
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.lipe-result-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex: 1;
+}
+.lipe-result-value {
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 20px;
+    font-weight: 800;
+}
+.lipe-result-value.da-versare { color: #c0392b; }
+.lipe-result-value.a-credito  { color: #27ae60; }
+
+.lipe-dl-btn {
+    margin-left: auto;
+    background: #8e44ad !important;
+    white-space: nowrap;
+}
+.lipe-dl-btn:hover:not(:disabled) { background: #7d3c98 !important; }

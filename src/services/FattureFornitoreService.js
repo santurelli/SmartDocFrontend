@@ -15,6 +15,9 @@ const FattureFornitoreService = {
     },
 
     save: (data) => {
+        if (data.id) {
+            return api.put(`/fatture-fornitore/${data.id}`, data);
+        }
         return api.post('/fatture-fornitore', data);
     },
 

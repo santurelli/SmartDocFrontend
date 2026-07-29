@@ -100,15 +100,15 @@ const FornitoreEditModal = ({ isOpen, onClose, fornitoreId, onSave }) => {
                         <button type="button" className="close" onClick={onClose}>&times;</button>
                         <h4 className="modal-title" style={{ fontWeight: 'bold' }}>{isNew ? 'Nuovo Fornitore' : 'Modifica Fornitore'}</h4>
                     </div>
-                    <form onSubmit={handleSubmit}>
+                    <div>
                         <div className="modal-body" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto', padding: '10px 25px' }}>
                             <FornitoreForm data={fornitore} onChange={setFornitore} isNew={isNew} />
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn-premium-cancel" onClick={onClose}>Annulla</button>
-                            <button type="submit" className="btn-premium-save" disabled={loading}>Salva</button>
+                            <button type="button" className="btn-premium-save" disabled={loading} onClick={handleSubmit}>Salva</button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

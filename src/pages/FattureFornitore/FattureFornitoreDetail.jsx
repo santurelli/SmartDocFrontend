@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaInfoCircle, FaCalendarAlt, FaFileAlt, FaAngleRight, FaListUl, FaSave, FaPlus, FaTrash, FaArrowLeft } from 'react-icons/fa';
 import Swal from 'sweetalert2';
@@ -10,6 +10,7 @@ import ArticoliService from '../../services/ArticoliService';
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
 import ScadenzeTable from '../../components/common/ScadenzeTable';
+import ComunicazioniTimeline from '../../components/ComunicazioniTimeline';
 import EntitySelectGroup from '../../components/EntitySelectGroup';
 import TipiPagamentoManagementModal from '../../components/modals/TipiPagamentoManagementModal';
 import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
@@ -46,6 +47,13 @@ const FattureFornitoreDetail = () => {
         flFatturaElettronica: 0,
         xmlFattura: null,
         progFileFatturaElettronica: '',
+        tipoDocumentoSdi: '',
+        statoFatturaElettronica: null,
+        flRitenutaAcconto: 0,
+        percRitenutaAcconto: 20,
+        importoRitenutaAcconto: null,
+        tipoRitenuta: 'PERSONE_FISICHE',
+        causalePagamento: 'A',
         listaScadenzePagamentiDocumento: []
     });
 
@@ -195,6 +203,9 @@ const FattureFornitoreDetail = () => {
                         if (data.dataDocumentoFornitore && data.dataDocumentoFornitore.includes('/')) {
                             const parts = data.dataDocumentoFornitore.split('/');
                             data.dataDocumentoFornitore = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                        }
+                        if (!data.tipoRitenuta) {
+                            data.tipoRitenuta = 'PERSONE_FISICHE';
                         }
                         setFormData(data);
                         
@@ -453,6 +464,23 @@ const FattureFornitoreDetail = () => {
                             {isNew ? 'Nuova' : `Fattura ${formData.numeroDocumentoFornitore}`}
                         </span>
                     </div>
+                    {formData.tipoDocumentoSdi && (
+                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '11px', background: '#e3f2fd', color: '#1565c0', padding: '2px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                                SDI {formData.tipoDocumentoSdi}
+                            </span>
+                            {formData.statoFatturaElettronica === 'DI' && (
+                                <span style={{ fontSize: '11px', background: '#fff3e0', color: '#e65100', padding: '2px 10px', borderRadius: '12px', fontWeight: 600 }}>
+                                    In coda SDI
+                                </span>
+                            )}
+                            {formData.statoFatturaElettronica === 'IN' && (
+                                <span style={{ fontSize: '11px', background: '#e8f5e9', color: '#2e7d32', padding: '2px 10px', borderRadius: '12px', fontWeight: 600 }}>
+                                    Inviata
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
                 <div className="header-totals" style={{ display: 'flex', gap: '15px' }}>
                     <div className="total-box" style={{ background: '#fff', padding: '10px 20px', borderRadius: '8px', border: '1px solid #e7ebee', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '150px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -490,10 +518,15 @@ const FattureFornitoreDetail = () => {
                     <li className={activeTab === 'note' ? 'active' : ''} style={{ margin: '0' }}>
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('note'); }} style={{ display: 'block', padding: '12px 20px', textDecoration: 'none', color: activeTab === 'note' ? '#03a9f4' : '#666', borderBottom: activeTab === 'note' ? '2px solid #03a9f4' : 'none', fontWeight: activeTab === 'note' ? '600' : 'normal' }}>Annotazioni</a>
                     </li>
+                    {!isNew && (
+                        <li className={activeTab === 'comunicazioni' ? 'active' : ''} style={{ margin: '0' }}>
+                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('comunicazioni'); }} style={{ display: 'block', padding: '12px 20px', textDecoration: 'none', color: activeTab === 'comunicazioni' ? '#03a9f4' : '#666', borderBottom: activeTab === 'comunicazioni' ? '2px solid #03a9f4' : 'none', fontWeight: activeTab === 'comunicazioni' ? '600' : 'normal' }}>Comunicazioni inviate</a>
+                        </li>
+                    )}
                 </ul>
 
                 <div className="main-box-body" style={{ padding: '20px' }}>
-                    <form className="tab-content" onSubmit={handleSave} autoComplete="off">
+                    <div className="tab-content">
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="row" style={{ alignItems: 'flex-start' }}>
@@ -618,7 +651,7 @@ const FattureFornitoreDetail = () => {
                                                         value={formData.dataDocumento || ''}
                                                         onChange={handleHeaderChange}
                                                         disabled={isReadOnly}
-                                                        required
+                                                        required={!isReadOnly}
                                                     />
                                                 </div>
                                             </div>
@@ -640,7 +673,7 @@ const FattureFornitoreDetail = () => {
                                                         value={formData.numeroDocumentoFornitore || ''}
                                                         onChange={handleHeaderChange}
                                                         disabled={isReadOnly}
-                                                        required
+                                                        required={!isReadOnly}
                                                     />
                                                 </div>
                                                 <div style={{ flex: '1' }}>
@@ -652,11 +685,132 @@ const FattureFornitoreDetail = () => {
                                                         value={formData.dataDocumentoFornitore || ''}
                                                         onChange={handleHeaderChange}
                                                         disabled={isReadOnly}
-                                                        required
+                                                        required={!isReadOnly}
                                                     />
                                                 </div>
                                             </div>
+                                            <div className="form-group" style={{ marginBottom: '5px' }}>
+                                                <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Tipo Documento SDI (Autofattura)</label>
+                                                <select
+                                                    className="form-control premium-input"
+                                                    name="tipoDocumentoSdi"
+                                                    value={formData.tipoDocumentoSdi || ''}
+                                                    onChange={handleHeaderChange}
+                                                    disabled={isReadOnly}
+                                                >
+                                                    <option value="">— Nessuna (documento normale) —</option>
+                                                    <option value="TD17">TD17 – Integrazione/autofattura servizi da non residenti</option>
+                                                    <option value="TD18">TD18 – Integrazione acquisti intracomunitari di beni</option>
+                                                    <option value="TD19">TD19 – Integrazione/autofattura beni art.17 c.2 DPR 633/72</option>
+                                                    <option value="TD20">TD20 – Autofattura per regolarizzazione</option>
+                                                    <option value="TD28">TD28 – Acquisti da San Marino con IVA</option>
+                                                </select>
+                                            </div>
                                         </div>
+                                    </div>
+
+                                    {/* Card Ritenuta d'acconto */}
+                                    <div className="premium-card address-card" style={{
+                                        border: !!formData.flRitenutaAcconto ? '1px solid #c5cae9' : '1px solid #e7ebee',
+                                        borderRadius: '8px',
+                                        borderLeft: !!formData.flRitenutaAcconto ? '4px solid #1a237e' : '1px solid #e7ebee'
+                                    }}>
+                                        <div className="card-header-vibrant" style={{ background: '#f8f9fa', padding: '12px 18px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px', borderBottom: !!formData.flRitenutaAcconto ? '1px solid #f1f2f7' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <span style={{ fontWeight: 700, fontSize: '13px', color: '#555' }}>
+                                                <span style={{ color: '#1a237e', marginRight: '8px' }}>§</span> Ritenuta d'acconto
+                                            </span>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isReadOnly ? 'default' : 'pointer', margin: 0 }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!formData.flRitenutaAcconto}
+                                                    disabled={isReadOnly}
+                                                    onChange={e => {
+                                                        const fl = e.target.checked ? 0 : 1;
+                                                        setFormData(prev => ({ ...prev, flRitenutaAcconto: fl }));
+                                                    }}
+                                                    style={{ width: '16px', height: '16px', accentColor: '#1a237e' }}
+                                                />
+                                                <span style={{ fontSize: '12px', fontWeight: 600, color: !formData.flRitenutaAcconto ? '#999' : '#1a237e' }}>
+                                                    {formData.flRitenutaAcconto ? 'Soggetto a ritenuta' : 'Esente da ritenuta'}
+                                                </span>
+                                            </label>
+                                        </div>
+                                        {!!formData.flRitenutaAcconto && (
+                                        <div className="card-body" style={{ padding: '20px' }}>
+                                                <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                                                    <div style={{ flex: '1' }}>
+                                                        <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Aliquota ritenuta %</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control premium-input"
+                                                            name="percRitenutaAcconto"
+                                                            value={formData.percRitenutaAcconto ?? ''}
+                                                            min="0" max="100" step="0.01"
+                                                            onChange={e => {
+                                                                const perc = parseFloat(e.target.value) || 0;
+                                                                const importo = (calculateTotalImponibile() * perc / 100).toFixed(2);
+                                                                setFormData(prev => ({ ...prev, percRitenutaAcconto: perc, importoRitenutaAcconto: parseFloat(importo) }));
+                                                            }}
+                                                            disabled={isReadOnly}
+                                                        />
+                                                    </div>
+                                                    <div style={{ flex: '1' }}>
+                                                        <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Importo ritenuta (€)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control premium-input"
+                                                            name="importoRitenutaAcconto"
+                                                            value={formData.importoRitenutaAcconto ?? ''}
+                                                            step="0.01"
+                                                            onChange={e => setFormData(prev => ({ ...prev, importoRitenutaAcconto: parseFloat(e.target.value) || null }))}
+                                                            disabled={isReadOnly}
+                                                            style={{ fontWeight: 600, color: '#1a237e' }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+                                                    <div style={{ flex: '1' }}>
+                                                        <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Tipo ritenuta</label>
+                                                        <select
+                                                            className="form-control premium-input"
+                                                            name="tipoRitenuta"
+                                                            value={formData.tipoRitenuta || ''}
+                                                            onChange={e => setFormData(prev => ({ ...prev, tipoRitenuta: e.target.value }))}
+                                                            disabled={isReadOnly}
+                                                        >
+                                                            <option value="PERSONE_FISICHE">Persone fisiche</option>
+                                                            <option value="PERSONE_GIURIDICHE">Persone giuridiche</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Causale pagamento (770)</label>
+                                                    <select
+                                                        className="form-control premium-input"
+                                                        name="causalePagamento"
+                                                        value={formData.causalePagamento || ''}
+                                                        onChange={e => setFormData(prev => ({ ...prev, causalePagamento: e.target.value }))}
+                                                        disabled={isReadOnly}
+                                                    >
+                                                        <option value="">— Seleziona causale —</option>
+                                                        <option value="A">A — Prestazioni lavoro autonomo abituale</option>
+                                                        <option value="B">B — Opere ingegno / brevetti (autore)</option>
+                                                        <option value="L">L — Opere ingegno (sogg. diverso autore)</option>
+                                                        <option value="M">M — Lavoro autonomo non abituale / obblighi</option>
+                                                        <option value="M1">M1 — Obblighi di fare / non fare / permettere</option>
+                                                        <option value="O">O — Lavoro autonomo non abituale (no gest. sep.)</option>
+                                                        <option value="Q">Q — Provvigioni agente monomandatario</option>
+                                                        <option value="R">R — Provvigioni agente plurimandatario</option>
+                                                        <option value="S">S — Provvigioni commissionario</option>
+                                                        <option value="T">T — Provvigioni mediatore</option>
+                                                        <option value="U">U — Provvigioni procacciatore d'affari</option>
+                                                        <option value="V">V — Provvigioni vendite a domicilio</option>
+                                                        <option value="V1">V1 — Attività commerciali non abituali</option>
+                                                        <option value="Z">Z — Altro titolo</option>
+                                                    </select>
+                                                </div>
+                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -782,18 +936,24 @@ const FattureFornitoreDetail = () => {
                             </div>
                         </div>
 
+                        {!isNew && (
+                            <div className={`tab-pane ${activeTab === 'comunicazioni' ? 'active' : ''}`}>
+                                <ComunicazioniTimeline idDocumento={parseInt(id)} tipo="fatturaFornitore" />
+                            </div>
+                        )}
+
                         {/* Barra dei pulsanti inferiori */}
                         <div className="form-actions" style={{ marginTop: '30px' }}>
                             <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/fatture-fornitore')}>
                                 <FaArrowLeft style={{ marginRight: '8px' }} /> Torna all'elenco
                             </button>
                             {!isReadOnly && (
-                                <button type="submit" className="btn btn-premium-save">
+                                <button type="button" className="btn btn-premium-save" onClick={handleSave}>
                                     <FaSave style={{ marginRight: '8px' }} /> Salva Fattura
                                 </button>
                             )}
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -801,3 +961,4 @@ const FattureFornitoreDetail = () => {
 };
 
 export default FattureFornitoreDetail;
+

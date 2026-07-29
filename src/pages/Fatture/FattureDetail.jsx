@@ -31,6 +31,7 @@ import NazioneSelect from '../../components/common/NazioneSelect';
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
 import ScadenzeTable from '../../components/common/ScadenzeTable';
+import ComunicazioniTimeline from '../../components/ComunicazioniTimeline';
 import { getRowValues } from '../../utils/documentUtils';
 
 const particellaSelectStyles = {
@@ -1230,10 +1231,15 @@ const FattureDetail = () => {
                     <li className={activeTab === 'note' ? 'active' : ''}>
                         <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('note'); }}>Annotazioni</a>
                     </li>
+                    {!isNew && (
+                        <li className={activeTab === 'comunicazioni' ? 'active' : ''}>
+                            <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('comunicazioni'); }}>Comunicazioni inviate</a>
+                        </li>
+                    )}
                 </ul>
 
                 <div className="main-box-body">
-                    <form className="tab-content" onSubmit={handleSave} autoComplete="off">
+                    <div className="tab-content">
                         <input type="text" style={{ display: 'none' }} autoComplete="off" />
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
@@ -1920,13 +1926,21 @@ const FattureDetail = () => {
                             </div>
                         </div>
 
+                        {!isNew && (
+                            <div className={`tab-pane ${activeTab === 'comunicazioni' ? 'active' : ''}`}>
+                                <div className="tab-padding-wrapper">
+                                    <ComunicazioniTimeline idDocumento={parseInt(id)} tipo="fattura" />
+                                </div>
+                            </div>
+                        )}
+
                         <footer className="main-box-footer detail-footer">
                             <button type="button" className="btn btn-premium-cancel" onClick={() => navigate('/fatture')}>
                                 <FaArrowLeft /> Indietro
                             </button>
                             <div className="footer-right">
                                 <div className="split-btn-container" ref={saveMenuRef}>
-                                    <button type="submit" className="split-btn-main btn-premium-save">
+                                    <button type="button" className="split-btn-main btn-premium-save" onClick={handleSave}>
                                         <FaSave /> Salva
                                     </button>
                                     <button type="button" className="split-btn-toggle" onClick={() => setShowSaveMenu(!showSaveMenu)}>
@@ -1961,7 +1975,7 @@ const FattureDetail = () => {
                                 </div>
                             </div>
                         </footer>
-                    </form>
+                    </div>
                 </div>
             </div >
 

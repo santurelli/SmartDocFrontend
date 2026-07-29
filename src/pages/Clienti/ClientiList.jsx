@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ClientiService from '../../services/ClientiService';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaCloudDownloadAlt, FaChevronLeft, FaChevronRight, FaFileAlt, FaHome, FaAngleRight, FaEnvelope } from 'react-icons/fa';
 import './ClientiList.css';
 import DownloadProgress from '../../components/DownloadProgress';
 import Swal from 'sweetalert2';
+import ComunicazioniDocumentoModal from '../../components/modals/ComunicazioniDocumentoModal';
 
 import storageHelper from '../../utils/storageHelper';
 
@@ -27,6 +28,7 @@ const ClientiList = () => {
     const [downloading, setDownloading] = useState(false);
     const [total, setTotal] = useState(0);
     const [search, setSearch] = useState(initialState.search);
+    const [comunicazioniCliente, setComunicazioniCliente] = useState(null);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(initialState.currentPage);
@@ -257,6 +259,14 @@ const ClientiList = () => {
                                                             <FaFileAlt size={16} color="#ffffff" />
                                                         </button>
                                                         <button
+                                                            className="btn-action"
+                                                            style={{ backgroundColor: '#00897b' }}
+                                                            onClick={(e) => { e.preventDefault(); setComunicazioniCliente(cliente); }}
+                                                            title="Comunicazioni inviate"
+                                                        >
+                                                            <FaEnvelope size={16} color="#ffffff" />
+                                                        </button>
+                                                        <button
                                                             className="btn-action btn-action-delete"
                                                             onClick={(e) => { e.preventDefault(); handleDelete(cliente.id); }}
                                                             title="Elimina"
@@ -312,6 +322,15 @@ const ClientiList = () => {
                     </div>
                 </div>
             </div>
+
+            <ComunicazioniDocumentoModal
+                isOpen={!!comunicazioniCliente}
+                onClose={() => setComunicazioniCliente(null)}
+                idDocumento={comunicazioniCliente?.id}
+                tipo="cliente"
+                titolo={comunicazioniCliente?.denominazione}
+                sottotitolo="Storico solleciti di incasso"
+            />
         </div >
     );
 };

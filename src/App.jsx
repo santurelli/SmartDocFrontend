@@ -40,6 +40,8 @@ import RegistriIvaPage from './pages/RegistriIva/RegistriIvaPage';
 import UtentiList from './pages/Configurazione/UtentiList';
 import UtentiDetail from './pages/Configurazione/UtentiDetail';
 import StatistichePage from './pages/Statistiche/StatistichePage';
+import Prospetto770Page from './pages/Ritenute/Prospetto770Page';
+import PromemoriaPage from './pages/Scadenzario/PromemoriaPage';
 
 const RoleProtectedRoute = ({ allowedRoles, children }) => {
   const user = authService.getCurrentUser();
@@ -126,6 +128,8 @@ function App() {
         <Route path="/articoli/:id" element={<ArticoliDetail />} />
         <Route path="/prima-nota" element={<PrimaNotaList />} />
         <Route path="/registri-iva" element={<RegistriIvaPage />} />
+        <Route path="/ritenute/770" element={<Prospetto770Page />} />
+        <Route path="/scadenzario/promemoria" element={<PromemoriaPage />} />
         <Route path="/statistiche/vendite" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
         <Route path="/statistiche/acquisti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
         <Route path="/statistiche/pagamenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
