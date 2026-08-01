@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaEnvelope, FaInfoCircle, FaSave, FaTimes, FaPlay } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import ScadenzarioPromemoriaService from '../../services/ScadenzarioPromemoriaService';
+import authService from '../../services/authService';
 import './PromemoriaPage.css';
 
 const PLACEHOLDER_INCASSO = [
@@ -176,6 +177,11 @@ const PromemoriaPage = () => {
 
     const placeholders = editing?.tipo === 'PAGAMENTO' ? PLACEHOLDER_PAGAMENTO : PLACEHOLDER_INCASSO;
 
+    const currentUser = authService.getCurrentUser()?.user;
+    const isSupportUser = (currentUser?.username || '').toLowerCase().includes('support') || 
+                          (currentUser?.email || '').toLowerCase().includes('support') ||
+                          (currentUser?.nome || '').toLowerCase().includes('support');
+
     return (
         <div className="promemoria-container">
             <div className="promemoria-header">
@@ -185,9 +191,11 @@ const PromemoriaPage = () => {
                     <p className="promemoria-subtitle">Solleciti di incasso inviati ai clienti e avvisi interni per non dimenticare i pagamenti ai fornitori</p>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn-esegui-ora" onClick={handleEseguiOra} disabled={eseguendo} title="Esegue subito il batch dei promemoria, utile per verificare che tutto funzioni prima di aspettare la schedulazione giornaliera">
-                        <FaPlay /> {eseguendo ? 'Esecuzione...' : 'Esegui ora (test)'}
-                    </button>
+                    {isSupportUser && (
+                        <button className="btn-esegui-ora" onClick={handleEseguiOra} disabled={eseguendo} title="Esegue subito il batch dei promemoria, utile per verificare che tutto funzioni prima di aspettare la schedulazione giornaliera">
+                            <FaPlay /> {eseguendo ? 'Esecuzione...' : 'Esegui ora (test)'}
+                        </button>
+                    )}
                     <button className="btn-nuova-regola" onClick={handleNuova}>
                         <FaPlus /> Nuova regola
                     </button>

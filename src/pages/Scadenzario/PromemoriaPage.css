@@ -16,7 +16,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: #00897b;
+    color: #3498db;
     margin-bottom: 6px;
 }
 
@@ -37,7 +37,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #00897b;
+    background: #3498db;
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -45,20 +45,20 @@
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 137, 123, 0.3);
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
     white-space: nowrap;
     height: fit-content;
 }
 
-.btn-nuova-regola:hover { background: #00695c; }
+.btn-nuova-regola:hover { background: #2980b9; }
 
 .btn-esegui-ora {
     display: flex;
     align-items: center;
     gap: 8px;
     background: #fff;
-    color: #00897b;
-    border: 1px solid #00897b;
+    color: #3498db;
+    border: 1px solid #3498db;
     border-radius: 8px;
     padding: 12px 20px;
     font-weight: 600;
@@ -68,7 +68,7 @@
     height: fit-content;
 }
 
-.btn-esegui-ora:hover:not(:disabled) { background: #e0f2f1; }
+.btn-esegui-ora:hover:not(:disabled) { background: #ebf5fb; }
 .btn-esegui-ora:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Tabs */
@@ -92,8 +92,8 @@
 }
 
 .promemoria-tab.active {
-    color: #00897b;
-    border-bottom-color: #00897b;
+    color: #3498db;
+    border-bottom-color: #3498db;
 }
 
 .promemoria-tab-hint {
@@ -138,8 +138,8 @@
 }
 
 .promemoria-card-offset {
-    background: #e0f2f1;
-    color: #00897b;
+    background: #ebf5fb;
+    color: #2980b9;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -290,22 +290,22 @@
     gap: 8px;
     flex-wrap: wrap;
     padding: 10px 12px;
-    background: #f0faf9;
-    border: 1px dashed #b2dfdb;
+    background: #f4f9fc;
+    border: 1px dashed #a9cce3;
     border-radius: 8px;
 }
 
 .promemoria-esempi-label {
     font-size: 11px;
     font-weight: 600;
-    color: #00695c;
+    color: #2980b9;
     margin-right: 2px;
 }
 
 .btn-esempio {
     background: #fff;
-    border: 1px solid #80cbc4;
-    color: #00695c;
+    border: 1px solid #a9cce3;
+    color: #2980b9;
     border-radius: 20px;
     padding: 5px 12px;
     font-size: 11px;
@@ -314,8 +314,8 @@
 }
 
 .btn-esempio:hover {
-    background: #00897b;
-    border-color: #00897b;
+    background: #3498db;
+    border-color: #3498db;
     color: #fff;
 }
 
@@ -375,7 +375,7 @@
     transition: 0.2s;
 }
 
-.promemoria-switch input:checked + .promemoria-switch-slider { background-color: #00897b; }
+.promemoria-switch input:checked + .promemoria-switch-slider { background-color: #3498db; }
 .promemoria-switch input:checked + .promemoria-switch-slider::before { transform: translateX(18px); }
 
 .promemoria-placeholder-legend {
@@ -406,8 +406,8 @@
 .promemoria-chip {
     font-family: 'Courier New', monospace;
     font-size: 11px;
-    background: #e0f2f1;
-    color: #00695c;
+    background: #ebf5fb;
+    color: #2980b9;
     padding: 3px 8px;
     border-radius: 4px;
     cursor: help;
@@ -457,7 +457,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    background: #00897b;
+    background: #3498db;
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -467,4 +467,4 @@
     cursor: pointer;
 }
 
-.btn-salva:hover { background: #00695c; }
+.btn-salva:hover { background: #2980b9; }

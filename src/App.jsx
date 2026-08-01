@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './pages/Login';
+import CompletaRegistrazione from './pages/CompletaRegistrazione';
+import RegistrazioneProva from './pages/RegistrazioneProva';
 import authService from './services/authService';
 import './App.css';
 
@@ -87,6 +89,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/completa-registrazione" element={<CompletaRegistrazione />} />
+      <Route path="/registrazione-prova" element={<RegistrazioneProva />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/clienti" element={<ClientiList />} />

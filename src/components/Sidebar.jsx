@@ -59,18 +59,21 @@ const Sidebar = ({ user }) => {
         
         const fullKey = key.includes(':') ? key : `${domain}:${key}`;
         
-        // Se la chiave (con o senza dominio) esiste nella mappa, usiamo il suo valore
         if (configs[fullKey] !== undefined) {
             return configs[fullKey] === '1';
         }
         
-        // Fallback per compatibilità con il dominio DOCUMENTI (senza prefisso nella mappa)
         if (configs[key] !== undefined) {
             return configs[key] === '1';
         }
         
-        // Se la chiave è totalmente assente, la consideriamo abilitata di default
         return true;
+    };
+
+    const isAllowedByPlan = (minPlanLevel) => {
+        const currentUser = user || authService.getCurrentUser()?.user;
+        const tipoAccount = currentUser?.aziendaDto?.tipoAccount ?? currentUser?.tipoAccount ?? 4;
+        return tipoAccount >= minPlanLevel;
     };
 
     const userName = user ? `${user.nome} ${user.cognome ? user.cognome.charAt(0) + '.' : ''}` : 'Utente';
@@ -82,20 +85,18 @@ const Sidebar = ({ user }) => {
 
                     {/* User Profile Box */}
                     <div id="user-left-box" className="clearfix hidden-sm hidden-xs dropdown profile2-dropdown">
-                        <div className="user-avatar-initials">
-                            {user && user.nome ? (user.nome[0] + (user.cognome ? user.cognome[0] : '')).toUpperCase() : 'U'}
-                        </div>
-                        <div className="user-box">
-                            <span className="name">
-                                {userName} <FaAngleDown style={{ fontSize: '10px', marginLeft: '3px', opacity: 0.7 }} />
+                        <FaUser className="user-icon" style={{ fontSize: '32px', color: '#95a5a6', float: 'left', marginRight: '10px' }} />
+                        <div className="user-box" style={{ float: 'left' }}>
+                            <span className="name" style={{ color: '#fff', fontWeight: 'bold', display: 'block' }}>
+                                {userName}
                             </span>
-                            <span className="status">
-                                <FaCircle className="status-icon" /> Online
+                            <span className="status" style={{ color: '#2ecc71', fontSize: '12px' }}>
+                                <FaCircle style={{ fontSize: '8px', marginRight: '3px' }} /> Online
                             </span>
                         </div>
                     </div>
 
-                    <div className="collapse navbar-collapse navbar-ex1-collapse" id="sidebar-nav">
+                    <div id="sidebar-nav" className="collapse navbar-collapse navbar-ex1-collapse-1">
                         <ul className="nav nav-pills nav-stacked">
 
                             <li>
@@ -105,24 +106,28 @@ const Sidebar = ({ user }) => {
                                 </NavLink>
                             </li>
 
-                            <li>
-                                <NavLink to="/articoli" className={({ isActive }) => isActive ? "active" : ""}>
-                                    <span className="icon-container"><FaThLarge /></span>
-                                    <span className="text">Articoli</span>
-                                </NavLink>
-                            </li>
+                            {isAllowedByPlan(3) && (
+                                <li>
+                                    <NavLink to="/articoli" className={({ isActive }) => isActive ? "active" : ""}>
+                                        <span className="icon-container"><FaThLarge /></span>
+                                        <span className="text">Articoli</span>
+                                    </NavLink>
+                                </li>
+                            )}
 
-                            <li className={openMenus['magazzino'] ? 'open' : ''}>
-                                <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('magazzino'); }}>
-                                    <span className="icon-container"><FaCubes /></span>
-                                    <span className="text">Magazzino</span>
-                                    <FaAngleRight className="drop-icon" />
-                                </a>
-                                <ul className="submenu">
-                                    <li><NavLink to="/articoli/movimenti">Movimenti</NavLink></li>
-                                    <li><NavLink to="/articoli/inventario">Inventario</NavLink></li>
-                                </ul>
-                            </li>
+                            {isAllowedByPlan(4) && (
+                                <li className={openMenus['magazzino'] ? 'open' : ''}>
+                                    <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('magazzino'); }}>
+                                        <span className="icon-container"><FaCubes /></span>
+                                        <span className="text">Magazzino</span>
+                                        <FaAngleRight className="drop-icon" />
+                                    </a>
+                                    <ul className="submenu">
+                                        <li><NavLink to="/articoli/movimenti">Movimenti</NavLink></li>
+                                        <li><NavLink to="/articoli/inventario">Inventario</NavLink></li>
+                                    </ul>
+                                </li>
+                            )}
 
                             <li className={openMenus['documenti'] ? 'open' : ''}>
                                 <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('documenti'); }}>
@@ -131,9 +136,9 @@ const Sidebar = ({ user }) => {
                                     <FaAngleRight className="drop-icon" />
                                 </a>
                                 <ul className="submenu">
-                                    {isEnabled('ABILITA_PREVENTIVI') && <li><NavLink to="/preventivi">Preventivi</NavLink></li>}
-                                    {isEnabled('ABILITA_CONF_ORDINE') && <li><NavLink to="/conf-ordine">Conferme d'ordine</NavLink></li>}
-                                    {isEnabled('ABILITA_DDT') && <li><NavLink to="/ddt">Doc. trasporto</NavLink></li>}
+                                    {isAllowedByPlan(3) && isEnabled('ABILITA_PREVENTIVI') && <li><NavLink to="/preventivi">Preventivi</NavLink></li>}
+                                    {isAllowedByPlan(3) && isEnabled('ABILITA_CONF_ORDINE') && <li><NavLink to="/conf-ordine">Conferme d'ordine</NavLink></li>}
+                                    {isAllowedByPlan(3) && isEnabled('ABILITA_DDT') && <li><NavLink to="/ddt">Doc. trasporto</NavLink></li>}
                                     {(isEnabled('ABILITA_FATTURE') || isEnabled('ABILITA_NOTE_DEBITO') || isEnabled('ABILITA_FATTURE_PROFORMA') || isEnabled('ABILITA_FATTURE_ACCOMPAGNATORIE')) && (
                                         <li><NavLink to="/fatture">Fatture/Note debito</NavLink></li>
                                     )}
@@ -143,12 +148,14 @@ const Sidebar = ({ user }) => {
                                 </ul>
                             </li>
 
-                            <li>
-                                <NavLink to="/prima-nota">
-                                    <span className="icon-container"><FaTable /></span>
-                                    <span className="text">Prima nota</span>
-                                </NavLink>
-                            </li>
+                            {isAllowedByPlan(4) && (
+                                <li>
+                                    <NavLink to="/prima-nota">
+                                        <span className="icon-container"><FaTable /></span>
+                                        <span className="text">Prima nota</span>
+                                    </NavLink>
+                                </li>
+                            )}
 
                             <li>
                                 <NavLink to="/registri-iva">
@@ -181,26 +188,28 @@ const Sidebar = ({ user }) => {
                                     <li><NavLink to="/clienti">Clienti</NavLink></li>
                                     <li><NavLink to="/fornitori">Fornitori</NavLink></li>
                                     {isEnabled('DIPENDENTI', 'GLOBAL') && <li><NavLink to="/dipendenti">Dipendenti</NavLink></li>}
-                                    <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
+                                    {isAllowedByPlan(3) && <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>}
                                     <li><a href="#" onClick={(e) => { e.preventDefault(); setShowTipiPagamento(true); }}>Tipi pagamento</a></li>
                                     <li><a href="#" onClick={(e) => { e.preventDefault(); setShowUnitaMisura(true); }}>Unità di misura</a></li>
                                     <li><a href="#" onClick={(e) => { e.preventDefault(); setShowAliquoteIva(true); }}>Aliquote IVA</a></li>
                                 </ul>
                             </li>
 
-                            <li className={openMenus['statistiche'] ? 'open' : ''}>
-                                <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('statistiche'); }}>
-                                    <span className="icon-container"><FaChartBar /></span>
-                                    <span className="text">Statistiche</span>
-                                    <FaAngleRight className="drop-icon" />
-                                </a>
-                                <ul className="submenu">
-                                    {isEnabled('PROGETTI', 'GLOBAL') && <li><NavLink to="/statistiche/progetti">Progetti</NavLink></li>}
-                                    <li><NavLink to="/statistiche/vendite">Vendite</NavLink></li>
-                                    <li><NavLink to="/statistiche/acquisti">Acquisti</NavLink></li>
-                                    <li><NavLink to="/statistiche/pagamenti">Pagamenti</NavLink></li>
-                                </ul>
-                            </li>
+                            {isAllowedByPlan(4) && (
+                                <li className={openMenus['statistiche'] ? 'open' : ''}>
+                                    <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('statistiche'); }}>
+                                        <span className="icon-container"><FaChartBar /></span>
+                                        <span className="text">Statistiche</span>
+                                        <FaAngleRight className="drop-icon" />
+                                    </a>
+                                    <ul className="submenu">
+                                        {isEnabled('PROGETTI', 'GLOBAL') && <li><NavLink to="/statistiche/progetti">Progetti</NavLink></li>}
+                                        <li><NavLink to="/statistiche/vendite">Vendite</NavLink></li>
+                                        <li><NavLink to="/statistiche/acquisti">Acquisti</NavLink></li>
+                                        <li><NavLink to="/statistiche/pagamenti">Pagamenti</NavLink></li>
+                                    </ul>
+                                </li>
+                            )}
 
                             <li className={openMenus['configurazione'] ? 'open' : ''}>
                                 <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('configurazione'); }}>
@@ -222,13 +231,13 @@ const Sidebar = ({ user }) => {
 
                         </ul>
                     </div>
-                </div >
-            </section >
+                </div>
+            </section>
 
             <TipiPagamentoManagementModal isOpen={showTipiPagamento} onClose={() => setShowTipiPagamento(false)} />
             <UnitaMisuraManagementModal isOpen={showUnitaMisura} onClose={() => setShowUnitaMisura(false)} />
             <AliquoteIvaManagementModal isOpen={showAliquoteIva} onClose={() => setShowAliquoteIva(false)} />
-        </div >
+        </div>
     );
 };
 
