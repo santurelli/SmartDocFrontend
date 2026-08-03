@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DatiAziendaService from '../../services/DatiAziendaService';
+import authService from '../../services/authService';
+import CommercialistaSection from '../../components/CommercialistaSection';
 import { FaSave, FaBuilding, FaTrash } from 'react-icons/fa';
 import './DatiAziendaForm.css';
 
@@ -27,6 +29,10 @@ const DatiAziendaForm = () => {
     const [logoFile, setLogoFile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState({ text: '', type: '' });
+    const [fetchedTipoAccount, setFetchedTipoAccount] = useState(null);
+    const [fetchedFlProva, setFetchedFlProva] = useState(1);
+    const [fetchedTipoRinnovo, setFetchedTipoRinnovo] = useState('ANNUAL');
+    const [giorniRimanenti, setGiorniRimanenti] = useState(90);
 
     useEffect(() => {
         fetchData();
@@ -36,6 +42,27 @@ const DatiAziendaForm = () => {
         try {
             const response = await DatiAziendaService.get();
             const payload = response.data;
+
+            if (payload.tipoAccount !== undefined) {
+                setFetchedTipoAccount(payload.tipoAccount);
+                const cfg = authService.getConfig ? authService.getConfig() : {};
+                if (authService.updateConfig) {
+                    authService.updateConfig({ ...cfg, tipoAccount: payload.tipoAccount, tipo_account: payload.tipoAccount });
+                    window.dispatchEvent(new Event('configupdated'));
+                }
+            }
+
+            if (payload.flProva !== undefined) {
+                setFetchedFlProva(payload.flProva);
+            }
+
+            if (payload.tipoRinnovo !== undefined) {
+                setFetchedTipoRinnovo(payload.tipoRinnovo);
+            }
+
+            if (payload.giorniRimanentiProva !== undefined) {
+                setGiorniRimanenti(payload.giorniRimanentiProva);
+            }
 
             if (payload.REGIMIFISCALI) {
                 setRegimiFiscali(payload.REGIMIFISCALI);
@@ -131,10 +158,140 @@ const DatiAziendaForm = () => {
 
     if (loading) return <div>Caricamento dati azienda...</div>;
 
+    const appConfig = authService.getConfig ? authService.getConfig() : {};
+    const currentUser = authService.getCurrentUser ? authService.getCurrentUser() : {};
+    const tipoAccount = fetchedTipoAccount || appConfig.tipoAccount || appConfig.tipo_account || currentUser.tipoAccount || 1;
+
+    const getPlanBadge = (tipo) => {
+        if (tipo === 5) return { name: 'Studio Contabile Partner', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' };
+        if (tipo === 4) return { name: 'Enterprise', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' };
+        if (tipo === 3) return { name: 'Professional', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' };
+        return { name: 'Smart', color: '#f59e0b', bg: '#fffbe6', border: '#fde68a' };
+    };
+
+    const currentPlanInfo = getPlanBadge(tipoAccount);
+
+    const stripeLinks = {
+        smart: 'https://buy.stripe.com/test_5kQdR904pbRyall1tl2Nq02',
+        pro: 'https://buy.stripe.com/test_3cI3cv7wRg7Obpp8VN2Nq01',
+        enterprise: 'https://buy.stripe.com/test_bJecN5g3ndZGfFF4Fx2Nq00'
+    };
+
+    const getValidEmail = (...emails) => {
+        for (const e of emails) {
+            if (e && typeof e === 'string' && e.includes('@')) {
+                return e.trim();
+            }
+        }
+        return '';
+    };
+
+    const userEmail = getValidEmail(currentUser.email, formData.email, appConfig.sub, appConfig.email);
+
+    const getStripeUrl = (baseUrl) => {
+        if (!userEmail) return baseUrl;
+        return `${baseUrl}?prefilled_email=${encodeURIComponent(userEmail)}`;
+    };
+
     return (
         <div className="dati-azienda-container">
+            {/* BOX ABBONAMENTO E PIANO ATTIVO */}
+            <div style={{
+                background: '#ffffff',
+                border: `2px solid ${currentPlanInfo.border}`,
+                borderRadius: '16px',
+                padding: '24px',
+                marginBottom: '30px',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.04)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                    <div>
+                        <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: '#64748b', tracking: '1px', marginBottom: '4px' }}>
+                            IL TUO ACCREDITO SMARTDOC
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '22px', fontWeight: '900', color: '#0f172a' }}>
+                                Piano Attivo: <span style={{ color: currentPlanInfo.color }}>{currentPlanInfo.name}</span>
+                            </span>
+                            {tipoAccount === 5 ? (
+                                <span style={{
+                                    background: '#d1fae5',
+                                    color: '#047857',
+                                    border: '1px solid #6ee7b7',
+                                    fontSize: '11px',
+                                    fontWeight: '800',
+                                    padding: '4px 12px',
+                                    borderRadius: '20px',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    💼 100% GRATUITO PER SEMPRE (STUDIO PARTNER)
+                                </span>
+                            ) : fetchedFlProva === 1 ? (
+                                <span style={{
+                                    background: '#fffbe6',
+                                    color: '#d97706',
+                                    border: '1px solid #fde68a',
+                                    fontSize: '11px',
+                                    fontWeight: '800',
+                                    padding: '4px 12px',
+                                    borderRadius: '20px',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    🎁 Prova Gratuita ({giorniRimanenti} giorni rimanenti)
+                                </span>
+                            ) : (
+                                <span style={{
+                                    background: '#ecfdf5',
+                                    color: '#059669',
+                                    border: '1px solid #a7f3d0',
+                                    fontSize: '11px',
+                                    fontWeight: '800',
+                                    padding: '4px 12px',
+                                    borderRadius: '20px',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    ✓ Abbonamento {fetchedTipoRinnovo === 'MONTHLY' ? 'Mensile' : 'Annuale'} Pagato (Stripe)
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
+                    {tipoAccount < 5 && (
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            {tipoAccount < 3 && (
+                                <a 
+                                    href={getStripeUrl(stripeLinks.pro)} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="btn btn-primary"
+                                    style={{ fontWeight: '700', borderRadius: '10px', padding: '10px 18px', background: '#3b82f6', borderColor: '#3b82f6' }}
+                                >
+                                    ⚡ Passa a Professional (€58,80/anno)
+                                </a>
+                            )}
+                            {tipoAccount < 4 && (
+                                <a 
+                                    href={getStripeUrl(stripeLinks.enterprise)} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="btn btn-success"
+                                    style={{ fontWeight: '700', borderRadius: '10px', padding: '10px 18px', background: '#10b981', borderColor: '#10b981' }}
+                                >
+                                    🚀 Passa a Enterprise (€118,80/anno)
+                                </a>
+                            )}
+                            {tipoAccount === 4 && (
+                                <span style={{ fontSize: '13px', fontWeight: '700', color: '#10b981' }}>
+                                    ✓ Disponi già del piano completo Enterprise
+                                </span>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {message.text && (
-                <div className={`alert ${message.type === 'error' ? 'alert-danger' : 'alert-success'}`}>
+                <div className={`alert alert-${message.type === 'error' ? 'danger' : 'success'}`}>
                     {message.text}
                 </div>
             )}
@@ -270,6 +427,8 @@ const DatiAziendaForm = () => {
                     <button type="button" className="btn btn-secondary ml-2" onClick={() => window.location.reload()}>Annulla</button>
                 </div>
             </form>
+
+            <CommercialistaSection />
         </div>
     );
 };

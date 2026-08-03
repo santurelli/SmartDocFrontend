@@ -1,0 +1,356 @@
+.rb-container {
+    padding: 20px;
+    padding-bottom: 50px;
+}
+
+.rb-subtitle {
+    color: #888;
+    font-size: 13px;
+    margin: -8px 0 20px;
+}
+
+.rb-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+/* Sidebar: import history */
+.rb-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: #fff;
+    border: 1px solid #e7ebee;
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.rb-sidebar-title {
+    background-color: #03a9f4;
+    color: #fff;
+    padding: 10px 15px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.rb-empty-small {
+    padding: 20px 15px;
+    color: #999;
+    font-size: 12px;
+}
+
+.rb-import-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f1f2f7;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.rb-import-item:hover { background: #f7f9fa; }
+
+.rb-import-item.active {
+    background: #e3f2fd;
+    border-left: 3px solid #03a9f4;
+}
+
+.rb-import-item.is-error { border-left: 3px solid #e74c3c; }
+
+.rb-import-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.rb-import-file {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 170px;
+}
+
+.rb-format-badge {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.rb-format-badge.mt940 { background: #e3f2fd; color: #0277bd; }
+.rb-format-badge.csv { background: #fff3e0; color: #e65100; }
+
+.rb-import-item-meta {
+    font-size: 11px;
+    color: #999;
+    margin-top: 3px;
+}
+
+.rb-import-item-stats {
+    display: flex;
+    gap: 10px;
+    font-size: 11px;
+    color: #666;
+    margin-top: 6px;
+}
+
+.rb-stat-ok { color: #2e7d32; font-weight: 600; }
+
+.rb-import-item-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 11px;
+    color: #c62828;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+/* Main area */
+.rb-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.rb-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.rb-empty-icon {
+    font-size: 32px;
+    color: #ddd;
+    margin-bottom: 14px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Summary strip */
+.rb-summary-strip {
+    display: flex;
+    background: #fff;
+    border: 1px solid #e7ebee;
+    border-left: 4px solid #03a9f4;
+    border-radius: 0 3px 3px 0;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.rb-summary-item {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 24px;
+    gap: 3px;
+    border-right: 1px solid #f1f2f7;
+}
+
+.rb-summary-item:last-child { border-right: none; }
+
+.rb-summary-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+}
+
+.rb-summary-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    font-variant-numeric: tabular-nums;
+}
+
+.rb-summary-item.ok .rb-summary-value { color: #2e7d32; }
+.rb-summary-item.warn .rb-summary-value { color: #e65100; }
+
+/* Table */
+.rb-table thead th {
+    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 700;
+    color: #888;
+    background: #f9fafb;
+    border-bottom: 2px solid #f1f2f7;
+    padding: 10px;
+}
+
+.rb-table tbody td {
+    padding: 10px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f2f7;
+}
+
+.rb-causale {
+    font-size: 13px;
+    color: #333;
+    font-weight: 500;
+}
+
+.rb-controparte {
+    font-size: 11px;
+    color: #999;
+    margin-top: 2px;
+}
+
+.rb-importo {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.rb-importo.entrata { color: #2e7d32; }
+.rb-importo.uscita { color: #c62828; }
+
+.rb-stato-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.rb-stato-abbinato_auto { background: #e8f5e9; color: #2e7d32; }
+.rb-stato-abbinato_manuale { background: #e3f2fd; color: #0277bd; }
+.rb-stato-non_abbinato { background: #fff3e0; color: #e65100; }
+.rb-stato-ignorato { background: #f1f2f7; color: #999; }
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+.btn-icon:hover { background: #f1f2f7; color: #333; }
+
+/* Candidates row */
+.rb-candidates-row td {
+    background: #f9fbfe;
+    padding: 14px 20px !important;
+}
+
+.rb-no-candidates {
+    color: #999;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.rb-candidates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rb-candidate-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #e3eef8;
+    border-radius: 6px;
+    padding: 10px 14px;
+}
+
+.rb-candidate-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.rb-tipo-badge {
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 3px;
+}
+
+.rb-tipo-badge.incasso { background: #e3f2fd; color: #0277bd; }
+.rb-tipo-badge.pagamento { background: #fce4ec; color: #ad1457; }
+
+.rb-candidate-doc {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: #333;
+}
+
+.rb-candidate-soggetto {
+    font-size: 12px;
+    color: #555;
+}
+
+.rb-candidate-scadenza {
+    font-size: 11px;
+    color: #999;
+}
+
+.rb-candidate-importo {
+    font-size: 12px;
+    font-weight: 700;
+    color: #03a9f4;
+    font-variant-numeric: tabular-nums;
+}
+
+.rb-candidate-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.rb-score {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666;
+    background: #f1f2f7;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+.rb-abbina-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #03a9f4;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rb-abbina-btn:hover { background: #039be5; }
+
+.rb-ignora-link {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.rb-ignora-link:hover { color: #c62828; }

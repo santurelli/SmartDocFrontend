@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Navigate } from 'react-router-dom';
 import StatisticheService from '../../services/StatisticheService';
 import FattureService from '../../services/FattureService';
+import authService from '../../services/authService';
 import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
     Tooltip, Legend, ResponsiveContainer, ComposedChart, Area
@@ -10,6 +11,13 @@ import { FaFrownOpen, FaPaperPlane, FaMoneyBillWave, FaInbox, FaUsers, FaTruck, 
 import './Dashboard.css';
 
 const Dashboard = () => {
+    const appConfig = authService.getConfig ? authService.getConfig() : {};
+    const currentUser = authService.getCurrentUser() ? authService.getCurrentUser() : {};
+    const tipoAccount = appConfig.tipoAccount || appConfig.tipo_account || currentUser.tipoAccount || 1;
+
+    if (tipoAccount === 5) {
+        return <Navigate to="/studio/dashboard" replace />;
+    }
     const [stats, setStats] = useState(null);
     const [ultimeFatture, setUltimeFatture] = useState([]);
     const [loading, setLoading] = useState(true);

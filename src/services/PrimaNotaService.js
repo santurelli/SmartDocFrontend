@@ -37,6 +37,22 @@ const PrimaNotaService = {
         return api.post('/primanota/export-excel', criteria, {
             responseType: 'blob'
         });
+    },
+
+    exportCsv: (criteria) => {
+        return api.post('/primanota/export-csv', criteria, {
+            responseType: 'blob'
+        });
+    },
+
+    exportDatev: (criteria, beraterNr, mandantNr) => {
+        const params = {};
+        if (beraterNr) params.beraterNr = beraterNr;
+        if (mandantNr) params.mandantNr = mandantNr;
+        return api.post('/primanota/export-datev', criteria, {
+            params,
+            responseType: 'blob'
+        });
     }
 };
 

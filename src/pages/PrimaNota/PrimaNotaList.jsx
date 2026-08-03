@@ -6,7 +6,8 @@ import FornitoriService from '../../services/FornitoriService';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
 import Swal from 'sweetalert2';
-import { FaSearch, FaSync, FaPlus, FaTrash, FaEdit, FaArrowUp, FaArrowDown, FaLandmark, FaEllipsisV, FaHome, FaAngleRight, FaFileExcel } from 'react-icons/fa';
+import { FaSearch, FaSync, FaPlus, FaTrash, FaEdit, FaArrowUp, FaArrowDown, FaLandmark, FaEllipsisV, FaHome, FaAngleRight, FaFileExcel, FaFileCsv, FaFileExport, FaCaretDown } from 'react-icons/fa';
+import authService from '../../services/authService';
 import PrimaNotaModal from './PrimaNotaModal';
 import storageHelper from '../../utils/storageHelper';
 import { getDefaultSearchRange } from '../../utils/dateUtils';
@@ -33,6 +34,11 @@ const PrimaNotaList = () => {
     const [data, setData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [risorseCombo, setRisorseCombo] = useState([]);
+    const [showExportMenu, setShowExportMenu] = useState(false);
+
+    const currentUser = authService.getCurrentUser()?.user;
+    const tipoAccount = currentUser?.aziendaDto?.tipoAccount ?? currentUser?.tipoAccount ?? 4;
+    const isPianoEnterprise = tipoAccount >= 4;
     
     // Pagination & Sort state
     const [page, setPage] = useState(0);
@@ -180,17 +186,7 @@ const PrimaNotaList = () => {
     const handleExportExcel = async () => {
         setIsLoading(true);
         try {
-            const criteria = {
-                idRisorsa: appliedFilters.idRisorsa || null,
-                idSoggetto: appliedFilters.idSoggetto || null,
-                dataDa: appliedFilters.dataDa ? appliedFilters.dataDa.split('-').reverse().join('/') : null,
-                dataA: appliedFilters.dataA ? appliedFilters.dataA.split('-').reverse().join('/') : null,
-                idDivisione: 0,
-                orderColumn: sort.column,
-                orderDir: sort.direction
-            };
-            
-            const res = await PrimaNotaService.exportExcel(criteria);
+            const res = await PrimaNotaService.exportExcel(buildCriteria());
             
             const url = window.URL.createObjectURL(new Blob([res.data]));
             const link = document.createElement('a');
@@ -210,6 +206,78 @@ const PrimaNotaList = () => {
         } catch (err) {
             console.error("Errore esportazione excel:", err);
             Swal.fire('Errore', 'Impossibile esportare il file Excel', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const buildCriteria = () => ({
+        idRisorsa: appliedFilters.idRisorsa || null,
+        idSoggetto: appliedFilters.idSoggetto || null,
+        dtFrom: appliedFilters.dataDa ? appliedFilters.dataDa.split('-').reverse().join('/') : null,
+        dtTo: appliedFilters.dataA ? appliedFilters.dataA.split('-').reverse().join('/') : null,
+        idDivisione: 0,
+        orderColumn: sort.column,
+        orderDir: sort.direction
+    });
+
+    const downloadBlob = (blobData, filename) => {
+        const url = window.URL.createObjectURL(new Blob([blobData]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    };
+
+    const handleExportCsv = async () => {
+        setShowExportMenu(false);
+        setIsLoading(true);
+        try {
+            const res = await PrimaNotaService.exportCsv(buildCriteria());
+            downloadBlob(res.data, `prima_nota_${new Date().getTime()}.csv`);
+            Swal.fire({ title: 'Esportazione completata', icon: 'success', timer: 2000, showConfirmButton: false });
+        } catch (err) {
+            console.error("Errore esportazione CSV:", err);
+            Swal.fire('Errore', 'Impossibile esportare il file CSV', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleExportDatev = async () => {
+        setShowExportMenu(false);
+        const { value: formValues } = await Swal.fire({
+            title: 'Export Datev',
+            html:
+                '<p style="font-size:13px;color:#666;text-align:left;margin-bottom:10px;">Numero consulente e cliente forniti dal tuo commercialista (facoltativi, puoi lasciarli vuoti e farli inserire a lui in un secondo momento).</p>' +
+                '<input id="swal-berater" class="swal2-input" placeholder="Numero Berater (consulente)">' +
+                '<input id="swal-mandant" class="swal2-input" placeholder="Numero Mandant (cliente)">',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Esporta',
+            cancelButtonText: 'Annulla',
+            preConfirm: () => ({
+                beraterNr: document.getElementById('swal-berater').value,
+                mandantNr: document.getElementById('swal-mandant').value
+            })
+        });
+        if (!formValues) return;
+
+        setIsLoading(true);
+        try {
+            const res = await PrimaNotaService.exportDatev(buildCriteria(), formValues.beraterNr, formValues.mandantNr);
+            downloadBlob(res.data, `EXTF_prima_nota_${new Date().getTime()}.csv`);
+            Swal.fire({
+                title: 'Esportazione completata',
+                text: 'Verifica con il commercialista i codici conto/contropartita: SmartDoc non gestisce un piano dei conti in partita doppia, quindi vanno assegnati da lui in fase di import.',
+                icon: 'success'
+            });
+        } catch (err) {
+            console.error("Errore esportazione Datev:", err);
+            Swal.fire('Errore', 'Impossibile esportare il file Datev', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -283,9 +351,35 @@ const PrimaNotaList = () => {
                     {/* Eventuali azioni massive o selettore righe per pagina potrebbero andare qui */}
                 </div>
                 <div className="toolbar-right">
-                    <button className="btn-export-vibrant mr-2" onClick={handleExportExcel} title="Esporta in Excel" disabled={isLoading}>
-                        <FaFileExcel size={14} /> Esporta
-                    </button>
+                    {isPianoEnterprise ? (
+                        <div className="action-menu-container mr-2" style={{ position: 'relative', display: 'inline-block' }}>
+                            <button className="btn-export-vibrant" onClick={() => setShowExportMenu(v => !v)} title="Esporta" disabled={isLoading}>
+                                <FaFileExport size={14} /> Esporta <FaCaretDown size={11} />
+                            </button>
+                            {showExportMenu && (
+                                <div className="action-dropdown-menu" style={{ right: 0, left: 'auto' }}>
+                                    <button className="action-dropdown-item" onClick={handleExportExcel}>
+                                        <FaFileExcel /> Excel
+                                    </button>
+                                    <button className="action-dropdown-item" onClick={handleExportCsv}>
+                                        <FaFileCsv /> CSV (Zucchetti / TeamSystem)
+                                    </button>
+                                    <button className="action-dropdown-item" onClick={handleExportDatev}>
+                                        <FaFileExport /> Datev
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            className="btn-export-vibrant mr-2"
+                            title="Disponibile solo con il piano Enterprise"
+                            onClick={() => Swal.fire('Funzione Enterprise', "L'export strutturato per il commercialista è disponibile solo con il piano Enterprise.", 'info')}
+                            style={{ opacity: 0.6 }}
+                        >
+                            <FaFileExport size={14} /> Esporta
+                        </button>
+                    )}
                     <button className="btn-new-vibrant" onClick={() => { setSelectedId(null); setIsModalOpen(true); }}>
                         <FaPlus size={14} /> Registra Movimento
                     </button>

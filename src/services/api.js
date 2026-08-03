@@ -14,6 +14,23 @@ instance.interceptors.request.use(
         if (user && user.token) {
             config.headers['Authorization'] = 'Bearer ' + user.token;
         }
+
+        const impersonated = sessionStorage.getItem('impersonated_tenant');
+        if (impersonated) {
+            try {
+                const tenantData = JSON.parse(impersonated);
+                const dbName = tenantData.nome_db || tenantData.nomeDb;
+                const tenantId = tenantData.k_d_e_enti || tenantData.idCliente || tenantData.id;
+                if (dbName) {
+                    config.headers['X-Impersonated-Tenant-Db'] = dbName;
+                }
+                if (tenantId) {
+                    config.headers['X-Impersonated-Tenant-Id'] = String(tenantId);
+                }
+            } catch (e) {
+                console.error("Error parsing impersonated_tenant in api.js", e);
+            }
+        }
         return config;
     },
     (error) => {
