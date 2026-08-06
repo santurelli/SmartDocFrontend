@@ -172,8 +172,10 @@ const Sidebar = ({ user }) => {
                                                 <li><NavLink to="/fatture">Fatture/Note debito</NavLink></li>
                                             )}
                                             {isEnabled('ABILITA_NOTE_CREDITO') && <li><NavLink to="/note-credito">Note di credito</NavLink></li>}
-                                            {isEnabled('ABILITA_FATTURE_FORNITORE') && <li><NavLink to="/fatture-fornitore">Fatture fornitore</NavLink></li>}
-                                            {isEnabled('ABILITA_NOTE_CREDITO_FORNITORE') && <li><NavLink to="/note-credito-fornitore">Note credito fornitore</NavLink></li>}
+                                            {isAllowedByPlan(4) && isEnabled('ABILITA_ORDINI') && <li><NavLink to="/ordini">Ordini a fornitori</NavLink></li>}
+                                            {isAllowedByPlan(4) && isEnabled('ABILITA_BOLLECARICO') && <li><NavLink to="/bollecarico">Bolle di carico</NavLink></li>}
+                                            {isAllowedByPlan(4) && isEnabled('ABILITA_FATTURE_FORNITORE') && <li><NavLink to="/fatture-fornitore">Fatture fornitore</NavLink></li>}
+                                            {isAllowedByPlan(4) && isEnabled('ABILITA_NOTE_CREDITO_FORNITORE') && <li><NavLink to="/note-credito-fornitore">Note credito fornitore</NavLink></li>}
                                         </ul>
                                     </li>
 

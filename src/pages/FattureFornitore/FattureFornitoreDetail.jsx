@@ -1,11 +1,13 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaInfoCircle, FaCalendarAlt, FaFileAlt, FaAngleRight, FaListUl, FaSave, FaPlus, FaTrash, FaArrowLeft } from 'react-icons/fa';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { FaInfoCircle, FaCalendarAlt, FaFileAlt, FaAngleRight, FaListUl, FaSave, FaPlus, FaTrash, FaArrowLeft, FaBoxOpen } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
 import FattureFornitoreService from '../../services/FattureFornitoreService';
 import FornitoriService from '../../services/FornitoriService';
+import OrdiniService from '../../services/OrdiniService';
+import BollaCaricoService from '../../services/BollaCaricoService';
 import ArticoliService from '../../services/ArticoliService';
 import authService from '../../services/authService';
 import DocumentRows from '../../components/common/DocumentRows';
@@ -21,6 +23,9 @@ import '../../components/EntityForms.css';
 const FattureFornitoreDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const fromOrdineId = searchParams.get('fromOrdine');
+    const fromBollaCaricoId = searchParams.get('fromBollaCarico');
     const isNew = !id || id === 'new';
 
     const [isCeramica, setIsCeramica] = useState(false);
@@ -215,6 +220,10 @@ const FattureFornitoreDetail = () => {
                         }));
                         setProdotti(mappedProdotti);
                     }
+                } else if (fromOrdineId) {
+                    await fetchDataFromOrdine(fromOrdineId);
+                } else if (fromBollaCaricoId) {
+                    await fetchDataFromBollaCarico(fromBollaCaricoId);
                 } else {
                     // Automatically fetch next internal number for new documents
                     fetchNextNum(formData.dataDocumento);
@@ -228,7 +237,90 @@ const FattureFornitoreDetail = () => {
         };
 
         fetchInitialData();
-    }, [id, isNew]);
+    }, [id, isNew, fromOrdineId, fromBollaCaricoId]);
+
+    const fetchDataFromOrdine = async (ordineId) => {
+        try {
+            const res = await OrdiniService.getById(ordineId);
+            const data = res.data?.payload || res.data;
+            if (!data) return;
+
+            const mappedProdotti = [
+                {
+                    id: 0,
+                    idDocumento: 0,
+                    tipo: 'N',
+                    fmDescrizione: `Rif. Ordine num. ${data.numDocumento} del ${data.dataDocumento}`,
+                    quantita: 0,
+                    prezzo: 0,
+                    sconto: 0
+                },
+                ...(data.prodotti || []).map(p => ({
+                    ...p,
+                    id: 0,
+                    idDocumento: 0,
+                    tipo: p.tipo || (p.idProdotto ? 'A' : 'F'),
+                    scarica: 1
+                }))
+            ];
+            setProdotti(mappedProdotti);
+
+            setFormData(prev => ({
+                ...prev,
+                idFornitore: data.idFornitore,
+                descFornitore: data.descFornitore,
+                fornitoreDto: data.fornitoreDto,
+                idOrdini: [parseInt(ordineId, 10)]
+            }));
+
+            fetchNextNum(formData.dataDocumento);
+        } catch (error) {
+            console.error('Errore nel caricamento dei dati dall\'ordine:', error);
+            Swal.fire('Errore', 'Impossibile caricare i dati dell\'ordine', 'error');
+        }
+    };
+
+    const fetchDataFromBollaCarico = async (bollaCaricoId) => {
+        try {
+            const res = await BollaCaricoService.getById(bollaCaricoId);
+            const data = res.data?.payload || res.data;
+            if (!data) return;
+
+            const mappedProdotti = [
+                {
+                    id: 0,
+                    idDocumento: 0,
+                    tipo: 'N',
+                    fmDescrizione: `Rif. Bolla di carico num. ${data.numDocumento} del ${data.dataDocumento}`,
+                    quantita: 0,
+                    prezzo: 0,
+                    sconto: 0
+                },
+                ...(data.prodotti || []).map(p => ({
+                    ...p,
+                    id: 0,
+                    idDocumento: 0,
+                    tipo: p.tipo || (p.idProdotto ? 'A' : 'F'),
+                    scarica: 0,
+                    daBollaCarico: true
+                }))
+            ];
+            setProdotti(mappedProdotti);
+
+            setFormData(prev => ({
+                ...prev,
+                idFornitore: data.idFornitore,
+                descFornitore: data.descFornitore,
+                fornitoreDto: data.fornitoreDto,
+                idBolleCarico: [parseInt(bollaCaricoId, 10)]
+            }));
+
+            fetchNextNum(formData.dataDocumento);
+        } catch (error) {
+            console.error('Errore nel caricamento dei dati dalla bolla di carico:', error);
+            Swal.fire('Errore', 'Impossibile caricare i dati della bolla di carico', 'error');
+        }
+    };
 
     // Calculate totals dynamically from prodotti rows
     const calculateTotalImponibile = () => {
@@ -322,6 +414,15 @@ const FattureFornitoreDetail = () => {
                 [field]: value
             };
             return recalculateTotals(newP);
+        });
+    };
+
+    const toggleScarica = (idx) => {
+        setProdotti(prev => {
+            const newP = [...prev];
+            const cur = newP[idx].scarica === 0 ? 0 : 1;
+            newP[idx] = { ...newP[idx], scarica: cur === 1 ? 0 : 1 };
+            return newP;
         });
     };
 
@@ -529,8 +630,11 @@ const FattureFornitoreDetail = () => {
                     <div className="tab-content">
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
+                            <div style={{ fontSize: '11px', color: '#999', marginBottom: '12px' }}>
+                                <span style={{ color: '#dc3545' }}>*</span> campo obbligatorio
+                            </div>
                             <div className="row" style={{ alignItems: 'flex-start' }}>
-                                
+
                                 {/* Colonna Sinistra: Fornitore */}
                                 <div className="col-md-6">
                                     <div className="premium-card address-card" style={{ border: '1px solid #e7ebee', borderRadius: '8px' }}>
@@ -539,10 +643,10 @@ const FattureFornitoreDetail = () => {
                                         </div>
                                         <div className="card-body" style={{ padding: '20px' }}>
                                             <div className="form-group" style={{ marginBottom: '15px' }}>
-                                                <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Ragione Sociale</label>
+                                                <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Ragione Sociale <span style={{ color: '#dc3545' }}>*</span></label>
                                                 {isReadOnly ? (
                                                     <input
-                                                        type="text"
+autoComplete="off"                                                         type="text"
                                                         className="form-control premium-input"
                                                         value={formData.descFornitore || formData.fornitoreDto?.denominazione || 'N/D'}
                                                         disabled
@@ -562,7 +666,7 @@ const FattureFornitoreDetail = () => {
                                             <div className="form-group" style={{ marginBottom: '15px' }}>
                                                 <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Indirizzo</label>
                                                 <input
-                                                    type="text"
+autoComplete="off"                                                     type="text"
                                                     className="form-control premium-input"
                                                     value={fornitoreDetails.indirizzo || ''}
                                                     disabled
@@ -573,7 +677,7 @@ const FattureFornitoreDetail = () => {
                                                 <div style={{ flex: '2' }}>
                                                     <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Città</label>
                                                     <input
-                                                        type="text"
+autoComplete="off"                                                         type="text"
                                                         className="form-control premium-input"
                                                         value={fornitoreDetails.citta || ''}
                                                         disabled
@@ -582,7 +686,7 @@ const FattureFornitoreDetail = () => {
                                                 <div style={{ flex: '1' }}>
                                                     <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Prov.</label>
                                                     <input
-                                                        type="text"
+autoComplete="off"                                                         type="text"
                                                         className="form-control premium-input"
                                                         value={fornitoreDetails.provincia || ''}
                                                         disabled
@@ -591,7 +695,7 @@ const FattureFornitoreDetail = () => {
                                                 <div style={{ flex: '1' }}>
                                                     <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>CAP</label>
                                                     <input
-                                                        type="text"
+autoComplete="off"                                                         type="text"
                                                         className="form-control premium-input"
                                                         value={fornitoreDetails.cap || ''}
                                                         disabled
@@ -603,7 +707,7 @@ const FattureFornitoreDetail = () => {
                                                 <div style={{ flex: '1' }}>
                                                     <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Partita IVA</label>
                                                     <input
-                                                        type="text"
+autoComplete="off"                                                         type="text"
                                                         className="form-control premium-input"
                                                         value={fornitoreDetails.partitaIva || ''}
                                                         disabled
@@ -612,7 +716,7 @@ const FattureFornitoreDetail = () => {
                                                 <div style={{ flex: '1' }}>
                                                     <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Codice Fiscale</label>
                                                     <input
-                                                        type="text"
+autoComplete="off"                                                         type="text"
                                                         className="form-control premium-input"
                                                         value={fornitoreDetails.codiceFiscale || ''}
                                                         disabled
@@ -634,7 +738,7 @@ const FattureFornitoreDetail = () => {
                                                 <div style={{ flex: '1' }}>
                                                     <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>N. Registrazione</label>
                                                     <input
-                                                        type="number"
+autoComplete="off"                                                         type="number"
                                                         className="form-control premium-input"
                                                         name="numDocumento"
                                                         value={formData.numDocumento || ''}
@@ -643,8 +747,9 @@ const FattureFornitoreDetail = () => {
                                                     />
                                                 </div>
                                                 <div style={{ flex: '1' }}>
-                                                    <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Data Registrazione</label>
+                                                    <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Data Registrazione <span style={{ color: '#dc3545' }}>*</span></label>
                                                     <input
+                                                        autoComplete="off"
                                                         type="date"
                                                         className="form-control premium-input"
                                                         name="dataDocumento"
@@ -665,8 +770,9 @@ const FattureFornitoreDetail = () => {
                                         <div className="card-body" style={{ padding: '20px' }}>
                                             <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
                                                 <div style={{ flex: '1' }}>
-                                                    <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>N. Fattura Fornitore</label>
+                                                    <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>N. Fattura Fornitore <span style={{ color: '#dc3545' }}>*</span></label>
                                                     <input
+                                                        autoComplete="off"
                                                         type="text"
                                                         className="form-control premium-input"
                                                         name="numeroDocumentoFornitore"
@@ -677,8 +783,9 @@ const FattureFornitoreDetail = () => {
                                                     />
                                                 </div>
                                                 <div style={{ flex: '1' }}>
-                                                    <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Data Fattura Fornitore</label>
+                                                    <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Data Fattura Fornitore <span style={{ color: '#dc3545' }}>*</span></label>
                                                     <input
+                                                        autoComplete="off"
                                                         type="date"
                                                         className="form-control premium-input"
                                                         name="dataDocumentoFornitore"
@@ -692,7 +799,7 @@ const FattureFornitoreDetail = () => {
                                             <div className="form-group" style={{ marginBottom: '5px' }}>
                                                 <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Tipo Documento SDI (Autofattura)</label>
                                                 <select
-                                                    className="form-control premium-input"
+autoComplete="off"                                                     className="form-control premium-input"
                                                     name="tipoDocumentoSdi"
                                                     value={formData.tipoDocumentoSdi || ''}
                                                     onChange={handleHeaderChange}
@@ -721,7 +828,7 @@ const FattureFornitoreDetail = () => {
                                             </span>
                                             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isReadOnly ? 'default' : 'pointer', margin: 0 }}>
                                                 <input
-                                                    type="checkbox"
+autoComplete="off"                                                     type="checkbox"
                                                     checked={!formData.flRitenutaAcconto}
                                                     disabled={isReadOnly}
                                                     onChange={e => {
@@ -741,7 +848,7 @@ const FattureFornitoreDetail = () => {
                                                     <div style={{ flex: '1' }}>
                                                         <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Aliquota ritenuta %</label>
                                                         <input
-                                                            type="number"
+autoComplete="off"                                                             type="number"
                                                             className="form-control premium-input"
                                                             name="percRitenutaAcconto"
                                                             value={formData.percRitenutaAcconto ?? ''}
@@ -757,7 +864,7 @@ const FattureFornitoreDetail = () => {
                                                     <div style={{ flex: '1' }}>
                                                         <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Importo ritenuta (€)</label>
                                                         <input
-                                                            type="number"
+autoComplete="off"                                                             type="number"
                                                             className="form-control premium-input"
                                                             name="importoRitenutaAcconto"
                                                             value={formData.importoRitenutaAcconto ?? ''}
@@ -772,7 +879,7 @@ const FattureFornitoreDetail = () => {
                                                     <div style={{ flex: '1' }}>
                                                         <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Tipo ritenuta</label>
                                                         <select
-                                                            className="form-control premium-input"
+autoComplete="off"                                                             className="form-control premium-input"
                                                             name="tipoRitenuta"
                                                             value={formData.tipoRitenuta || ''}
                                                             onChange={e => setFormData(prev => ({ ...prev, tipoRitenuta: e.target.value }))}
@@ -786,7 +893,7 @@ const FattureFornitoreDetail = () => {
                                                 <div>
                                                     <label className="premium-label" style={{ fontWeight: 600, color: '#666', fontSize: '12px', display: 'block', marginBottom: '5px' }}>Causale pagamento (770)</label>
                                                     <select
-                                                        className="form-control premium-input"
+autoComplete="off"                                                         className="form-control premium-input"
                                                         name="causalePagamento"
                                                         value={formData.causalePagamento || ''}
                                                         onChange={e => setFormData(prev => ({ ...prev, causalePagamento: e.target.value }))}
@@ -822,24 +929,59 @@ const FattureFornitoreDetail = () => {
                                 rows={prodotti}
                                 onRowChange={handleRowChange}
                                 onRowUpdate={(idx, update) => {
-                                    const newP = [...prodotti];
-                                    newP[idx] = { ...newP[idx], ...update };
-                                    setProdotti(recalculateTotals(newP));
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP[idx] = { ...newP[idx], ...update };
+                                        return recalculateTotals(newP);
+                                    });
                                 }}
                                 onDeleteRow={(idx) => {
-                                    const newP = [...prodotti];
-                                    newP.splice(idx, 1);
-                                    setProdotti(recalculateTotals(newP));
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP.splice(idx, 1);
+                                        return recalculateTotals(newP);
+                                    });
                                 }}
                                 onAddRow={(newRow) => {
                                     setProdotti(prev => recalculateTotals([...prev, newRow]));
                                 }}
+                                addExtraProps={{ scarica: 1 }}
                                 combos={combos}
                                 isCeramica={isCeramica}
                                 showRitenuta={false}
                                 readOnly={isReadOnly}
                                 idListino={null}
                             />
+
+                            {prodotti.length > 0 && (
+                                <div className="carica-magazzino-panel">
+                                    <div className="card-header-vibrant">
+                                        <span><FaBoxOpen /> Carico in magazzino</span>
+                                    </div>
+                                    {prodotti.map((row, idx) => {
+                                        if (row.tipo !== 'A' || (row.tipologia !== 'AM' && row.tipologia !== 'AMSC')) return null;
+                                        const desc = row.descProdotto || row.codiceProdotto || `Riga ${idx + 1}`;
+                                        return (
+                                            <div className="carica-magazzino-row" key={idx}>
+                                                <label>
+                                                    <input
+autoComplete="off"                                                         type="checkbox"
+                                                        checked={row.scarica !== 0}
+                                                        onChange={() => toggleScarica(idx)}
+                                                    />
+                                                    Carica in magazzino
+                                                </label>
+                                                <span style={{ color: '#666' }}>— {desc}</span>
+                                                {row.daBollaCarico && (
+                                                    <span className="badge-da-bolla" title="Articolo già caricato a magazzino dalla Bolla di carico collegata">
+                                                        Da Bolla di carico
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Tab Pagamento */}

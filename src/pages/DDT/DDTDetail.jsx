@@ -7,7 +7,7 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaGlobe } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaGlobe, FaBoxOpen } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -607,9 +607,11 @@ const DDTDetail = () => {
 
 
     const handleDeleteRow = (idx) => {
-        const newP = [...prodotti];
-        newP.splice(idx, 1);
-        setProdotti(newP);
+        setProdotti(prev => {
+            const newP = [...prev];
+            newP.splice(idx, 1);
+            return newP;
+        });
     };
 
     const handleListinoChange = (opt) => {
@@ -673,15 +675,28 @@ const DDTDetail = () => {
     };
 
     const handleRowChange = (idx, field, value) => {
-        const newP = [...prodotti];
-        newP[idx][field] = value;
-        setProdotti(newP);
+        setProdotti(prev => {
+            const newP = [...prev];
+            newP[idx] = { ...newP[idx], [field]: value };
+            return newP;
+        });
     };
 
     const handleRowUpdate = (idx, updates) => {
-        const newP = [...prodotti];
-        newP[idx] = { ...newP[idx], ...updates };
-        setProdotti(newP);
+        setProdotti(prev => {
+            const newP = [...prev];
+            newP[idx] = { ...newP[idx], ...updates };
+            return newP;
+        });
+    };
+
+    const toggleScarica = (idx) => {
+        setProdotti(prev => {
+            const newP = [...prev];
+            const cur = newP[idx].scarica === 0 ? 0 : 1;
+            newP[idx] = { ...newP[idx], scarica: cur === 1 ? 0 : 1 };
+            return newP;
+        });
     };
 
     const calculateTotalDocument = () => {
@@ -978,10 +993,13 @@ const DDTDetail = () => {
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
+                                <div style={{ fontSize: '11px', color: '#999', marginBottom: '12px' }}>
+                                    <span style={{ color: '#dc3545' }}>*</span> campo obbligatorio
+                                </div>
                                 <div className="compact-row">
                                     <div className="compact-col compact-col-md">
                                         <div className="form-group">
-                                            <label>Numero</label>
+                                            <label>Numero <span style={{ color: '#dc3545' }}>*</span></label>
                                             <div className="flex-input-group w-md">
                                                 <input
                                                     type="text"
@@ -1017,7 +1035,7 @@ const DDTDetail = () => {
                                     </div>
                                     <div className="compact-col compact-col-sm">
                                         <div className="form-group">
-                                            <label>Data</label>
+                                            <label>Data <span style={{ color: '#dc3545' }}>*</span></label>
                                             <div className="flex-input-group">
                                                 <input
                                                     type="date"
@@ -1032,7 +1050,7 @@ const DDTDetail = () => {
                                     </div>
                                     <div className="compact-col compact-col-xl">
                                         <EntitySelectGroup
-                                            label="Cliente"
+                                            label={<>Cliente <span style={{ color: '#dc3545' }}>*</span></>}
                                             isAsync={true}
                                             loadOptions={loadClienti}
                                             value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente || formData.denominazioneCliente } : null}
@@ -1325,6 +1343,31 @@ const DDTDetail = () => {
                                 isCeramica={isCeramica}
                                 idListino={formData.idListino}
                             />
+
+                            {prodotti.length > 0 && (
+                                <div className="carica-magazzino-panel">
+                                    <div className="card-header-vibrant">
+                                        <span><FaBoxOpen /> Scarico da magazzino</span>
+                                    </div>
+                                    {prodotti.map((row, idx) => {
+                                        if (row.tipo !== 'A' || (row.tipologia !== 'AM' && row.tipologia !== 'AMSC')) return null;
+                                        const desc = row.descProdotto || row.codiceProdotto || `Riga ${idx + 1}`;
+                                        return (
+                                            <div className="carica-magazzino-row" key={idx}>
+                                                <label>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={row.scarica !== 0}
+                                                        onChange={() => toggleScarica(idx)}
+                                                    />
+                                                    Scarica da magazzino
+                                                </label>
+                                                <span style={{ color: '#666' }}>— {desc}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Tab Trasporto */}

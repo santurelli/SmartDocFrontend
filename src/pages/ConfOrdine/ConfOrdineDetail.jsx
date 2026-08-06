@@ -558,9 +558,11 @@ const ConfOrdineDetail = () => {
 
 
     const handleDeleteRow = (idx) => {
-        const newP = [...prodotti];
-        newP.splice(idx, 1);
-        setProdotti(newP);
+        setProdotti(prev => {
+            const newP = [...prev];
+            newP.splice(idx, 1);
+            return newP;
+        });
     };
 
     const handleListinoChange = (opt) => {
@@ -624,15 +626,19 @@ const ConfOrdineDetail = () => {
     };
 
     const handleRowChange = (idx, field, value) => {
-        const newP = [...prodotti];
-        newP[idx][field] = value;
-        setProdotti(newP);
+        setProdotti(prev => {
+            const newP = [...prev];
+            newP[idx] = { ...newP[idx], [field]: value };
+            return newP;
+        });
     };
 
     const handleRowUpdate = (idx, updates) => {
-        const newP = [...prodotti];
-        newP[idx] = { ...newP[idx], ...updates };
-        setProdotti(newP);
+        setProdotti(prev => {
+            const newP = [...prev];
+            newP[idx] = { ...newP[idx], ...updates };
+            return newP;
+        });
     };
 
     // getRowValues from utils
@@ -914,10 +920,13 @@ const ConfOrdineDetail = () => {
                         <input type="text" style={{ display: 'none' }} autoComplete="off" />
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
+                            <div style={{ fontSize: '11px', color: '#999', marginBottom: '12px' }}>
+                                <span style={{ color: '#dc3545' }}>*</span> campo obbligatorio
+                            </div>
                             <div className="compact-row">
                                 <div className="compact-col compact-col-md">
                                     <div className="form-group">
-                                        <label>Numero</label>
+                                        <label>Numero <span style={{ color: '#dc3545' }}>*</span></label>
                                         <div className="flex-input-group w-md">
                                             <input
                                                 type="text"
@@ -953,7 +962,7 @@ const ConfOrdineDetail = () => {
                                 </div>
                                 <div className="compact-col compact-col-sm">
                                     <div className="form-group">
-                                        <label>Data</label>
+                                        <label>Data <span style={{ color: '#dc3545' }}>*</span></label>
                                         <div className="flex-input-group">
                                             <input
                                                 type="date"
@@ -968,7 +977,7 @@ const ConfOrdineDetail = () => {
                                 </div>
                                 <div className="compact-col compact-col-xl">
                                     <EntitySelectGroup
-                                        label="Cliente"
+                                        label={<>Cliente <span style={{ color: '#dc3545' }}>*</span></>}
                                         isAsync={true}
                                         loadOptions={loadClienti}
                                         value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente || formData.denominazioneCliente } : null}

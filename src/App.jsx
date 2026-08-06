@@ -33,6 +33,10 @@ import NoteCreditoList from './pages/NoteCredito/NoteCreditoList';
 import NoteCreditoDetail from './pages/NoteCredito/NoteCreditoDetail';
 import FattureFornitoreList from './pages/FattureFornitore/FattureFornitoreList';
 import FattureFornitoreDetail from './pages/FattureFornitore/FattureFornitoreDetail';
+import OrdiniList from './pages/Ordini/OrdiniList';
+import OrdiniDetail from './pages/Ordini/OrdiniDetail';
+import BollaCaricoList from './pages/BollaCarico/BollaCaricoList';
+import BollaCaricoDetail from './pages/BollaCarico/BollaCaricoDetail';
 import NoteCreditoFornitoreList from './pages/NoteCreditoFornitore/NoteCreditoFornitoreList';
 import NoteCreditoFornitoreDetail from './pages/NoteCreditoFornitore/NoteCreditoFornitoreDetail';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -156,16 +160,22 @@ function App() {
         <Route path="/ddt" element={<DDTList />} />
         <Route path="/ddt/new" element={<DDTDetail />} />
         <Route path="/ddt/:id" element={<DDTDetail />} />
+        <Route path="/ordini" element={<PlanProtectedRoute minPlanLevel={4}><OrdiniList /></PlanProtectedRoute>} />
+        <Route path="/ordini/new" element={<PlanProtectedRoute minPlanLevel={4}><OrdiniDetail /></PlanProtectedRoute>} />
+        <Route path="/ordini/:id" element={<PlanProtectedRoute minPlanLevel={4}><OrdiniDetail /></PlanProtectedRoute>} />
+        <Route path="/bollecarico" element={<PlanProtectedRoute minPlanLevel={4}><BollaCaricoList /></PlanProtectedRoute>} />
+        <Route path="/bollecarico/new" element={<PlanProtectedRoute minPlanLevel={4}><BollaCaricoDetail /></PlanProtectedRoute>} />
+        <Route path="/bollecarico/:id" element={<PlanProtectedRoute minPlanLevel={4}><BollaCaricoDetail /></PlanProtectedRoute>} />
         <Route path="/fatture" element={<FattureList />} />
         <Route path="/fatture/new" element={<FattureDetail />} />
         <Route path="/fatture/:id" element={<FattureDetail />} />
         <Route path="/note-credito" element={<NoteCreditoList />} />
         <Route path="/note-credito/new" element={<NoteCreditoDetail />} />
         <Route path="/note-credito/:id" element={<NoteCreditoDetail />} />
-        <Route path="/fatture-fornitore" element={<FattureFornitoreList />} />
-        <Route path="/fatture-fornitore/:id" element={<FattureFornitoreDetail />} />
-        <Route path="/note-credito-fornitore" element={<NoteCreditoFornitoreList />} />
-        <Route path="/note-credito-fornitore/:id" element={<NoteCreditoFornitoreDetail />} />
+        <Route path="/fatture-fornitore" element={<PlanProtectedRoute minPlanLevel={4}><FattureFornitoreList /></PlanProtectedRoute>} />
+        <Route path="/fatture-fornitore/:id" element={<PlanProtectedRoute minPlanLevel={4}><FattureFornitoreDetail /></PlanProtectedRoute>} />
+        <Route path="/note-credito-fornitore" element={<PlanProtectedRoute minPlanLevel={4}><NoteCreditoFornitoreList /></PlanProtectedRoute>} />
+        <Route path="/note-credito-fornitore/:id" element={<PlanProtectedRoute minPlanLevel={4}><NoteCreditoFornitoreDetail /></PlanProtectedRoute>} />
         <Route path="/articoli" element={<ArticoliList />} />
         <Route path="/articoli/movimenti" element={<MovimentiList />} />
         <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />

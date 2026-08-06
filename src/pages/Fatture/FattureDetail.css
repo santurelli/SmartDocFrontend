@@ -470,6 +470,51 @@ hr {
     transform: translateY(0);
 }
 
+.carica-magazzino-panel {
+    margin-top: 15px;
+    border: 1px solid #e7ebee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.carica-magazzino-panel .card-header-vibrant {
+    background: #f8f9fa;
+}
+
+.carica-magazzino-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 15px;
+    border-bottom: 1px solid #f1f2f7;
+    font-size: 13px;
+}
+
+.carica-magazzino-row:last-child {
+    border-bottom: none;
+}
+
+.carica-magazzino-row label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 600;
+    color: #2c7a39;
+}
+
+.badge-da-bolla {
+    margin-left: auto;
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
 .premium-input:disabled {
     background-color: #f8f9fa !important;
     color: #607d8b !important;

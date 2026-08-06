@@ -1,0 +1,7 @@
+/* OrdiniDetail.css - reuses the DDT detail vibrant styling for visual consistency */
+@import '../DDT/DDTDetail.css';
+
+.ordini-detail-container {
+    padding: 20px;
+    padding-bottom: 80px;
+}

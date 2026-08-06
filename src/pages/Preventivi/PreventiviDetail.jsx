@@ -937,10 +937,13 @@ const PreventiviDetail = () => {
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
+                                <div style={{ fontSize: '11px', color: '#999', marginBottom: '12px' }}>
+                                    <span style={{ color: '#dc3545' }}>*</span> campo obbligatorio
+                                </div>
                                 <div className="compact-row">
                                     <div className="compact-col compact-col-md">
                                         <div className="form-group">
-                                            <label>Numero</label>
+                                            <label>Numero <span style={{ color: '#dc3545' }}>*</span></label>
                                             <div className="flex-input-group w-md">
                                                     <input
                                                         type="text"
@@ -976,7 +979,7 @@ const PreventiviDetail = () => {
                                     </div>
                                     <div className="compact-col compact-col-sm">
                                         <div className="form-group">
-                                            <label>Data</label>
+                                            <label>Data <span style={{ color: '#dc3545' }}>*</span></label>
                                             <div className="flex-input-group">
                                                 <input
                                                     type="date"
@@ -993,7 +996,7 @@ const PreventiviDetail = () => {
                                     </div>
                                     <div className="compact-col compact-col-xl">
                                         <EntitySelectGroup
-                                            label="Cliente"
+                                            label={<>Cliente <span style={{ color: '#dc3545' }}>*</span></>}
                                             loadOptions={loadClienti}
                                             value={formData.idCliente ? { value: formData.idCliente, label: formData.denominazione || formData.denominazioneCliente } : null}
                                             onChange={(opt) => {

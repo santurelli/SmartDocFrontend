@@ -557,8 +557,12 @@ const NoteCreditoDetail = () => {
         });
     };
 
-    const handleRecalculate = (newProdotti) => {
-        setProdotti(newProdotti);
+    const handleRecalculate = (idx, field, value) => {
+        setProdotti(prev => {
+            const newP = [...prev];
+            newP[idx] = { ...newP[idx], [field]: value };
+            return newP;
+        });
     };
 
     const calculateTotalDocument = () => {
@@ -849,6 +853,9 @@ const NoteCreditoDetail = () => {
                         <input type="text" style={{ display: 'none' }} autoComplete="off" />
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
+                                <div style={{ fontSize: '11px', color: '#999', marginBottom: '12px' }}>
+                                    <span style={{ color: '#dc3545' }}>*</span> campo obbligatorio
+                                </div>
                                 <div className="status-workflow-bar">
                                     <div className="status-workflow-field">
                                         <label>Stato Documento</label>
@@ -884,7 +891,7 @@ const NoteCreditoDetail = () => {
                                 <div className="compact-row">
                                 <div className="compact-col compact-col-md">
                                     <div className="form-group">
-                                        <label>Numero</label>
+                                        <label>Numero <span style={{ color: '#dc3545' }}>*</span></label>
                                         <div className="flex-input-group w-md">
                                             <input
                                                 type="text"
@@ -923,7 +930,7 @@ const NoteCreditoDetail = () => {
                                 </div>
                                 <div className="compact-col compact-col-sm">
                                     <div className="form-group">
-                                        <label>Data</label>
+                                        <label>Data <span style={{ color: '#dc3545' }}>*</span></label>
                                         <div className="flex-input-group">
                                             <input
                                                 type="date"
@@ -939,7 +946,7 @@ const NoteCreditoDetail = () => {
                                 </div>
                                 <div className="compact-col compact-col-xl">
                                     <EntitySelectGroup
-                                        label="Cliente"
+                                        label={<>Cliente <span style={{ color: '#dc3545' }}>*</span></>}
                                         isAsync={true}
                                         loadOptions={loadClienti}
                                         value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente || formData.denominazioneCliente } : null}
@@ -1332,14 +1339,18 @@ const NoteCreditoDetail = () => {
                                 onRowChange={handleRecalculate}
                                 isDisabled={isLocked}
                                 onRowUpdate={(idx, update) => {
-                                    const newP = [...prodotti];
-                                    newP[idx] = { ...newP[idx], ...update };
-                                    setProdotti(newP);
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP[idx] = { ...newP[idx], ...update };
+                                        return newP;
+                                    });
                                 }}
                                 onDeleteRow={(idx) => {
-                                    const newP = [...prodotti];
-                                    newP.splice(idx, 1);
-                                    setProdotti(newP);
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP.splice(idx, 1);
+                                        return newP;
+                                    });
                                 }}
                                 combos={combos}
                                 isCeramica={isCeramica}

@@ -74,6 +74,29 @@ const DocumentRows = (props) => {
         return () => window.removeEventListener('resize', handler);
     }, []);
 
+    // Le righe caricate da un documento gia' salvato (o importate da un altro documento) non
+    // portano con se' la disponibilita' live del prodotto (quantitaEsistente/quantitaImpegnata),
+    // quindi la recuperiamo dal server per poterla mostrare all'utente invece di nasconderla.
+    const fetchedStockRef = React.useRef(new Set());
+    useEffect(() => {
+        rows.forEach((row, idx) => {
+            if (row.tipo !== 'A' || !row.idProdotto) return;
+            if (row.quantitaEsistente !== undefined && row.quantitaEsistente !== null) return;
+            if (fetchedStockRef.current.has(row.idProdotto)) return;
+            fetchedStockRef.current.add(row.idProdotto);
+            ArticoliService.getById(row.idProdotto).then(res => {
+                const art = res.data?.payload || res.data;
+                if (!art) return;
+                onRowUpdate(idx, {
+                    quantitaEsistente: art.quantitaEsistente,
+                    quantitaImpegnata: art.quantitaImpegnata,
+                    tipologia: art.tipologia
+                });
+            }).catch(err => console.error("Error loading stock for articolo", row.idProdotto, err));
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rows]);
+
     const loadArticoli = (inputValue, callback) => {
         if (!inputValue || inputValue.length < 3) return callback([]);
         ArticoliService.getSuggestion(inputValue).then(res => {
@@ -103,8 +126,12 @@ const DocumentRows = (props) => {
         
         // Calcolo disponibilità (solo se gestito a magazzino)
         const disponib = (data.quantitaEsistente || 0) - (data.quantitaImpegnata || 0);
-        // Mostriamo la disponibilità solo per "Articolo con magazzino" (AM) o "Articolo con scelte/colori" (AMSC)
-        const showStock = data.tipologia === 'AM' || data.tipologia === 'AMSC';
+        // Mostriamo la disponibilità solo per "Articolo con magazzino" (AM) o "Articolo con scelte/colori" (AMSC),
+        // e solo se abbiamo dati live (quantitaEsistente presente): le righe caricate da un documento
+        // gia' salvato (o importate da un altro documento) non portano questo dato, quindi mostrerebbero
+        // sempre "Disp: 0" anche quando la disponibilità reale è diversa.
+        const hasLiveStockData = data.quantitaEsistente !== undefined && data.quantitaEsistente !== null;
+        const showStock = hasLiveStockData && (data.tipologia === 'AM' || data.tipologia === 'AMSC');
 
         // For selected value (in the input), show details underneath
         if (context === 'value') {
@@ -216,7 +243,8 @@ const DocumentRows = (props) => {
                 descrFormato: a.descrFormato,
                 descrScelta: a.descrScelta,
                 descrTono: a.descrTono,
-                descrCalibro: a.descrCalibro
+                descrCalibro: a.descrCalibro,
+                tipologia: a.tipologia
             });
         }
         setModalOpen(false);
@@ -240,7 +268,7 @@ const DocumentRows = (props) => {
                             value={row.idProdotto ? { value: row.idProdotto, label: `${row.codiceProdotto} - ${row.descProdotto}`, data: row } : null}
                             onChange={(opt) => {
                                 const a = opt?.data || {};
-                                onRowUpdate(idx, { idProdotto: opt?.value, codiceProdotto: a.codiceProdotto || '', descProdotto: a.descProdotto || '', prezzo: a.prezzo || 0, idUnitaMisura: a.idUnitaMisura, idAliquotaIva: a.idAliquotaIva, descrFormato: a.descrFormato, descrScelta: a.descrScelta, descrTono: a.descrTono, descrCalibro: a.descrCalibro });
+                                onRowUpdate(idx, { idProdotto: opt?.value, codiceProdotto: a.codiceProdotto || '', descProdotto: a.descProdotto || '', prezzo: a.prezzo || 0, idUnitaMisura: a.idUnitaMisura, idAliquotaIva: a.idAliquotaIva, descrFormato: a.descrFormato, descrScelta: a.descrScelta, descrTono: a.descrTono, descrCalibro: a.descrCalibro, tipologia: a.tipologia });
                                 if (opt?.value) {
                                     ArticoliService.getArticlePrice(opt.value, idListino).then(res => {
                                         if (res.data && res.data.prezzo !== undefined) onRowChange(idx, 'prezzo', res.data.prezzo);

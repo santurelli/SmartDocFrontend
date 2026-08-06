@@ -1,0 +1,83 @@
+/* BollaCaricoDetail.css - reuses the DDT detail vibrant styling for visual consistency */
+@import '../DDT/DDTDetail.css';
+
+.bollacarico-detail-container {
+    padding: 20px;
+    padding-bottom: 80px;
+}
+
+.ordini-aperti-panel {
+    border: 1px solid #e7ebee;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #f9fbfe;
+}
+
+.ordini-aperti-header {
+    padding: 10px 15px;
+    font-weight: 700;
+    font-size: 13px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.ordini-aperti-list {
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ordine-aperto-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid #e7ebee;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 13px;
+}
+
+.ordine-aperto-item.linked {
+    border-color: #03a9f4;
+    background: #e3f2fd;
+}
+
+.carica-magazzino-panel {
+    margin-top: 15px;
+    border: 1px solid #e7ebee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.carica-magazzino-panel .card-header-vibrant {
+    background: #f8f9fa;
+}
+
+.carica-magazzino-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 15px;
+    border-bottom: 1px solid #f1f2f7;
+    font-size: 13px;
+}
+
+.carica-magazzino-row:last-child {
+    border-bottom: none;
+}
+
+.carica-magazzino-row label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 600;
+    color: #2c7a39;
+}

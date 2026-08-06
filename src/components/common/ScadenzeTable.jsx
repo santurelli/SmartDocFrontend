@@ -297,7 +297,7 @@ const ScadenzeTable = ({
                         }}>
                             {/* Header: saldato + data scadenza + importo + elimina */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                                <input type="checkbox" className="custom-checkbox"
+                                <input autoComplete="off" type="checkbox" className="custom-checkbox"
                                     checked={s.saldato === 1}
                                     onChange={(e) => handleSaldatoChange(index, e.target.checked ? 1 : 0)}
                                     disabled={isActuallyReadOnly}
@@ -306,7 +306,7 @@ const ScadenzeTable = ({
                                 {isActuallyReadOnly ? (
                                     <span style={{ fontWeight: 700, color: '#333', fontSize: '14px' }}>{s.dtScadenza}</span>
                                 ) : (
-                                    <input type="date" className="form-control form-control-sm"
+                                    <input autoComplete="off" type="date" className="form-control form-control-sm"
                                         style={{ flex: '0 0 auto', width: 'auto' }}
                                         value={formatDateForInput(s.dtScadenza)}
                                         onChange={(e) => handleDateChange(index, e.target.value)}
@@ -316,7 +316,7 @@ const ScadenzeTable = ({
                                 {isActuallyReadOnly ? (
                                     <span style={{ fontWeight: 700, color: '#17a2b8', fontSize: '15px', whiteSpace: 'nowrap' }}>{formatCurrency(s.importo)}</span>
                                 ) : (
-                                    <input type="number" step="0.01" className="form-control form-control-sm text-right"
+                                    <input autoComplete="off" type="number" step="0.01" className="form-control form-control-sm text-right"
                                         style={{ color: '#17a2b8', fontWeight: 700, width: '90px', flexShrink: 0 }}
                                         value={s.importo != null ? Math.round((s.importo + Number.EPSILON) * 100) / 100 : ''}
                                         onChange={(e) => handleImportoChange(index, e.target.value)}
@@ -338,7 +338,7 @@ const ScadenzeTable = ({
                                         {s.modalitaPagamento || '-'}
                                     </span>
                                 ) : (
-                                    <select className="form-control form-control-sm"
+                                    <select autoComplete="off" className="form-control form-control-sm"
                                         value={s.modalitaPagamento || 'MP01'}
                                         onChange={(e) => handleModalitaChange(index, e.target.value)}>
                                         {modalitaList.map(m => (
@@ -353,7 +353,7 @@ const ScadenzeTable = ({
                                 <div style={{ borderTop: '1px solid #d1fae5', paddingTop: '10px', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
                                     <div style={{ flex: '0 0 auto' }}>
                                         <label style={{ fontSize: '10px', color: '#aaa', textTransform: 'uppercase', marginBottom: '3px', display: 'block', fontWeight: 600 }}>Data Pag.</label>
-                                        <input type="date" className="form-control form-control-sm"
+                                        <input autoComplete="off" type="date" className="form-control form-control-sm"
                                             value={formatDateForInput(s.dtPagamento)}
                                             onChange={(e) => handleDataPagamentoChange(index, e.target.value)}
                                             disabled={isActuallyReadOnly}
@@ -362,7 +362,7 @@ const ScadenzeTable = ({
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <label style={{ fontSize: '10px', color: '#aaa', textTransform: 'uppercase', marginBottom: '3px', display: 'block', fontWeight: 600 }}>Conto</label>
                                         <div className="flex-input-group">
-                                            <select className="form-control form-control-sm"
+                                            <select autoComplete="off" className="form-control form-control-sm"
                                                 style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, borderRight: 0 }}
                                                 value={s.idRisorsa || ''}
                                                 onChange={(e) => handleContoChange(index, e.target.value)}
@@ -465,7 +465,7 @@ const ScadenzeTable = ({
                             scadenze.map((s, index) => (
                                 <tr key={s.id || index} className={`scadenze-row ${s.saldato === 1 ? 'row-saldato' : ''}`}>
                                     <td className="text-center align-middle">
-                                        <input 
+                                        <input autoComplete="off" 
                                             type="checkbox" 
                                             className="custom-checkbox"
                                             checked={s.saldato === 1}
@@ -477,7 +477,7 @@ const ScadenzeTable = ({
                                         {isActuallyReadOnly ? (
                                             <span className="font-weight-bold" style={{ color: '#333' }}>{s.dtScadenza}</span>
                                         ) : (
-                                            <input 
+                                            <input autoComplete="off" 
                                                 type="date" 
                                                 className="form-control form-control-sm text-center" 
                                                 value={formatDateForInput(s.dtScadenza)} 
@@ -489,7 +489,7 @@ const ScadenzeTable = ({
                                         {isActuallyReadOnly ? (
                                             <span style={{ fontWeight: '600', color: '#17a2b8' }}>{formatCurrency(s.importo)}</span>
                                         ) : (
-                                            <input 
+                                            <input autoComplete="off" 
                                                 type="number" 
                                                 step="0.01" 
                                                 className="form-control form-control-sm text-right font-weight-bold" 
@@ -505,7 +505,7 @@ const ScadenzeTable = ({
                                                 {s.modalitaPagamento || '-'}
                                             </span>
                                         ) : (
-                                            <select 
+                                            <select autoComplete="off" 
                                                 className="form-control form-control-sm"
                                                 value={s.modalitaPagamento || 'MP01'}
                                                 onChange={(e) => handleModalitaChange(index, e.target.value)}
@@ -519,7 +519,7 @@ const ScadenzeTable = ({
                                     <td className="align-middle">
                                         {s.saldato === 1 && (
                                             <div className="payment-inputs-group">
-                                                <input 
+                                                <input autoComplete="off" 
                                                     type="date" 
                                                     className="form-control form-control-sm" 
                                                     style={{ width: '135px', flexShrink: 0 }}
@@ -529,7 +529,7 @@ const ScadenzeTable = ({
                                                 />
                                                 <div className="flex-input-group" style={{ flex: 1, minWidth: 0 }}>
                                                     <select
-                                                        className="form-control form-control-sm"
+autoComplete="off"                                                         className="form-control form-control-sm"
                                                         style={{ 
                                                             borderTopRightRadius: 0, 
                                                             borderBottomRightRadius: 0,

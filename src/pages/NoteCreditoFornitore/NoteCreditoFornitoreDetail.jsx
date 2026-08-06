@@ -675,14 +675,18 @@ const NoteCreditoFornitoreDetail = () => {
                                 rows={prodotti}
                                 onRowChange={handleRowChange}
                                 onRowUpdate={(idx, update) => {
-                                    const newP = [...prodotti];
-                                    newP[idx] = { ...newP[idx], ...update };
-                                    setProdotti(recalculateTotals(newP));
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP[idx] = { ...newP[idx], ...update };
+                                        return recalculateTotals(newP);
+                                    });
                                 }}
                                 onDeleteRow={(idx) => {
-                                    const newP = [...prodotti];
-                                    newP.splice(idx, 1);
-                                    setProdotti(recalculateTotals(newP));
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP.splice(idx, 1);
+                                        return recalculateTotals(newP);
+                                    });
                                 }}
                                 onAddRow={(newRow) => {
                                     setProdotti(prev => recalculateTotals([...prev, newRow]));

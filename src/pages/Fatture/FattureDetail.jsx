@@ -8,7 +8,7 @@ import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import ArticoliService from '../../services/ArticoliService';
 import ConfOrdineService from '../../services/ConfOrdineService';
-import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaPaperPlane, FaExclamationTriangle, FaGlobe } from 'react-icons/fa';
+import { FaSave, FaArrowLeft, FaPlus, FaTrash, FaPrint, FaFilePdf, FaWrench, FaHome, FaTruck, FaMapMarkerAlt, FaCaretDown, FaArrowRight, FaPaperPlane, FaExclamationTriangle, FaGlobe, FaBoxOpen } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
@@ -383,7 +383,8 @@ const FattureDetail = () => {
                             id: 0,
                             idDocumento: 0,
                             tipo: p.idProdotto ? 'A' : (p.fmDescrizione ? 'F' : 'N'),
-                            scarica: 0 // <--- Da DDT: NON scaricare magazzino
+                            scarica: 0, // <--- Da DDT: NON scaricare magazzino (gia' scaricato al salvataggio del DDT)
+                            daDDT: true
                         }));
                         allProdotti = [...allProdotti, ...mappedProdotti];
                     }
@@ -791,6 +792,15 @@ const FattureDetail = () => {
             const newProdotti = [...prev];
             newProdotti[index] = { ...newProdotti[index], [field]: value };
             return newProdotti;
+        });
+    };
+
+    const toggleScarica = (idx) => {
+        setProdotti(prev => {
+            const newP = [...prev];
+            const cur = newP[idx].scarica === 0 ? 0 : 1;
+            newP[idx] = { ...newP[idx], scarica: cur === 1 ? 0 : 1 };
+            return newP;
         });
     };
 
@@ -1244,6 +1254,9 @@ const FattureDetail = () => {
                         {/* Tab Generale */}
                         <div className={`tab-pane ${activeTab === 'generale' ? 'active' : ''}`}>
                             <div className="tab-padding-wrapper">
+                                <div style={{ fontSize: '11px', color: '#999', marginBottom: '12px' }}>
+                                    <span style={{ color: '#dc3545' }}>*</span> campo obbligatorio
+                                </div>
                                 <div className="status-workflow-bar">
                                     <div className="status-workflow-field">
                                         <label>Stato Documento</label>
@@ -1297,7 +1310,7 @@ const FattureDetail = () => {
                                     </div>
                                     <div className="compact-col compact-col-md">
                                         <div className="form-group">
-                                            <label>Numero</label>
+                                            <label>Numero <span style={{ color: '#dc3545' }}>*</span></label>
                                             <div className="flex-input-group w-md">
                                                 <input
                                                     type="text"
@@ -1335,7 +1348,7 @@ const FattureDetail = () => {
                                     </div>
                                     <div className="compact-col compact-col-sm">
                                         <div className="form-group">
-                                            <label>Data</label>
+                                            <label>Data <span style={{ color: '#dc3545' }}>*</span></label>
                                             <div className="flex-input-group">
                                                 <input
                                                     type="date"
@@ -1351,7 +1364,7 @@ const FattureDetail = () => {
                                     </div>
                                     <div className="compact-col compact-col-xl">
                                         <EntitySelectGroup
-                                            label="Cliente"
+                                            label={<>Cliente <span style={{ color: '#dc3545' }}>*</span></>}
                                             isAsync={true}
                                             loadOptions={loadClienti}
                                             value={formData.idCliente ? { value: formData.idCliente, label: formData.nomeCliente || formData.denominazioneCliente } : null}
@@ -1727,24 +1740,29 @@ const FattureDetail = () => {
                                 onRowChange={handleRowChange}
                                 isDisabled={isLocked}
                                 onRowUpdate={(idx, update) => {
-                                    const newP = [...prodotti];
-                                    newP[idx] = { ...newP[idx], ...update };
-                                    setProdotti(newP);
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP[idx] = { ...newP[idx], ...update };
+                                        return newP;
+                                    });
                                 }}
                                 onDeleteRow={(idx) => {
-                                    const newP = [...prodotti];
-                                    newP.splice(idx, 1);
-                                    setProdotti(newP);
+                                    setProdotti(prev => {
+                                        const newP = [...prev];
+                                        newP.splice(idx, 1);
+                                        return newP;
+                                    });
                                 }}
                                 onAddRow={(newRow) => {
-                                    const bolloIdx = prodotti.findIndex(p => p.fmCodice === 'BOLLO_SISTEMA');
-                                    if (bolloIdx !== -1) {
-                                        const newP = [...prodotti];
-                                        newP.splice(bolloIdx, 0, newRow);
-                                        setProdotti(newP);
-                                    } else {
-                                        setProdotti(prev => [...prev, newRow]);
-                                    }
+                                    setProdotti(prev => {
+                                        const bolloIdx = prev.findIndex(p => p.fmCodice === 'BOLLO_SISTEMA');
+                                        if (bolloIdx !== -1) {
+                                            const newP = [...prev];
+                                            newP.splice(bolloIdx, 0, newRow);
+                                            return newP;
+                                        }
+                                        return [...prev, newRow];
+                                    });
                                 }}
                                 addExtraProps={{ flRitenuta: 1, scarica: 1 }}
                                 combos={combos}
@@ -1753,6 +1771,36 @@ const FattureDetail = () => {
                                 readOnly={isReadOnly}
                                 idListino={formData.idListino}
                             />
+
+                            {prodotti.length > 0 && (
+                                <div className="carica-magazzino-panel">
+                                    <div className="card-header-vibrant">
+                                        <span><FaBoxOpen /> Scarico da magazzino</span>
+                                    </div>
+                                    {prodotti.map((row, idx) => {
+                                        if (row.tipo !== 'A' || (row.tipologia !== 'AM' && row.tipologia !== 'AMSC')) return null;
+                                        const desc = row.descProdotto || row.codiceProdotto || `Riga ${idx + 1}`;
+                                        return (
+                                            <div className="carica-magazzino-row" key={idx}>
+                                                <label>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={row.scarica !== 0}
+                                                        onChange={() => toggleScarica(idx)}
+                                                    />
+                                                    Scarica da magazzino
+                                                </label>
+                                                <span style={{ color: '#666' }}>— {desc}</span>
+                                                {row.daDDT && (
+                                                    <span className="badge-da-bolla" title="Articolo gia' scaricato a magazzino dal DDT collegato">
+                                                        Da DDT
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Tab Pagamento */}

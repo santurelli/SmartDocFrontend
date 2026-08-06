@@ -259,7 +259,7 @@ const MovimentiList = () => {
                                             <td>{m.clienteFornitore}</td>
                                             <td className="text-right">{m.quantitaCarico ? m.quantitaCarico.toFixed(2) : ''}</td>
                                             <td className="text-right">{m.quantitaScarico ? m.quantitaScarico.toFixed(2) : ''}</td>
-                                            <td>{m.causale}</td>
+                                            <td>{m.causale}{m.causale && m.numeroDocumento ? ` n. ${m.numeroDocumento}` : ''}</td>
                                         </tr>
                                     ))
                                 )}

@@ -1,0 +1,36 @@
+/* OrdiniList.css - reuses the DDT list vibrant styling for visual consistency */
+@import '../DDT/DDTList.css';
+
+.ordini-list-container {
+    padding: 20px;
+    padding-bottom: 50px;
+}
+
+.stato-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.stato-badge.stato-in-corso {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #bbdefb;
+}
+
+.stato-badge.stato-parziale {
+    background: #fff8e1;
+    color: #e65100;
+    border: 1px solid #ffe082;
+}
+
+.stato-badge.stato-concluso {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}

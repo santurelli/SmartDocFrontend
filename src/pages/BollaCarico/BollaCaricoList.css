@@ -1,0 +1,7 @@
+/* BollaCaricoList.css - reuses the DDT list vibrant styling for visual consistency */
+@import '../DDT/DDTList.css';
+
+.bollacarico-list-container {
+    padding: 20px;
+    padding-bottom: 50px;
+}
