@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import StudioService from '../services/StudioService';
+import authService from '../services/authService';
 import Swal from 'sweetalert2';
 import { FaUserTie, FaCheck, FaTimes, FaShieldAlt } from 'react-icons/fa';
+import InvitoStudioBanner from './InvitoStudioBanner';
 
 const CommercialistaSection = () => {
     const [deleghe, setDeleghe] = useState([]);
     const [auditLogs, setAuditLogs] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const appConfig = authService.getConfig ? authService.getConfig() : {};
+    const currentUser = authService.getCurrentUser ? authService.getCurrentUser() : null;
+    const u = currentUser?.user || currentUser || {};
+    const tipoAccount = appConfig.tipoAccount || appConfig.tipo_account || u.tipoAccount || u.tipo_account || 1;
+    const showInvitoStudio = tipoAccount >= 1 && tipoAccount <= 4;
 
     useEffect(() => {
         loadDeleghe();
@@ -115,18 +123,22 @@ const CommercialistaSection = () => {
                     Caricamento deleghe in corso...
                 </div>
             ) : deleghe.length === 0 ? (
-                <div style={{
-                    background: '#f8fafc',
-                    border: '1px dashed #cbd5e1',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    textAlign: 'center',
-                    color: '#64748b',
-                    fontSize: '13px'
-                }}>
-                    Nessuno Studio Contabile è attualmente collegato al tuo account.<br />
-                    Se il tuo commercialista usa SmartDoc, forniscigli la tua Partita IVA per farti inviare una richiesta di collegamento.
-                </div>
+                showInvitoStudio ? (
+                    <InvitoStudioBanner />
+                ) : (
+                    <div style={{
+                        background: '#f8fafc',
+                        border: '1px dashed #cbd5e1',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        textAlign: 'center',
+                        color: '#64748b',
+                        fontSize: '13px'
+                    }}>
+                        Nessuno Studio Contabile è attualmente collegato al tuo account.<br />
+                        Se il tuo commercialista usa SmartDoc, forniscigli la tua Partita IVA per farti inviare una richiesta di collegamento.
+                    </div>
+                )
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {deleghe.map(d => (

@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import ArticoliService from '../../services/ArticoliService';
 import { getRowValues } from '../../utils/documentUtils';
 import ArticoliManagementModal from '../modals/ArticoliManagementModal';
+import ContoOverridePopover from './ContoOverridePopover';
 
 const formatCurrency = (val) => {
     return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(val || 0);
@@ -61,8 +62,12 @@ const DocumentRows = (props) => {
         showRitenuta = false,
         readOnly = false,
         idListino = null,
+        showContoOverride = false,
+        conti = [],
         children
     } = props;
+
+    const colCount = 9 + (showContoOverride ? 1 : 0);
 
     const [modalOpen, setModalOpen] = useState(false);
     const [activeRowIdx, setActiveRowIdx] = useState(null);
@@ -344,6 +349,14 @@ const DocumentRows = (props) => {
                         <div style={{ flex: 1, minWidth: 0 }}>
                             {renderDescriptionContent(row, idx)}
                         </div>
+                        {showContoOverride && row.tipo !== 'N' && (
+                            <ContoOverridePopover
+                                value={row.idContoOverride}
+                                conti={conti}
+                                disabled={readOnly}
+                                onChange={(v) => onRowChange(idx, 'idContoOverride', v)}
+                            />
+                        )}
                         {!readOnly && (
                             <button type="button" className="btn-delete-row" onClick={() => handleDelete(idx)} tabIndex="-1" style={{ flexShrink: 0 }}>
                                 <FaTrash />
@@ -378,6 +391,7 @@ const DocumentRows = (props) => {
                         <th style={{ width: '100px' }}>Sconto</th>
                         <th style={{ width: '100px' }}>IVA</th>
                         <th style={{ width: '120px' }}>Totale</th>
+                        {showContoOverride && <th style={{ width: '36px' }}></th>}
                         <th style={{ width: '40px' }}></th>
                     </tr>
                 </thead>
@@ -391,7 +405,7 @@ const DocumentRows = (props) => {
                                     {row.tipo === 'F' && <span className="label label-info">F.M.</span>}
                                     {row.tipo === 'N' && <span className="label label-default">NOTA</span>}
                                 </td>
-                                <td colSpan={row.tipo === 'N' ? 7 : 1}>
+                                <td colSpan={row.tipo === 'N' ? (showContoOverride ? 8 : 7) : 1}>
                                     {renderDescriptionContent(row, idx)}
                                 </td>
 
@@ -423,6 +437,18 @@ const DocumentRows = (props) => {
                                         </>
                                     ) : null
                                 }
+                                {showContoOverride && (
+                                    <td style={{ textAlign: 'center' }}>
+                                        {row.tipo !== 'N' && (
+                                            <ContoOverridePopover
+                                                value={row.idContoOverride}
+                                                conti={conti}
+                                                disabled={readOnly}
+                                                onChange={(v) => onRowChange(idx, 'idContoOverride', v)}
+                                            />
+                                        )}
+                                    </td>
+                                )}
                                 <td>
                                     {!readOnly && (
                                         <button type="button" className="btn-delete-row" onClick={() => handleDelete(idx)} tabIndex="-1">
@@ -435,7 +461,7 @@ const DocumentRows = (props) => {
                     })}
                     {onAddRow && !readOnly && (
                         <tr className="row-add-actions">
-                            <td colSpan={9} style={{ padding: '0px' }}>
+                            <td colSpan={colCount} style={{ padding: '0px' }}>
                                 <div className="table-row-add-toolbar">
                                     <button type="button" className="btn-add-inline" onClick={() => addRow('A')}>
                                         <FaPlus /> ARTICOLO
@@ -452,7 +478,7 @@ const DocumentRows = (props) => {
                     )}
                     {children && (
                         <tr className="row-add-actions">
-                            <td colSpan={9} style={{ padding: '0px' }}>
+                            <td colSpan={colCount} style={{ padding: '0px' }}>
                                 {children}
                             </td>
                         </tr>

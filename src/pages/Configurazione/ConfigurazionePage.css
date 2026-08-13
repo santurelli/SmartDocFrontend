@@ -230,3 +230,10 @@
     border-radius: 12px;
     border: 1px solid #f0f0f0;
 }
+
+/* Allinea l'EntitySelectGroup con gli altri campi quando e' usato accanto a input nativi in una
+   riga (es. selettore conto in Mastrini o nella scrittura manuale del Libro Giornale): senza
+   questa regola il form-group interno aggiunge un margine sotto che sposta il campo rispetto ai vicini. */
+.inline-select-group .form-group {
+    margin-bottom: 0;
+}

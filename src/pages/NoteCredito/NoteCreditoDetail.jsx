@@ -630,6 +630,18 @@ const NoteCreditoDetail = () => {
         return total - ritenuta;
     };
 
+    const loadCausaliEsigibilitaDifferita = (inputValue, callback) => {
+        const term = (inputValue || '').toLowerCase();
+        const filtered = (combos.causaliEsigibilitaDifferita || []).filter(c =>
+            !term || (c.label || c.descrizione || '').toLowerCase().includes(term)
+        );
+        callback(filtered.map(c => ({ value: c.value ?? c.id, label: c.label ?? c.descrizione })));
+    };
+
+    const fetchCausaliEsigibilitaDifferita = () => {
+        fetchCombos();
+    };
+
     const loadClienti = (inputValue, callback) => {
         if (!inputValue || inputValue.length < 3) return callback([]);
         ClientiService.getSuggestion(inputValue).then(res => {

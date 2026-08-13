@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import CategorieArticoliService from '../../services/CategorieArticoliService';
+import PianoDeiContiService from '../../services/PianoDeiContiService';
 import { FaPencilAlt, FaTrash, FaPlus, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 const CategorieManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
+    const [conti, setConti] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(50);
     const [currentPage, setCurrentPage] = useState(1);
@@ -13,6 +15,7 @@ const CategorieManagementModal = ({ onClose }) => {
 
     useEffect(() => {
         loadData();
+        PianoDeiContiService.getList().then(res => setConti(res.payload || [])).catch(() => setConti([]));
     }, []);
 
     const loadData = async () => {
@@ -107,14 +110,33 @@ const CategorieManagementModal = ({ onClose }) => {
     };
 
     const handleEdit = (item) => {
-        openDetailModal(item.id, item.descrizione);
+        openDetailModal(item.id, item.descrizione, item.idContoRicavo, item.idContoCosto);
     };
 
     const handleAdd = () => {
-        openDetailModal(null, '');
+        openDetailModal(null, '', null, null);
     };
 
-    const openDetailModal = (id, existingDesc) => {
+    const contoLabel = (c) => `${c.codice} - ${c.descrizione}`;
+
+    const buildContoDatalist = (listId) => {
+        let options = '';
+        conti.forEach(c => {
+            options += `<option data-id="${c.id}" value="${contoLabel(c).replace(/"/g, '&quot;')}"></option>`;
+        });
+        return `<datalist id="${listId}">${options}</datalist>`;
+    };
+
+    // Risolve il testo digitato/selezionato nell'input in un id conto valido, tramite match esatto sull'etichetta.
+    const resolveContoId = (inputValue) => {
+        if (!inputValue) return null;
+        const match = conti.find(c => contoLabel(c) === inputValue);
+        return match ? match.id : null;
+    };
+
+    const openDetailModal = (id, existingDesc, existingContoRicavo, existingContoCosto) => {
+        const contoRicavoObj = conti.find(c => String(c.id) === String(existingContoRicavo));
+        const contoCostoObj = conti.find(c => String(c.id) === String(existingContoCosto));
         Swal.fire({
             title: id ? 'Modifica Categoria' : 'Nuova Categoria',
             html: `
@@ -122,6 +144,16 @@ const CategorieManagementModal = ({ onClose }) => {
                     <div class="form-group">
                         <label class="premium-swal-label">Descrizione Categoria</label>
                         <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Ferramenta, Idraulica..." value="${existingDesc}">
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label class="premium-swal-label">Conto di Ricavo</label>
+                        <input id="swal-conto-ricavo" class="form-control premium-swal-input" list="datalist-conto-ricavo" placeholder="Cerca per codice o descrizione..." value="${contoRicavoObj ? contoLabel(contoRicavoObj) : ''}" autocomplete="off">
+                        ${buildContoDatalist('datalist-conto-ricavo')}
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label class="premium-swal-label">Conto di Costo</label>
+                        <input id="swal-conto-costo" class="form-control premium-swal-input" list="datalist-conto-costo" placeholder="Cerca per codice o descrizione..." value="${contoCostoObj ? contoLabel(contoCostoObj) : ''}" autocomplete="off">
+                        ${buildContoDatalist('datalist-conto-costo')}
                     </div>
                 </div>
             `,
@@ -139,16 +171,28 @@ const CategorieManagementModal = ({ onClose }) => {
             },
             preConfirm: async () => {
                 const value = document.getElementById('swal-descrizione').value;
+                const ricavoInput = document.getElementById('swal-conto-ricavo').value;
+                const costoInput = document.getElementById('swal-conto-costo').value;
                 if (!value) {
                     Swal.showValidationMessage('La descrizione è obbligatoria');
                     return false;
                 }
+                if (ricavoInput && !resolveContoId(ricavoInput)) {
+                    Swal.showValidationMessage('Conto di Ricavo non valido: selezionane uno dall\'elenco suggerito');
+                    return false;
+                }
+                if (costoInput && !resolveContoId(costoInput)) {
+                    Swal.showValidationMessage('Conto di Costo non valido: selezionane uno dall\'elenco suggerito');
+                    return false;
+                }
+                const idContoRicavo = resolveContoId(ricavoInput);
+                const idContoCosto = resolveContoId(costoInput);
                 try {
                     let res;
                     if (id) {
-                        res = await CategorieArticoliService.update(id, { descrizione: value });
+                        res = await CategorieArticoliService.update(id, { descrizione: value, idContoRicavo, idContoCosto });
                     } else {
-                        res = await CategorieArticoliService.create({ descrizione: value });
+                        res = await CategorieArticoliService.create({ descrizione: value, idContoRicavo, idContoCosto });
                     }
 
                     if (res.data && res.data.errorText) {
@@ -260,6 +304,8 @@ const CategorieManagementModal = ({ onClose }) => {
                                     >
                                         DESCRIZIONE {getSortIcon('descrizione')}
                                     </th>
+                                    <th style={{ verticalAlign: 'middle' }}>CONTO RICAVO</th>
+                                    <th style={{ verticalAlign: 'middle' }}>CONTO COSTO</th>
                                     <th style={{ width: '120px', verticalAlign: 'middle', textAlign: 'center' }}>AZIONI</th>
                                 </tr>
                             </thead>
@@ -268,6 +314,8 @@ const CategorieManagementModal = ({ onClose }) => {
                                     currentItems.map(item => (
                                         <tr key={item.id}>
                                             <td style={{ verticalAlign: 'middle' }}>{item.descrizione}</td>
+                                            <td style={{ verticalAlign: 'middle', fontSize: '12px', color: '#666' }}>{item.descContoRicavo || '-'}</td>
+                                            <td style={{ verticalAlign: 'middle', fontSize: '12px', color: '#666' }}>{item.descContoCosto || '-'}</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                                                     <button className="btn btn-primary btn-sm" onClick={() => handleEdit(item)} title="Modifica">
@@ -282,7 +330,7 @@ const CategorieManagementModal = ({ onClose }) => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="2" className="text-center">Nessun elemento trovato</td>
+                                        <td colSpan="4" className="text-center">Nessun elemento trovato</td>
                                     </tr>
                                 )}
                             </tbody>

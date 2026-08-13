@@ -13,6 +13,8 @@ import RisorseService from '../services/RisorseService';
 import { parseIban } from '../utils/ibanUtils';
 import { FaWrench } from 'react-icons/fa';
 import ListiniService from '../services/ListiniService';
+import PianoDeiContiService from '../services/PianoDeiContiService';
+import EntitySelectGroup from './EntitySelectGroup';
 import ComunicazioniTimeline from './ComunicazioniTimeline';
 import './EntityForms.css';
 
@@ -38,6 +40,7 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const [vettoriList, setVettoriList] = useState([]);
     const [bancheList, setBancheList] = useState([]);
     const [listiniList, setListiniList] = useState([]);
+    const [contiList, setContiList] = useState([]);
 
     // Sub-modal states
     const [showAvvisiModal, setShowAvvisiModal] = useState(false);
@@ -50,14 +53,15 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                const [avvisi, notes, porto, vect, banks, config, listini] = await Promise.all([
+                const [avvisi, notes, porto, vect, banks, config, listini, pianoConti] = await Promise.all([
                     AvvisiService.getAll(),
                     NoteDocumentiService.getAll(),
                     TipiPortoService.getAllForCombo(),
                     VettoriService.getAllForCombo(),
                     RisorseService.getAllForCombo('BA'),
                     ConfigurazioneService.getByDomain('CLIENTI'),
-                    ListiniService.getAll()
+                    ListiniService.getAll(),
+                    PianoDeiContiService.getList().catch(() => ({ payload: [] }))
                 ]);
 
                 if (avvisi.data) setAvvisiList(avvisi.data.filter(a => a.descrizione && a.descrizione.trim() !== ''));
@@ -66,6 +70,7 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                 if (vect.data) setVettoriList(vect.data);
                 if (banks.data) setBancheList(banks.data);
                 if (listini) setListiniList(Array.isArray(listini) ? listini : (listini.payload || []));
+                setContiList(pianoConti.payload || []);
 
                 if (config.data) {
                     const val = config.data['ABILITA_DATI_COMMERCIALI'] || config.data['ABILITA_DATICOMMERCIALI'];
@@ -476,6 +481,22 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                         </select>
                                         <button type="button" className="btn btn-default" onClick={() => setShowPortoModal(true)} title="Gestione tipi porto"><FaWrench /></button>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-lg">
+                                <div className="form-group">
+                                    <EntitySelectGroup
+                                        label="Conto Contabile"
+                                        isAsync={false}
+                                        options={contiList.map(c => ({ value: c.id, label: `${c.codice} - ${c.descrizione}` }))}
+                                        value={data.idContoContabile ? { value: data.idContoContabile, label: data.descContoContabile || '' } : null}
+                                        onChange={(opt) => onChange({ ...data, idContoContabile: opt ? opt.value : '', descContoContabile: opt ? opt.label : '' })}
+                                        placeholder='Lascia vuoto per usare il conto generico "Crediti verso clienti"'
+                                    />
+                                    <small className="text-muted">Conto usato per le future scritture contabili in partita doppia relative a questo cliente.</small>
                                 </div>
                             </div>
                         </div>

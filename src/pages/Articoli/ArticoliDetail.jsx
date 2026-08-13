@@ -15,6 +15,7 @@ import ToniArticoloManagementModal from '../../components/modals/ToniArticoloMan
 import FormatiArticoloManagementModal from '../../components/modals/FormatiArticoloManagementModal';
 import CalibriArticoloManagementModal from '../../components/modals/CalibriArticoloManagementModal';
 import WrenchModalButton from '../../components/WrenchModalButton';
+import PianoDeiContiService from '../../services/PianoDeiContiService';
 import './ArticoliDetail.css';
 import '../../components/EntityForms.css';
 
@@ -43,10 +44,13 @@ const ArticoliDetail = () => {
         idAliquotaIva: '',
         idFornitore: '',
         prezzoFornitore: '',
-        codicePerFornitore: ''
+        codicePerFornitore: '',
+        idContoRicavo: '',
+        idContoCosto: ''
     });
     const [prezzi, setPrezzi] = useState([]);
     const [allListini, setAllListini] = useState([]);
+    const [contiList, setContiList] = useState([]);
 
     const [combos, setCombos] = useState({
         categorie: [],
@@ -77,6 +81,7 @@ const ArticoliDetail = () => {
         const init = async () => {
             const currentConfig = await loadConfig();
             await loadCombos(currentConfig);
+            PianoDeiContiService.getList().then(res => setContiList(res.payload || [])).catch(() => setContiList([]));
             if (!isNew && id && id !== 'undefined') {
                 loadArticolo();
                 loadPrezzi();
@@ -210,7 +215,7 @@ const ArticoliDetail = () => {
                 if (sanitizedData.prezzoFornitore !== '') {
                     sanitizedData.prezzoFornitore = parseFloat(sanitizedData.prezzoFornitore).toFixed(2);
                 }
-                
+
                 setFormData(sanitizedData);
                 if (sanitizedData.idCategoria) {
                     loadSottoCategorie(sanitizedData.idCategoria);
@@ -261,6 +266,8 @@ const ArticoliDetail = () => {
                     dataToSave[field] = null;
                 }
             });
+            if (dataToSave.idContoRicavo === '') dataToSave.idContoRicavo = null;
+            if (dataToSave.idContoCosto === '') dataToSave.idContoCosto = null;
 
             if (isNew) {
                 res = await ArticoliService.createArticolo(dataToSave);
@@ -665,6 +672,33 @@ const ArticoliDetail = () => {
                                             }
                                         }}
                                         placeholder="Inserisci prezzo fornitore"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="row">
+                            <div className="col-xs-12 col-md-4">
+                                <div className="form-group">
+                                    <EntitySelectGroup
+                                        label="Conto di Ricavo (override puntuale)"
+                                        isAsync={false}
+                                        options={contiList.map(c => ({ value: c.id, label: `${c.codice} - ${c.descrizione}` }))}
+                                        value={formData.idContoRicavo ? { value: formData.idContoRicavo, label: formData.descContoRicavo || '' } : null}
+                                        onChange={(opt) => setFormData(prev => ({ ...prev, idContoRicavo: opt ? opt.value : '', descContoRicavo: opt ? opt.label : '' }))}
+                                        placeholder="Lascia vuoto per ereditare da sottocategoria/categoria"
+                                    />
+                                </div>
+                            </div>
+                            <div className="col-xs-12 col-md-4">
+                                <div className="form-group">
+                                    <EntitySelectGroup
+                                        label="Conto di Costo (override puntuale)"
+                                        isAsync={false}
+                                        options={contiList.map(c => ({ value: c.id, label: `${c.codice} - ${c.descrizione}` }))}
+                                        value={formData.idContoCosto ? { value: formData.idContoCosto, label: formData.descContoCosto || '' } : null}
+                                        onChange={(opt) => setFormData(prev => ({ ...prev, idContoCosto: opt ? opt.value : '', descContoCosto: opt ? opt.label : '' }))}
+                                        placeholder="Lascia vuoto per ereditare da sottocategoria/categoria"
                                     />
                                 </div>
                             </div>

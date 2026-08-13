@@ -29,6 +29,7 @@ import ListiniManagementModal from '../../components/modals/ListiniManagementMod
 import NazioneSelect from '../../components/common/NazioneSelect';
 
 import authService from '../../services/authService';
+import PianoDeiContiService from '../../services/PianoDeiContiService';
 import DocumentRows from '../../components/common/DocumentRows';
 import ScadenzeTable from '../../components/common/ScadenzeTable';
 import ComunicazioniTimeline from '../../components/ComunicazioniTimeline';
@@ -149,6 +150,22 @@ const FattureDetail = () => {
     const isEnabledGlobal = (key) => !globalConfigs || globalConfigs[key] === '1';
 
     const [prodotti, setProdotti] = useState([]);
+
+    // Override manuale del conto contabile per riga: solo piano Enterprise (tipoAccount >= 4),
+    // stesso livello richiesto per Libro Giornale/Mastrini/Chiusura Esercizio/Bilancio.
+    const [contiContabili, setContiContabili] = useState([]);
+    const appConfig = authService.getConfig ? authService.getConfig() : {};
+    const currentUserForPlan = authService.getCurrentUser();
+    const tipoAccount = appConfig.tipoAccount || appConfig.tipo_account || (currentUserForPlan?.user || currentUserForPlan)?.tipoAccount || 1;
+    const showContoOverride = tipoAccount >= 4;
+
+    useEffect(() => {
+        if (!showContoOverride) return;
+        PianoDeiContiService.getList('').then(res => {
+            setContiContabili((res.payload || []).filter(c => c.idPadre != null));
+        }).catch(err => console.error('Errore nel caricamento del piano dei conti:', err));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showContoOverride]);
 
     // Combos
     const [combos, setCombos] = useState({
@@ -1770,6 +1787,8 @@ const FattureDetail = () => {
                                 showRitenuta={formData.flRitenutaAcconto === 1}
                                 readOnly={isReadOnly}
                                 idListino={formData.idListino}
+                                showContoOverride={showContoOverride}
+                                conti={contiContabili}
                             />
 
                             {prodotti.length > 0 && (

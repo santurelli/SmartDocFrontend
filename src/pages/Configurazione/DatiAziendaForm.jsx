@@ -20,6 +20,7 @@ const DatiAziendaForm = () => {
         email: '',
         pec: '',
         sitoWeb: '',
+        settoreMerceologico: '',
         logoType: '',
         logo: '',
         deleteLogo: false
@@ -85,6 +86,7 @@ const DatiAziendaForm = () => {
                     email: payload.DATIAZIENDA.email || '',
                     pec: payload.DATIAZIENDA.pec || '',
                     sitoWeb: payload.DATIAZIENDA.sitoWeb || '',
+                    settoreMerceologico: payload.DATIAZIENDA.settoreMerceologico || '',
                     deleteLogo: false
                 }));
             }
@@ -330,6 +332,23 @@ const DatiAziendaForm = () => {
                                 <option key={rf.id} value={rf.id}>{rf.descrizione}</option>
                             ))}
                         </select>
+                    </div>
+                    <div className="col-md-6 form-group">
+                        <label>Settore Merceologico</label>
+                        <select
+                            name="settoreMerceologico"
+                            className="form-control"
+                            value={formData.settoreMerceologico || ''}
+                            onChange={handleChange}
+                        >
+                            <option value="">- Non specificato -</option>
+                            <option value="COMMERCIO">Commercio</option>
+                            <option value="SERVIZI">Servizi</option>
+                            <option value="PRODUZIONE">Produzione</option>
+                            <option value="EDILIZIA">Edilizia</option>
+                            <option value="GENERICO">Generico</option>
+                        </select>
+                        <small className="text-muted">Usato per proporre il template di piano dei conti più adatto.</small>
                     </div>
                 </div>
 

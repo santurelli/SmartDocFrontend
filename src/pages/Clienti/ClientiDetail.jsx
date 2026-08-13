@@ -69,7 +69,7 @@ const ClientiDetail = () => {
         setLoading(true);
         try {
             const payload = { ...cliente };
-            const intFields = ['idRisorsa', 'idVettore', 'idTipoPorto', 'idAvviso', 'idNota', 'idAgente', 'idListino', 'idZonaCompetenza', 'idSottoconto', 'idLingua'];
+            const intFields = ['idRisorsa', 'idVettore', 'idTipoPorto', 'idAvviso', 'idNota', 'idAgente', 'idListino', 'idZonaCompetenza', 'idSottoconto', 'idLingua', 'idContoContabile'];
             intFields.forEach(f => { if (payload[f] === '' || payload[f] === 0) payload[f] = null; });
 
             if (isNew) {

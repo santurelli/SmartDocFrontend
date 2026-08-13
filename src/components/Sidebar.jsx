@@ -4,7 +4,7 @@ import ConfigurazioneService from '../services/ConfigurazioneService';
 import authService from '../services/authService';
 import {
     FaTachometerAlt, FaThLarge, FaCubes, FaAngleRight, FaAngleDown,
-    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaLock, FaUser, FaCircle, FaFileAlt, FaBell, FaExchangeAlt, FaUserTie, FaCogs
+    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaUser, FaCircle, FaFileAlt, FaBell, FaExchangeAlt, FaUserTie, FaCogs, FaBalanceScale
 } from 'react-icons/fa';
 import TipiPagamentoManagementModal from './modals/TipiPagamentoManagementModal';
 import UnitaMisuraManagementModal from './modals/UnitaMisuraManagementModal';
@@ -197,6 +197,22 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
+                                    {isAllowedByPlan(4) && (
+                                        <li className={openMenus['contabilita'] ? 'open' : ''}>
+                                            <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('contabilita'); }}>
+                                                <span className="icon-container"><FaBalanceScale /></span>
+                                                <span className="text">Contabilità</span>
+                                                <FaAngleRight className="drop-icon" />
+                                            </a>
+                                            <ul className="submenu">
+                                                <li><NavLink to="/libro-giornale">Libro Giornale</NavLink></li>
+                                                <li><NavLink to="/mastrini">Mastrini</NavLink></li>
+                                                <li><NavLink to="/chiusura-esercizio">Chiusura Esercizio</NavLink></li>
+                                                <li><NavLink to="/bilancio">Bilancio</NavLink></li>
+                                            </ul>
+                                        </li>
+                                    )}
+
                                     <li>
                                         <NavLink to="/registri-iva">
                                             <span className="icon-container"><FaGavel /></span>
@@ -261,6 +277,7 @@ const Sidebar = ({ user }) => {
                                             <li><NavLink to="/configurazione/dati-azienda">Dati azienda</NavLink></li>
                                             <li><NavLink to="/configurazione/fatturazione">Fatturazione</NavLink></li>
                                             <li><NavLink to="/configurazione/documenti">Documenti</NavLink></li>
+                                            {isAllowedByPlan(4) && <li><NavLink to="/configurazione/piano-conti">Piano dei Conti</NavLink></li>}
                                             <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
                                             <li><NavLink to="/configurazione/generali">Dati generali</NavLink></li>
                                             {(authService.getConfig()?.role === 'ROLE_ADMIN') && (

@@ -10,6 +10,8 @@ import TipiPortoService from '../services/TipiPortoService';
 import VettoriService from '../services/VettoriService';
 import RisorseService from '../services/RisorseService';
 import CategorieSpesaService from '../services/CategorieSpesaService';
+import PianoDeiContiService from '../services/PianoDeiContiService';
+import EntitySelectGroup from './EntitySelectGroup';
 import { parseIban } from '../utils/ibanUtils';
 import { FaWrench } from 'react-icons/fa';
 import './EntityForms.css';
@@ -34,6 +36,7 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     const [vettoriList, setVettoriList] = useState([]);
     const [bancheList, setBancheList] = useState([]);
     const [categorieSpesaList, setCategorieSpesaList] = useState([]);
+    const [contiList, setContiList] = useState([]);
 
     // Sub-modal states
     const [showAvvisiModal, setShowAvvisiModal] = useState(false);
@@ -45,14 +48,15 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
     useEffect(() => {
         const loadInitialData = async () => {
             try {
-                const [avvisi, notes, porto, vect, banks, expenses, config] = await Promise.all([
+                const [avvisi, notes, porto, vect, banks, expenses, config, pianoConti] = await Promise.all([
                     AvvisiService.getAll(),
                     NoteDocumentiService.getAll(),
                     TipiPortoService.getAllForCombo(),
                     VettoriService.getAllForCombo(),
                     RisorseService.getAllForCombo('BA'),
                     CategorieSpesaService.getAllForCombo(),
-                    ConfigurazioneService.getByDomain('FORNITORI')
+                    ConfigurazioneService.getByDomain('FORNITORI'),
+                    PianoDeiContiService.getList().catch(() => ({ payload: [] }))
                 ]);
 
                 if (avvisi.data) setAvvisiList(avvisi.data.filter(a => a.descrizione && a.descrizione.trim() !== ''));
@@ -61,6 +65,7 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                 if (vect.data) setVettoriList(vect.data);
                 if (banks.data) setBancheList(banks.data);
                 if (expenses.data) setCategorieSpesaList(expenses.data);
+                setContiList(pianoConti.payload || []);
 
                 if (config.data) {
                     const val = config.data['ABILITA_DATI_COMMERCIALI'] || config.data['ABILITA_DATICOMMERCIALI'];
@@ -432,6 +437,22 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                             <button type="button" className="btn btn-default" onClick={() => setShowPortoModal(true)} title="Gestisci tipi porto"><FaWrench /></button>
                                         </span>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-lg">
+                                <div className="form-group">
+                                    <EntitySelectGroup
+                                        label="Conto Contabile"
+                                        isAsync={false}
+                                        options={contiList.map(c => ({ value: c.id, label: `${c.codice} - ${c.descrizione}` }))}
+                                        value={data.idContoContabile ? { value: data.idContoContabile, label: data.descContoContabile || '' } : null}
+                                        onChange={(opt) => onChange({ ...data, idContoContabile: opt ? opt.value : '', descContoContabile: opt ? opt.label : '' })}
+                                        placeholder='Lascia vuoto per usare il conto generico "Debiti verso fornitori"'
+                                    />
+                                    <small className="text-muted">Conto usato per le future scritture contabili in partita doppia relative a questo fornitore.</small>
                                 </div>
                             </div>
                         </div>

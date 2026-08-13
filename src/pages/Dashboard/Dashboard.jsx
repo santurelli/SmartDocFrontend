@@ -8,6 +8,7 @@ import {
     Tooltip, Legend, ResponsiveContainer, ComposedChart, Area
 } from 'recharts';
 import { FaFrownOpen, FaPaperPlane, FaMoneyBillWave, FaInbox, FaUsers, FaTruck, FaFileInvoice, FaEye } from 'react-icons/fa';
+import InvitoStudioBanner from '../../components/InvitoStudioBanner';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -99,6 +100,8 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            <InvitoStudioBanner compact />
 
             {/* Infoboxes - KPI REDESIGNED */}
             <div className="row">

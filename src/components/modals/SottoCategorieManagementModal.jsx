@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import SottoCategorieService from '../../services/SottoCategorieService';
 import CategorieArticoliService from '../../services/CategorieArticoliService';
+import PianoDeiContiService from '../../services/PianoDeiContiService';
 import { FaPencilAlt, FaTrash, FaPlus, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 const SottoCategorieManagementModal = ({ onClose }) => {
     const [list, setList] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [conti, setConti] = useState([]);
     const [filterCategory, setFilterCategory] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [pageSize, setPageSize] = useState(50);
@@ -17,6 +19,7 @@ const SottoCategorieManagementModal = ({ onClose }) => {
     useEffect(() => {
         loadData();
         loadCategories();
+        PianoDeiContiService.getList().then(res => setConti(res.payload || [])).catch(() => setConti([]));
     }, []);
 
     const loadCategories = async () => {
@@ -123,14 +126,32 @@ const SottoCategorieManagementModal = ({ onClose }) => {
     };
 
     const handleEdit = (item) => {
-        openDetailModal(item.id, item.parentId, item.descrizione);
+        openDetailModal(item.id, item.parentId, item.descrizione, item.idContoRicavo, item.idContoCosto);
     };
 
     const handleAdd = () => {
-        openDetailModal(null, filterCategory || '', '');
+        openDetailModal(null, filterCategory || '', '', null, null);
     };
 
-    const openDetailModal = (id, existingParentId, existingDesc) => {
+    const contoLabel = (c) => `${c.codice} - ${c.descrizione}`;
+
+    const buildContoDatalist = (listId) => {
+        let options = '';
+        conti.forEach(c => {
+            options += `<option data-id="${c.id}" value="${contoLabel(c).replace(/"/g, '&quot;')}"></option>`;
+        });
+        return `<datalist id="${listId}">${options}</datalist>`;
+    };
+
+    const resolveContoId = (inputValue) => {
+        if (!inputValue) return null;
+        const match = conti.find(c => contoLabel(c) === inputValue);
+        return match ? match.id : null;
+    };
+
+    const openDetailModal = (id, existingParentId, existingDesc, existingContoRicavo, existingContoCosto) => {
+        const contoRicavoObj = conti.find(c => String(c.id) === String(existingContoRicavo));
+        const contoCostoObj = conti.find(c => String(c.id) === String(existingContoCosto));
         Swal.fire({
             title: id ? 'Modifica Sottocategoria' : 'Nuova Sottocategoria',
             html: `
@@ -150,6 +171,16 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                         <label class="premium-swal-label">Descrizione</label>
                         <input id="swal-descrizione" class="form-control premium-swal-input" placeholder="Es. Minuterie, Accessori..." value="${existingDesc}">
                     </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label class="premium-swal-label">Conto di Ricavo</label>
+                        <input id="swal-conto-ricavo" class="form-control premium-swal-input" list="datalist-sc-conto-ricavo" placeholder="Cerca per codice o descrizione... (opzionale, eredita dalla categoria se vuoto)" value="${contoRicavoObj ? contoLabel(contoRicavoObj) : ''}" autocomplete="off">
+                        ${buildContoDatalist('datalist-sc-conto-ricavo')}
+                    </div>
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label class="premium-swal-label">Conto di Costo</label>
+                        <input id="swal-conto-costo" class="form-control premium-swal-input" list="datalist-sc-conto-costo" placeholder="Cerca per codice o descrizione... (opzionale, eredita dalla categoria se vuoto)" value="${contoCostoObj ? contoLabel(contoCostoObj) : ''}" autocomplete="off">
+                        ${buildContoDatalist('datalist-sc-conto-costo')}
+                    </div>
                 </div>
             `,
             showCancelButton: true,
@@ -167,16 +198,28 @@ const SottoCategorieManagementModal = ({ onClose }) => {
             preConfirm: async () => {
                 const parentId = document.getElementById('swal-parent-id').value;
                 const descrizione = document.getElementById('swal-descrizione').value;
+                const ricavoInput = document.getElementById('swal-conto-ricavo').value;
+                const costoInput = document.getElementById('swal-conto-costo').value;
                 if (!parentId || !descrizione) {
-                    Swal.showValidationMessage('Tutti i campi sono obbligatori');
+                    Swal.showValidationMessage('Categoria Padre e Descrizione sono obbligatori');
                     return false;
                 }
+                if (ricavoInput && !resolveContoId(ricavoInput)) {
+                    Swal.showValidationMessage('Conto di Ricavo non valido: selezionane uno dall\'elenco suggerito');
+                    return false;
+                }
+                if (costoInput && !resolveContoId(costoInput)) {
+                    Swal.showValidationMessage('Conto di Costo non valido: selezionane uno dall\'elenco suggerito');
+                    return false;
+                }
+                const idContoRicavo = resolveContoId(ricavoInput);
+                const idContoCosto = resolveContoId(costoInput);
                 try {
                     let res;
                     if (id) {
-                        res = await SottoCategorieService.update(id, { parentId, descrizione });
+                        res = await SottoCategorieService.update(id, { parentId, descrizione, idContoRicavo, idContoCosto });
                     } else {
-                        res = await SottoCategorieService.create({ parentId, descrizione });
+                        res = await SottoCategorieService.create({ parentId, descrizione, idContoRicavo, idContoCosto });
                     }
 
                     if (res.data && res.data.errorText) {
@@ -304,19 +347,23 @@ const SottoCategorieManagementModal = ({ onClose }) => {
                                     >
                                         SOTTOCATEGORIA {getSortIcon('descrizione')}
                                     </th>
+                                    <th style={{ verticalAlign: 'middle' }}>CONTO RICAVO</th>
+                                    <th style={{ verticalAlign: 'middle' }}>CONTO COSTO</th>
                                     <th style={{ width: '120px', verticalAlign: 'middle', textAlign: 'center' }}>AZIONI</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan="3" className="text-center">Caricamento...</td></tr>
+                                    <tr><td colSpan="5" className="text-center">Caricamento...</td></tr>
                                 ) : currentItems.length === 0 ? (
-                                    <tr><td colSpan="3" className="text-center">Nessun elemento trovato</td></tr>
+                                    <tr><td colSpan="5" className="text-center">Nessun elemento trovato</td></tr>
                                 ) : (
                                     currentItems.map(item => (
                                         <tr key={item.id}>
                                             <td style={{ verticalAlign: 'middle' }}>{item.parentDescription}</td>
                                             <td style={{ verticalAlign: 'middle' }}>{item.descrizione}</td>
+                                            <td style={{ verticalAlign: 'middle', fontSize: '12px', color: '#666' }}>{item.descContoRicavo || '-'}</td>
+                                            <td style={{ verticalAlign: 'middle', fontSize: '12px', color: '#666' }}>{item.descContoCosto || '-'}</td>
                                             <td className="text-center" style={{ verticalAlign: 'middle' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                                                     <button className="btn btn-primary btn-sm" onClick={() => handleEdit(item)} title="Modifica">

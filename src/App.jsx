@@ -21,6 +21,11 @@ import DatiAziendaPage from './pages/Configurazione/DatiAziendaPage';
 import ParametriPage from './pages/Configurazione/ParametriPage';
 import ImpostazioniFatturazionePage from './pages/Configurazione/ImpostazioniFatturazionePage';
 import ImpostazioniDocumentiPage from './pages/Configurazione/ImpostazioniDocumentiPage';
+import PianoDeiContiPage from './pages/Configurazione/PianoDeiContiPage';
+import LibroGiornaleList from './pages/Contabilita/LibroGiornaleList';
+import MastriniList from './pages/Contabilita/MastriniList';
+import ChiusuraEsercizioPage from './pages/Contabilita/ChiusuraEsercizioPage';
+import BilancioPage from './pages/Contabilita/BilancioPage';
 import FornitoriList from './pages/Fornitori/FornitoriList';
 import FornitoriDetail from './pages/Fornitori/FornitoriDetail';
 import ConfOrdineList from './pages/ConfOrdine/ConfOrdineList';
@@ -140,6 +145,11 @@ function App() {
         <Route path="/configurazione/parametri" element={<ParametriPage />} />
         <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
         <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
+        <Route path="/configurazione/piano-conti" element={<PlanProtectedRoute minPlanLevel={4}><PianoDeiContiPage /></PlanProtectedRoute>} />
+        <Route path="/libro-giornale" element={<PlanProtectedRoute minPlanLevel={4}><LibroGiornaleList /></PlanProtectedRoute>} />
+        <Route path="/mastrini" element={<PlanProtectedRoute minPlanLevel={4}><MastriniList /></PlanProtectedRoute>} />
+        <Route path="/chiusura-esercizio" element={<PlanProtectedRoute minPlanLevel={4}><ChiusuraEsercizioPage /></PlanProtectedRoute>} />
+        <Route path="/bilancio" element={<PlanProtectedRoute minPlanLevel={4}><BilancioPage /></PlanProtectedRoute>} />
         <Route path="/configurazione/listini" element={<ListiniList />} />
         <Route path="/configurazione/dati-generali" element={<DatiGeneraliPage />} />
         <Route path="/configurazione/utenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiList /></RoleProtectedRoute>} />

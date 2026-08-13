@@ -72,7 +72,7 @@ const FornitoriDetail = () => {
         setLoading(true);
         try {
             const payload = { ...fornitore };
-            const intFields = ['idRisorsa', 'idVettore', 'idTipoPorto', 'idAvviso', 'idNota', 'idCategoriaSpesa'];
+            const intFields = ['idRisorsa', 'idVettore', 'idTipoPorto', 'idAvviso', 'idNota', 'idCategoriaSpesa', 'idContoContabile'];
             intFields.forEach(f => { if (payload[f] === '') payload[f] = null; });
             payload.descrizioneBanca = payload.banca;
 
