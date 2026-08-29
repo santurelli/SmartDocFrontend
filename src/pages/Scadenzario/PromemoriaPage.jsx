@@ -235,7 +235,7 @@ const PromemoriaPage = () => {
                                     </div>
                                     <div className="promemoria-card-actions">
                                         {!r.attivo && <span className="promemoria-badge-disattiva">Disattivata</span>}
-                                        <button className="btn-icon" onClick={() => handleEdit(r)} title="Modifica"><FaEdit /></button>
+                                        <button className="icon-only-btn" onClick={() => handleEdit(r)} title="Modifica"><FaEdit /></button>
                                         <button className="btn-icon btn-icon-danger" onClick={() => handleDelete(r.id)} title="Elimina"><FaTrash /></button>
                                     </div>
                                 </div>
@@ -250,7 +250,7 @@ const PromemoriaPage = () => {
                     <div className="promemoria-modal" onClick={e => e.stopPropagation()}>
                         <div className="promemoria-modal-header">
                             <h3>{editing.id ? 'Modifica regola' : 'Nuova regola'}</h3>
-                            <button className="btn-icon" onClick={() => setEditing(null)}><FaTimes /></button>
+                            <button className="icon-only-btn" onClick={() => setEditing(null)}><FaTimes /></button>
                         </div>
                         <div className="promemoria-modal-body">
                             <div className="promemoria-form-row">

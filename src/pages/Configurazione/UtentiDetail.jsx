@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaInfoCircle } from 'react-icons/fa';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { FaInfoCircle, FaAngleRight } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import api from '../../services/api';
 import RuoliHelpModal from './RuoliHelpModal';
+import './UtentiDetail.css';
 
 const UtentiDetail = () => {
     const { id } = useParams();
@@ -79,64 +80,67 @@ const UtentiDetail = () => {
     if (loading) return <div>Caricamento...</div>;
 
     return (
-        <div className="row">
+        <div className="utenti-detail-container">
             <RuoliHelpModal show={showHelp} onHide={() => setShowHelp(false)} />
-            <div className="col-lg-12">
-                <div className="main-box">
-                    <header className="main-box-header clearfix">
-                        <h2>{isNew ? 'Nuovo Utente' : 'Modifica Utente'}</h2>
-                    </header>
-                    <div className="main-box-body clearfix">
-                        <form onSubmit={handleSubmit}>
-                            <div className="row">
-                                <div className="form-group col-md-6">
-                                    <label>Nome</label>
-                                    <input type="text" className="form-control" name="nome" value={utente.nome} onChange={handleChange} required />
-                                </div>
-                                <div className="form-group col-md-6">
-                                    <label>Cognome</label>
-                                    <input type="text" className="form-control" name="cognome" value={utente.cognome} onChange={handleChange} required />
-                                </div>
-                            </div>
-                            <div className="row">
-                                <div className="form-group col-md-6">
-                                    <label>Username (Accesso)</label>
-                                    <input type="text" className="form-control" name="username" value={utente.username} onChange={handleChange} required />
-                                </div>
-                                <div className="form-group col-md-6">
-                                    <label>Email (Invio Password)</label>
-                                    <input type="email" className="form-control" name="email" value={utente.email} onChange={handleChange} />
-                                </div>
-                            </div>
-                            <div className="row">
-                                <div className="form-group col-md-6">
-                                    <label style={{ display: 'flex', alignItems: 'center' }}>
-                                        Ruolo / Gruppo 
-                                        <FaInfoCircle 
-                                            style={{ marginLeft: '8px', color: '#17a2b8', cursor: 'pointer' }} 
-                                            onClick={() => setShowHelp(true)}
-                                            title="Vedi Guida ai Ruoli"
-                                        />
-                                    </label>
-                                    <select className="form-control" name="gruppo" value={utente.gruppo} onChange={handleChange} required>
-                                        <option value="">Seleziona ruolo...</option>
-                                        {gruppi.map(g => (
-                                            <option key={g.id} value={g.id}>{g.value}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
+            <ul className="breadcrumb">
+                <li><Link to="/">Home</Link></li>
+                <li><FaAngleRight /></li>
+                <li><Link to="/configurazione/utenti">Gestione Utenti</Link></li>
+                <li><FaAngleRight /></li>
+                <li className="active">{isNew ? 'Nuovo Utente' : 'Modifica Utente'}</li>
+            </ul>
 
-                            <button type="submit" className="btn btn-success" disabled={saving}>
-                                {saving ? "Salvataggio..." : "Salva Utente"}
-                            </button>
-                            <button type="button" className="btn btn-default" style={{ marginLeft: "10px" }} onClick={() => navigate('/configurazione/utenti')}>
-                                Annulla
-                            </button>
-                        </form>
+            <h1>{isNew ? 'Nuovo Utente' : 'Modifica Utente'}</h1>
+
+            <form onSubmit={handleSubmit}>
+                <div className="row">
+                    <div className="form-group col-md-6">
+                        <label>Nome</label>
+                        <input type="text" className="form-control" name="nome" value={utente.nome} onChange={handleChange} required />
+                    </div>
+                    <div className="form-group col-md-6">
+                        <label>Cognome</label>
+                        <input type="text" className="form-control" name="cognome" value={utente.cognome} onChange={handleChange} required />
                     </div>
                 </div>
-            </div>
+                <div className="row">
+                    <div className="form-group col-md-6">
+                        <label>Username (Accesso)</label>
+                        <input type="text" className="form-control" name="username" value={utente.username} onChange={handleChange} required />
+                    </div>
+                    <div className="form-group col-md-6">
+                        <label>Email (Invio Password)</label>
+                        <input type="email" className="form-control" name="email" value={utente.email} onChange={handleChange} />
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="form-group col-md-6">
+                        <label style={{ display: 'flex', alignItems: 'center' }}>
+                            Ruolo / Gruppo
+                            <FaInfoCircle
+                                style={{ marginLeft: '8px', color: '#17a2b8', cursor: 'pointer' }}
+                                onClick={() => setShowHelp(true)}
+                                title="Vedi Guida ai Ruoli"
+                            />
+                        </label>
+                        <select className="form-control" name="gruppo" value={utente.gruppo} onChange={handleChange} required>
+                            <option value="">Seleziona ruolo...</option>
+                            {gruppi.map(g => (
+                                <option key={g.id} value={g.id}>{g.value}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div className="form-footer">
+                    <button type="button" className="btn btn-default" onClick={() => navigate('/configurazione/utenti')}>
+                        Annulla
+                    </button>
+                    <button type="submit" className="btn btn-primary-custom" disabled={saving}>
+                        {saving ? "Salvataggio..." : "Salva Utente"}
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };

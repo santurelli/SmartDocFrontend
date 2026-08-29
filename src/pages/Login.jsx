@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import authService from '../services/authService';
 import './Login.css';
@@ -13,6 +13,16 @@ const Login = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    // Pre-seleziona l'azienda quando si arriva da un link di invito (es. email nuovo utente)
+    useEffect(() => {
+        const entedb = searchParams.get('entedb');
+        const entelabel = searchParams.get('entelabel');
+        if (entedb && entelabel) {
+            setEnte({ value: entelabel, label: entelabel, dbName: entedb });
+        }
+    }, [searchParams]);
 
     // Load options for AsyncSelect
     const loadOptions = (inputValue, callback) => {

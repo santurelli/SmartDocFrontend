@@ -176,6 +176,13 @@ const ClienteForm = ({ data, onChange, isNew, onConfigLoaded }) => {
         }
     };
 
+    useEffect(() => {
+        if (isNew) {
+            generateCodice();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isNew]);
+
     const refreshAvvisi = async () => {
         const res = await AvvisiService.getAll();
         if (res.data) setAvvisiList(res.data);

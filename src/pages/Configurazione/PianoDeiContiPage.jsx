@@ -22,6 +22,22 @@ const TIPO_COLORS = {
     IVA: { bg: '#f8fafc', color: '#64748b' }
 };
 
+// Ruoli riconosciuti dal motore di generazione automatica delle scritture contabili: associare un
+// conto a uno di questi ruoli indica al sistema quale conto usare per quel tipo di movimento.
+const RUOLO_LABELS = {
+    CREDITI_CLIENTI: 'Crediti verso clienti',
+    DEBITI_FORNITORI: 'Debiti verso fornitori',
+    RICAVI_VENDITE: 'Ricavi delle vendite',
+    COSTI_ACQUISTI: 'Costi di acquisto',
+    IVA_CREDITO: 'IVA a credito',
+    IVA_DEBITO: 'IVA a debito',
+    ERARIO_RITENUTE: 'Erario c/ritenute da versare',
+    UTILE_ESERCIZIO: 'Utile (perdita) d\'esercizio',
+    RIMANENZE: 'Rimanenze di magazzino',
+    CASSA: 'Cassa contanti',
+    BANCA: 'Banca c/c'
+};
+
 const SETTORE_LABELS = {
     COMMERCIO: 'Commercio',
     SERVIZI: 'Servizi',
@@ -30,7 +46,7 @@ const SETTORE_LABELS = {
     GENERICO: 'Generico'
 };
 
-const emptyForm = { id: null, codice: '', descrizione: '', idPadre: '', tipo: 'COSTO', note: '' };
+const emptyForm = { id: null, codice: '', descrizione: '', idPadre: '', tipo: 'COSTO', ruoloDefault: '', note: '' };
 
 const PianoDeiContiPage = () => {
     const [conti, setConti] = useState([]);
@@ -81,6 +97,7 @@ const PianoDeiContiPage = () => {
             descrizione: conto.descrizione,
             idPadre: conto.idPadre || '',
             tipo: conto.tipo,
+            ruoloDefault: conto.ruoloDefault || '',
             note: conto.note || ''
         });
         setShowForm(true);
@@ -96,6 +113,7 @@ const PianoDeiContiPage = () => {
             descrizione: form.descrizione,
             idPadre: form.idPadre || null,
             tipo: form.tipo,
+            ruoloDefault: form.ruoloDefault || null,
             note: form.note
         };
         try {
@@ -185,11 +203,11 @@ const PianoDeiContiPage = () => {
                         />
                         <div style={{ display: 'flex', gap: '10px' }}>
                             {conti.length === 0 && !loading && (
-                                <button type="button" className="btn btn-info" onClick={handleImportaStandard}>
+                                <button type="button" className="btn btn-info" style={{ fontSize: '14px', fontWeight: 500 }} onClick={handleImportaStandard}>
                                     <FaDownload /> Importa piano standard
                                 </button>
                             )}
-                            <button type="button" className="btn btn-success" onClick={() => openNew(null)}>
+                            <button type="button" className="btn btn-primary" style={{ fontSize: '14px', fontWeight: 500 }} onClick={() => openNew(null)}>
                                 <FaPlus /> Nuovo Conto
                             </button>
                         </div>
@@ -294,14 +312,28 @@ const PianoDeiContiPage = () => {
                         </div>
 
                         <div className="form-group">
+                            <label>Ruolo contabile</label>
+                            <select className="form-control" value={form.ruoloDefault || ''}
+                                onChange={(e) => setForm({ ...form, ruoloDefault: e.target.value })}>
+                                <option value="">- Nessuno -</option>
+                                {Object.entries(RUOLO_LABELS).map(([k, v]) => (
+                                    <option key={k} value={k}>{v}</option>
+                                ))}
+                            </select>
+                            <small style={{ color: '#94a3b8' }}>
+                                Indica al sistema di usare questo conto per generare automaticamente le scritture contabili di quel tipo (es. debiti v/fornitori, ritenute d'acconto). Lascia "Nessuno" per un conto normale.
+                            </small>
+                        </div>
+
+                        <div className="form-group">
                             <label>Note</label>
                             <textarea className="form-control" rows={2} value={form.note}
                                 onChange={(e) => setForm({ ...form, note: e.target.value })} />
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                            <button type="button" className="btn btn-default" onClick={() => setShowForm(false)}>Annulla</button>
-                            <button type="button" className="btn btn-success" onClick={handleSave}>Salva</button>
+                            <button type="button" className="btn btn-default" style={{ fontSize: '14px', fontWeight: 500 }} onClick={() => setShowForm(false)}>Annulla</button>
+                            <button type="button" className="btn btn-primary" style={{ fontSize: '14px', fontWeight: 500 }} onClick={handleSave}>Salva</button>
                         </div>
                     </div>
                 </div>

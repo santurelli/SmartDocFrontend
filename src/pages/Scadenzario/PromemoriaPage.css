@@ -210,7 +210,7 @@
     margin-right: 4px;
 }
 
-.btn-icon {
+.icon-only-btn {
     background: none;
     border: none;
     color: #888;
@@ -222,9 +222,9 @@
     justify-content: center;
 }
 
-.btn-icon:hover { background: #f1f2f7; color: #333; }
+.icon-only-btn:hover { background: #f1f2f7; color: #333; }
 
-.btn-icon-danger:hover { background: #fdecea; color: #d32f2f; }
+.icon-only-btn-danger:hover { background: #fdecea; color: #d32f2f; }
 
 /* Modal */
 .promemoria-modal-overlay {

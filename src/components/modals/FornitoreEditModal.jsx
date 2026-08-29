@@ -29,7 +29,10 @@ const FornitoreEditModal = ({ isOpen, onClose, fornitoreId, onSave }) => {
         conto: '',
         bic: '',
         codSia: '',
-        descrizioneBanca: ''
+        descrizioneBanca: '',
+        flRitenutaAcconto: 0,
+        tipoRitenuta: 'PERSONE_FISICHE',
+        percRitenutaAcconto: 20
     });
 
     useEffect(() => {

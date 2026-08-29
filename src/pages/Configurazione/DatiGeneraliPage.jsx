@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
-import { FaSave, FaCogs, FaHome } from 'react-icons/fa';
+import { FaSave, FaCogs, FaHome, FaUniversity } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import RisorseManagementModal from '../../components/modals/RisorseManagementModal';
 import './ConfigurazionePage.css';
 const DatiGeneraliPage = () => {
     const [configs, setConfigs] = useState({});
     const [loading, setLoading] = useState(true);
+    const [showRisorseModal, setShowRisorseModal] = useState(false);
 
     useEffect(() => {
         fetchConfigs();
@@ -106,11 +108,11 @@ const DatiGeneraliPage = () => {
             <ul className="breadcrumb">
                 <li><a href="/"><FaHome /> Home</a></li>
                 <li>Configurazione</li>
-                <li className="active">Dati Generali</li>
+                <li className="active">Impostazioni Generali</li>
             </ul>
 
             <div className="config-header">
-                <h2><FaCogs style={{ marginRight: '10px' }} />Dati Generali</h2>
+                <h2><FaCogs style={{ marginRight: '10px' }} />Impostazioni Generali</h2>
                 <button className="btn btn-primary premium-btn" onClick={handleSave}>
                     <FaSave className="mr-2" /> Salva Impostazioni
                 </button>
@@ -237,6 +239,21 @@ const DatiGeneraliPage = () => {
                     </div>
                 </div>
             </div>
+
+            <div className="config-section mb-4">
+                <h3 className="section-subtitle">Conti e Banche</h3>
+                <p className="section-description">
+                    Gestisci i conti (banca, cassa) usati nei documenti e nello scadenzario, e imposta il saldo iniziale
+                    di ciascuno — è il dato di partenza usato dalla Previsione di Cassa.
+                </p>
+                <button type="button" className="btn btn-primary premium-btn" onClick={() => setShowRisorseModal(true)}>
+                    <FaUniversity className="mr-2" /> Gestisci conti/banche
+                </button>
+            </div>
+
+            {showRisorseModal && (
+                <RisorseManagementModal onClose={() => setShowRisorseModal(false)} initialTipologia="BA" />
+            )}
         </div>
     );
 };

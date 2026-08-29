@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import LibroGiornaleService from '../../services/LibroGiornaleService';
 import PianoDeiContiService from '../../services/PianoDeiContiService';
 import { FaBook, FaChevronDown, FaChevronRight, FaPlus, FaTrash, FaPencilAlt, FaFilePdf } from 'react-icons/fa';
@@ -87,7 +88,7 @@ const LibroGiornaleList = () => {
             window.open(url, '_blank');
         } catch (err) {
             console.error('Errore nella stampa del libro giornale:', err);
-            alert('Errore nella generazione del PDF.');
+            Swal.fire({ title: 'Errore', text: 'Errore nella generazione del PDF.', icon: 'error' });
         } finally {
             setStampando(false);
         }
@@ -176,13 +177,23 @@ const LibroGiornaleList = () => {
     };
 
     const handleElimina = async (reg) => {
-        if (!window.confirm(`Eliminare la scrittura manuale del ${formatData(reg.dataRegistrazione)} (${reg.descrizione})?`)) {
+        const result = await Swal.fire({
+            title: 'Sei sicuro?',
+            text: `Vuoi eliminare la scrittura manuale del ${formatData(reg.dataRegistrazione)} (${reg.descrizione})?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sì, elimina',
+            cancelButtonText: 'Annulla'
+        });
+        if (!result.isConfirmed) {
             return;
         }
         try {
             const res = await LibroGiornaleService.eliminaManuale(reg.id);
             if (res.errorText) {
-                alert(res.errorText);
+                Swal.fire({ title: 'Errore', text: res.errorText, icon: 'error' });
             } else {
                 fetchData();
             }

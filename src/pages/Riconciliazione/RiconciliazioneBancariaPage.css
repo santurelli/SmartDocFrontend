@@ -227,7 +227,7 @@
 .rb-stato-non_abbinato { background: #fff3e0; color: #e65100; }
 .rb-stato-ignorato { background: #f1f2f7; color: #999; }
 
-.btn-icon {
+.icon-only-btn {
     background: none;
     border: none;
     color: #888;
@@ -236,7 +236,7 @@
     border-radius: 6px;
 }
 
-.btn-icon:hover { background: #f1f2f7; color: #333; }
+.icon-only-btn:hover { background: #f1f2f7; color: #333; }
 
 /* Candidates row */
 .rb-candidates-row td {

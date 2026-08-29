@@ -5,6 +5,10 @@ const DDTService = {
         return api.post('/ddt/list', params);
     },
 
+    exportExcel: (params) => {
+        return api.post('/ddt/export-excel', params, { responseType: 'blob' });
+    },
+
     search: (params) => {
         return api.post('/ddt/list', params);
     },

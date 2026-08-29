@@ -9,7 +9,7 @@ import { FaAngleRight } from 'react-icons/fa';
 const ClientiDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const isNew = id === 'new';
+    const isNew = !id || id === 'new';
     const [loading, setLoading] = useState(false);
     const [cliente, setCliente] = useState({
         codice: '',

@@ -9,7 +9,7 @@ import { FaAngleRight } from 'react-icons/fa';
 const FornitoriDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const isNew = id === 'new';
+    const isNew = !id || id === 'new';
     const [loading, setLoading] = useState(false);
     const [fornitore, setFornitore] = useState({
         codice: '',
@@ -34,7 +34,10 @@ const FornitoriDetail = () => {
         conto: '',
         bic: '',
         codSia: '',
-        descrizioneBanca: ''
+        descrizioneBanca: '',
+        flRitenutaAcconto: 0,
+        tipoRitenuta: 'PERSONE_FISICHE',
+        percRitenutaAcconto: 20
     });
 
     useEffect(() => {

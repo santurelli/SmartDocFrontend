@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import ChiusuraEsercizioService from '../../services/ChiusuraEsercizioService';
 import { FaLock, FaExclamationTriangle } from 'react-icons/fa';
 import '../Configurazione/ConfigurazionePage.css';
@@ -51,7 +52,17 @@ const ChiusuraEsercizioPage = () => {
     };
 
     const handleChiudi = async () => {
-        if (!window.confirm(`Confermi la chiusura dell'esercizio ${anno}? L'operazione genera la scrittura di chiusura sui conti economici e riporta i saldi patrimoniali sull'esercizio ${anno + 1}. Non e' pensata per essere annullata facilmente.`)) {
+        const result = await Swal.fire({
+            title: 'Confermi la chiusura?',
+            text: `L'operazione genera la scrittura di chiusura sui conti economici dell'esercizio ${anno} e riporta i saldi patrimoniali sull'esercizio ${anno + 1}. Non e' pensata per essere annullata facilmente.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: `Sì, chiudi l'esercizio ${anno}`,
+            cancelButtonText: 'Annulla'
+        });
+        if (!result.isConfirmed) {
             return;
         }
         setChiudendo(true);

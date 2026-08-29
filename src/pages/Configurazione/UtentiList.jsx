@@ -4,6 +4,7 @@ import { FaPlusCircle, FaSearch, FaHome, FaTrash, FaEdit, FaBookReader } from 'r
 import Swal from 'sweetalert2';
 import api from '../../services/api';
 import RuoliHelpModal from './RuoliHelpModal';
+import './UtentiList.css';
 
 const UtentiList = () => {
     const [utenti, setUtenti] = useState([]);
@@ -74,7 +75,7 @@ const UtentiList = () => {
                 <div className="main-box-header">
                     <div className="filter-block-left">
                         <button className="btn btn-info" onClick={() => setShowHelp(true)} style={{ color: 'white' }}>
-                            <FaBookReader className="btn-icon" /> Guida Ruoli
+                            <FaBookReader className="utenti-btn-icon" /> Guida Ruoli
                         </button>
                     </div>
                     <div className="filter-block-right">
@@ -89,7 +90,7 @@ const UtentiList = () => {
                             <FaSearch className="search-icon" />
                         </div>
                         <button className="btn btn-primary add-btn" onClick={() => navigate('/configurazione/utenti/new')}>
-                            <FaPlusCircle className="btn-icon" /> Nuovo Utente
+                            <FaPlusCircle className="utenti-btn-icon" /> Nuovo Utente
                         </button>
                     </div>
                 </div>

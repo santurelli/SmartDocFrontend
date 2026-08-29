@@ -7,7 +7,7 @@ import ClientiService from '../../services/ClientiService';
 import AgentiService from '../../services/AgentiService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import Swal from 'sweetalert2';
-import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaArrowRight } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaPlus, FaSearch, FaSync, FaChevronLeft, FaChevronRight, FaHome, FaAngleRight, FaEllipsisV, FaPrint, FaFilePdf, FaFileExcel, FaArrowRight } from 'react-icons/fa';
 import printJS from 'print-js';
 import storageHelper from '../../utils/storageHelper';
 import { getDefaultSearchRange } from '../../utils/dateUtils';
@@ -38,6 +38,7 @@ const PreventiviList = () => {
 
     const [preventivi, setPreventivi] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [downloading, setDownloading] = useState(false);
     const [total, setTotal] = useState(0);
     const [docConfigs, setDocConfigs] = useState(null);
     const [globalConfigs, setGlobalConfigs] = useState(null);
@@ -191,6 +192,27 @@ const PreventiviList = () => {
             Swal.fire('Errore', 'Errore nel caricamento dei preventivi', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleExportExcel = async () => {
+        setDownloading(true);
+        try {
+            const params = { idCliente, idAgente, dtFrom, dtTo, orderColumn: sortCol, orderDir: sortDir };
+            const response = await PreventiviService.exportExcel(params);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'elenco_preventivi.xls');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error exporting preventivi:", error);
+            Swal.fire('Errore', 'Errore nell\'esportazione excel', 'error');
+        } finally {
+            setDownloading(false);
         }
     };
 
@@ -381,6 +403,9 @@ const PreventiviList = () => {
                     )}
                 </div>
                 <div className="toolbar-right">
+                    <button className="btn-new-vibrant" style={{ backgroundColor: '#217346' }} onClick={handleExportExcel} disabled={downloading} title="Esporta Excel">
+                        <FaFileExcel size={14} /> {downloading ? 'Esportazione...' : 'Esporta Excel'}
+                    </button>
                     <button className="btn-new-vibrant" onClick={() => navigate('/preventivi/new')}>
                         <FaPlus size={14} /> Nuovo Preventivo
                     </button>

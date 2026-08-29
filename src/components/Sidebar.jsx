@@ -4,7 +4,7 @@ import ConfigurazioneService from '../services/ConfigurazioneService';
 import authService from '../services/authService';
 import {
     FaTachometerAlt, FaThLarge, FaCubes, FaAngleRight, FaAngleDown,
-    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaUser, FaCircle, FaFileAlt, FaBell, FaExchangeAlt, FaUserTie, FaCogs, FaBalanceScale
+    FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaUser, FaCircle, FaFileAlt, FaBell, FaExchangeAlt, FaUserTie, FaCogs, FaBalanceScale, FaChartLine
 } from 'react-icons/fa';
 import TipiPagamentoManagementModal from './modals/TipiPagamentoManagementModal';
 import UnitaMisuraManagementModal from './modals/UnitaMisuraManagementModal';
@@ -198,6 +198,15 @@ const Sidebar = ({ user }) => {
                                     )}
 
                                     {isAllowedByPlan(4) && (
+                                        <li>
+                                            <NavLink to="/previsione-cassa">
+                                                <span className="icon-container"><FaChartLine /></span>
+                                                <span className="text">Previsione di Cassa</span>
+                                            </NavLink>
+                                        </li>
+                                    )}
+
+                                    {isAllowedByPlan(4) && (
                                         <li className={openMenus['contabilita'] ? 'open' : ''}>
                                             <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('contabilita'); }}>
                                                 <span className="icon-container"><FaBalanceScale /></span>
@@ -209,6 +218,7 @@ const Sidebar = ({ user }) => {
                                                 <li><NavLink to="/mastrini">Mastrini</NavLink></li>
                                                 <li><NavLink to="/chiusura-esercizio">Chiusura Esercizio</NavLink></li>
                                                 <li><NavLink to="/bilancio">Bilancio</NavLink></li>
+                                                <li><NavLink to="/piano-conti">Piano dei Conti</NavLink></li>
                                             </ul>
                                         </li>
                                     )}
@@ -259,6 +269,7 @@ const Sidebar = ({ user }) => {
                                                 <FaAngleRight className="drop-icon" />
                                             </a>
                                             <ul className="submenu">
+                                                <li><NavLink to="/statistiche/dashboard">Dashboard</NavLink></li>
                                                 {isEnabled('PROGETTI', 'GLOBAL') && <li><NavLink to="/statistiche/progetti">Progetti</NavLink></li>}
                                                 <li><NavLink to="/statistiche/vendite">Vendite</NavLink></li>
                                                 <li><NavLink to="/statistiche/acquisti">Acquisti</NavLink></li>
@@ -275,11 +286,11 @@ const Sidebar = ({ user }) => {
                                         </a>
                                         <ul className="submenu">
                                             <li><NavLink to="/configurazione/dati-azienda">Dati azienda</NavLink></li>
+                                            <li><NavLink to="/configurazione/dati-generali">Impostazioni Generali</NavLink></li>
                                             <li><NavLink to="/configurazione/fatturazione">Fatturazione</NavLink></li>
                                             <li><NavLink to="/configurazione/documenti">Documenti</NavLink></li>
-                                            {isAllowedByPlan(4) && <li><NavLink to="/configurazione/piano-conti">Piano dei Conti</NavLink></li>}
                                             <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
-                                            <li><NavLink to="/configurazione/generali">Dati generali</NavLink></li>
+                                            <li><NavLink to="/configurazione/ecommerce">Integrazione E-commerce</NavLink></li>
                                             {(authService.getConfig()?.role === 'ROLE_ADMIN') && (
                                                 <li><NavLink to="/configurazione/utenti">Gestione Utenti</NavLink></li>
                                             )}

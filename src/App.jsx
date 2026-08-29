@@ -22,6 +22,7 @@ import ParametriPage from './pages/Configurazione/ParametriPage';
 import ImpostazioniFatturazionePage from './pages/Configurazione/ImpostazioniFatturazionePage';
 import ImpostazioniDocumentiPage from './pages/Configurazione/ImpostazioniDocumentiPage';
 import PianoDeiContiPage from './pages/Configurazione/PianoDeiContiPage';
+import EcommercePage from './pages/Configurazione/EcommercePage';
 import LibroGiornaleList from './pages/Contabilita/LibroGiornaleList';
 import MastriniList from './pages/Contabilita/MastriniList';
 import ChiusuraEsercizioPage from './pages/Contabilita/ChiusuraEsercizioPage';
@@ -54,8 +55,10 @@ import UtentiDetail from './pages/Configurazione/UtentiDetail';
 import Prospetto770Page from './pages/Ritenute/Prospetto770Page';
 import PromemoriaPage from './pages/Scadenzario/PromemoriaPage';
 import RiconciliazioneBancariaPage from './pages/Riconciliazione/RiconciliazioneBancariaPage';
+import PrevisioneCassaPage from './pages/PrevisioneCassa/PrevisioneCassaPage';
 import StudioDashboardPage from './pages/Studio/StudioDashboardPage';
 import StatistichePage from './pages/Statistiche/StatistichePage';
+import DashboardStatistichePage from './pages/Statistiche/DashboardStatistichePage';
 
 const RoleProtectedRoute = ({ allowedRoles, children }) => {
   const currentUser = authService.getCurrentUser();
@@ -145,11 +148,12 @@ function App() {
         <Route path="/configurazione/parametri" element={<ParametriPage />} />
         <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
         <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
-        <Route path="/configurazione/piano-conti" element={<PlanProtectedRoute minPlanLevel={4}><PianoDeiContiPage /></PlanProtectedRoute>} />
         <Route path="/libro-giornale" element={<PlanProtectedRoute minPlanLevel={4}><LibroGiornaleList /></PlanProtectedRoute>} />
         <Route path="/mastrini" element={<PlanProtectedRoute minPlanLevel={4}><MastriniList /></PlanProtectedRoute>} />
         <Route path="/chiusura-esercizio" element={<PlanProtectedRoute minPlanLevel={4}><ChiusuraEsercizioPage /></PlanProtectedRoute>} />
         <Route path="/bilancio" element={<PlanProtectedRoute minPlanLevel={4}><BilancioPage /></PlanProtectedRoute>} />
+        <Route path="/piano-conti" element={<PlanProtectedRoute minPlanLevel={4}><PianoDeiContiPage /></PlanProtectedRoute>} />
+        <Route path="/configurazione/ecommerce" element={<PlanProtectedRoute minPlanLevel={3}><EcommercePage /></PlanProtectedRoute>} />
         <Route path="/configurazione/listini" element={<ListiniList />} />
         <Route path="/configurazione/dati-generali" element={<DatiGeneraliPage />} />
         <Route path="/configurazione/utenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiList /></RoleProtectedRoute>} />
@@ -195,7 +199,9 @@ function App() {
         <Route path="/ritenute/770" element={<Prospetto770Page />} />
         <Route path="/scadenzario/promemoria" element={<PromemoriaPage />} />
         <Route path="/riconciliazione" element={<PlanProtectedRoute minPlanLevel={4}><RiconciliazioneBancariaPage /></PlanProtectedRoute>} />
+        <Route path="/previsione-cassa" element={<PlanProtectedRoute minPlanLevel={4}><PrevisioneCassaPage /></PlanProtectedRoute>} />
         <Route path="/studio/dashboard" element={<StudioDashboardPage />} />
+        <Route path="/statistiche/dashboard" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><DashboardStatistichePage /></RoleProtectedRoute>} />
         <Route path="/statistiche/vendite" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
         <Route path="/statistiche/acquisti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
         <Route path="/statistiche/pagamenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />

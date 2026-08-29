@@ -1,15 +1,17 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { FaInfoCircle, FaCalendarAlt, FaFileAlt, FaAngleRight, FaListUl, FaSave, FaPlus, FaTrash, FaArrowLeft, FaBoxOpen } from 'react-icons/fa';
+import { FaInfoCircle, FaCalendarAlt, FaFileAlt, FaAngleRight, FaListUl, FaSave, FaPlus, FaTrash, FaArrowLeft, FaBoxOpen, FaMagic } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
 import FattureFornitoreService from '../../services/FattureFornitoreService';
+import AiService from '../../services/AiService';
 import FornitoriService from '../../services/FornitoriService';
 import OrdiniService from '../../services/OrdiniService';
 import BollaCaricoService from '../../services/BollaCaricoService';
 import ArticoliService from '../../services/ArticoliService';
 import authService from '../../services/authService';
+import PianoDeiContiService from '../../services/PianoDeiContiService';
 import DocumentRows from '../../components/common/DocumentRows';
 import ScadenzeTable from '../../components/common/ScadenzeTable';
 import ComunicazioniTimeline from '../../components/ComunicazioniTimeline';
@@ -63,6 +65,26 @@ const FattureFornitoreDetail = () => {
     });
 
     const [prodotti, setProdotti] = useState([]);
+
+    // Override manuale del conto contabile per riga: solo piano Enterprise (tipoAccount >= 4),
+    // stesso comportamento della Fattura di vendita.
+    const [contiContabili, setContiContabili] = useState([]);
+    const appConfigContoOverride = authService.getConfig ? authService.getConfig() : {};
+    const currentUserForPlanContoOverride = authService.getCurrentUser();
+    const tipoAccountContoOverride = appConfigContoOverride.tipoAccount || appConfigContoOverride.tipo_account
+        || (currentUserForPlanContoOverride?.user || currentUserForPlanContoOverride)?.tipoAccount || 1;
+    const showContoOverride = tipoAccountContoOverride >= 4;
+    const showImportaAi = tipoAccountContoOverride >= 4;
+    const [importandoAi, setImportandoAi] = useState(false);
+
+    useEffect(() => {
+        if (!showContoOverride) return;
+        PianoDeiContiService.getList('').then(res => {
+            setContiContabili((res.payload || []).filter(c => c.idPadre != null));
+        }).catch(err => console.error('Errore nel caricamento del piano dei conti:', err));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showContoOverride]);
+
     const [combos, setCombos] = useState({
         aliquoteIva: [],
         unitaMisura: [],
@@ -92,6 +114,20 @@ const FattureFornitoreDetail = () => {
         (formData.progFileFatturaElettronica && formData.progFileFatturaElettronica.trim() !== '')
     );
 
+    // Applica il flag ritenuta d'acconto del fornitore, solo su documento nuovo (non sovrascrive
+    // la scelta fatta dall'utente su una fattura gia' salvata).
+    const applyRitenutaDaFornitore = (f) => {
+        if (!isNew || !f) return;
+        if (f.flRitenutaAcconto) {
+            setFormData(prev => ({
+                ...prev,
+                flRitenutaAcconto: 1,
+                tipoRitenuta: f.tipoRitenuta || 'PERSONE_FISICHE',
+                percRitenutaAcconto: f.percRitenutaAcconto ?? 20
+            }));
+        }
+    };
+
     // Sync supplier details dynamically
     useEffect(() => {
         if (formData.fornitoreDto) {
@@ -117,6 +153,7 @@ const FattureFornitoreDetail = () => {
                 partitaIva: f.partitaIva || '',
                 codiceFiscale: f.codiceFiscale || ''
             });
+            applyRitenutaDaFornitore(f);
         } else if (formData.idFornitore) {
             FornitoriService.getById(formData.idFornitore).then(res => {
                 const f = res.data?.payload || res.data;
@@ -142,6 +179,7 @@ const FattureFornitoreDetail = () => {
                         partitaIva: f.partitaIva || '',
                         codiceFiscale: f.codiceFiscale || ''
                     });
+                    applyRitenutaDaFornitore(f);
                 }
             }).catch(err => console.error("Errore nel caricamento del fornitore:", err));
         } else {
@@ -339,6 +377,23 @@ const FattureFornitoreDetail = () => {
         }, 0);
     };
 
+    // Importo effettivamente da versare al fornitore: il totale lordo al netto della ritenuta
+    // d'acconto (che non va al fornitore, ma trattenuta e versata all'Erario).
+    const calculateTotaleDaPagare = () => {
+        const ritenuta = formData.flRitenutaAcconto ? (formData.importoRitenutaAcconto || 0) : 0;
+        return calculateTotalLordo() - ritenuta;
+    };
+
+    // Ricalcola l'importo ritenuta quando cambia il totale imponibile (es. aggiunta/modifica articoli)
+    // o l'aliquota, così da non richiedere sempre un tocco manuale sul campo percentuale.
+    useEffect(() => {
+        if (!formData.flRitenutaAcconto) return;
+        const perc = formData.percRitenutaAcconto ?? 0;
+        const importo = parseFloat((calculateTotalImponibile() * perc / 100).toFixed(2));
+        setFormData(prev => (prev.importoRitenutaAcconto === importo ? prev : { ...prev, importoRitenutaAcconto: importo }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [prodotti, formData.flRitenutaAcconto, formData.percRitenutaAcconto]);
+
     // Recalculate totals using getRowValues (maps row values for state consistency)
     const recalculateTotals = (updatedProdotti) => {
         return updatedProdotti.map(p => {
@@ -403,6 +458,132 @@ const FattureFornitoreDetail = () => {
                 descFornitore: '',
                 fornitoreDto: null
             }));
+        }
+    };
+
+    const handleImportaAi = async (e) => {
+        const file = e.target.files?.[0];
+        e.target.value = ''; // permette di ricaricare lo stesso file una seconda volta
+        if (!file) return;
+
+        setImportandoAi(true);
+        Swal.fire({
+            title: 'Analisi del documento in corso...',
+            html: 'L\'AI sta leggendo la fattura, può richiedere qualche secondo.',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => Swal.showLoading()
+        });
+        try {
+            const res = await AiService.estraiFatturaFornitore(file);
+            const dto = res.data?.payload;
+            Swal.close();
+            if (res.data?.errorText || !dto) {
+                Swal.fire('Errore', res.data?.errorText || 'Estrazione non riuscita.', 'error');
+                return;
+            }
+            if (dto.erroreEstrazione) {
+                Swal.fire('Errore', dto.erroreEstrazione, 'error');
+                return;
+            }
+
+            if (dto.idFornitoreTrovato) {
+                setFormData(prev => ({
+                    ...prev,
+                    idFornitore: dto.idFornitoreTrovato,
+                    descFornitore: dto.denominazioneFornitoreTrovato
+                }));
+            }
+
+            if (dto.numeroDocumento) {
+                setFormData(prev => ({ ...prev, numeroDocumentoFornitore: dto.numeroDocumento }));
+            }
+            if (dto.dataDocumento && dto.dataDocumento.includes('/')) {
+                const parts = dto.dataDocumento.split('/');
+                if (parts.length === 3) {
+                    setFormData(prev => ({ ...prev, dataDocumentoFornitore: `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}` }));
+                }
+            }
+
+            const righeEstratte = (dto.righe || []).map(r => ({
+                id: 0,
+                idDocumento: 0,
+                tipo: 'F',
+                fmDescrizione: r.descrizione || '',
+                quantita: r.quantita ?? 1,
+                prezzo: r.prezzoUnitario ?? 0,
+                sconto: 0,
+                idAliquotaIva: (combos.aliquoteIva || []).find(a => a.imposta === r.aliquotaIva)?.id || null
+            }));
+            const startIndex = prodotti.length;
+            if (righeEstratte.length > 0) {
+                setProdotti(prev => [...prev, ...righeEstratte]);
+            }
+
+            const messaggioFornitore = dto.idFornitoreTrovato
+                ? `Fornitore riconosciuto: ${dto.denominazioneFornitoreTrovato}.`
+                : dto.denominazioneFornitore
+                    ? `Fornitore non trovato in anagrafica (estratto dal documento: "${dto.denominazioneFornitore}"). Selezionalo o creane uno nuovo.`
+                    : 'Fornitore non riconosciuto nel documento: selezionalo manualmente.';
+
+            const suggerimenti = (dto.righe || [])
+                .map((r, i) => ({ ...r, prodottoIndex: startIndex + i }))
+                .filter(r => r.idProdottoSuggerito);
+
+            await Swal.fire({
+                title: 'Documento importato',
+                html: `${messaggioFornitore}<br/><br/>Controlla righe e importi prima di salvare: l'estrazione AI può contenere errori.`,
+                icon: 'info'
+            });
+
+            if (suggerimenti.length > 0) {
+                const checkboxesHtml = suggerimenti.map(s => `
+                    <label style="display:flex; align-items:flex-start; gap:10px; text-align:left; margin-bottom:12px; cursor:pointer;">
+                        <input type="checkbox" id="ai-sugg-${s.prodottoIndex}" checked style="margin-top:4px;" />
+                        <span>
+                            <strong>"${s.descrizione}"</strong><br/>
+                            <span style="color:#64748b; font-size:13px;">→ collega ad articolo esistente: ${s.codiceProdottoSuggerito} - ${s.descrizioneProdottoSuggerito}</span>
+                        </span>
+                    </label>
+                `).join('');
+
+                const result = await Swal.fire({
+                    title: 'Articoli riconosciuti nel catalogo',
+                    html: `<div style="text-align:left; font-size:13px; color:#475569; margin-bottom:14px;">
+                            Per queste righe l'AI ha trovato un articolo simile già presente nel tuo catalogo.
+                            Deseleziona quelle che NON vuoi collegare (resteranno righe libere "fuori magazzino").
+                           </div>${checkboxesHtml}`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Applica selezionati',
+                    cancelButtonText: 'Nessuno, lascia tutto fuori magazzino',
+                    preConfirm: () => suggerimenti
+                        .filter(s => document.getElementById(`ai-sugg-${s.prodottoIndex}`)?.checked)
+                        .map(s => s.prodottoIndex)
+                });
+
+                if (result.isConfirmed && result.value?.length > 0) {
+                    const indiciAccettati = new Set(result.value);
+                    const mappaSuggerimenti = new Map(suggerimenti.map(s => [s.prodottoIndex, s]));
+                    setProdotti(prev => prev.map((riga, idx) => {
+                        if (!indiciAccettati.has(idx)) return riga;
+                        const s = mappaSuggerimenti.get(idx);
+                        return {
+                            ...riga,
+                            tipo: 'A',
+                            idProdotto: s.idProdottoSuggerito,
+                            descProdotto: s.descrizioneProdottoSuggerito,
+                            fmDescrizione: undefined
+                        };
+                    }));
+                }
+            }
+        } catch (error) {
+            console.error('Errore nell\'importazione AI:', error);
+            Swal.close();
+            Swal.fire('Errore', 'Errore durante l\'importazione del documento.', 'error');
+        } finally {
+            setImportandoAi(false);
         }
     };
 
@@ -488,7 +669,7 @@ const FattureFornitoreDetail = () => {
         const payload = {
             ...formData,
             totale: calculateTotalLordo(),
-            totaleDaPagare: calculateTotalLordo(),
+            totaleDaPagare: calculateTotaleDaPagare(),
             dataDocumento: formData.dataDocumento && formData.dataDocumento.includes('-')
                 ? formData.dataDocumento.split('-').reverse().join('/')
                 : formData.dataDocumento,
@@ -583,7 +764,30 @@ const FattureFornitoreDetail = () => {
                         </div>
                     )}
                 </div>
-                <div className="header-totals" style={{ display: 'flex', gap: '15px' }}>
+                <div className="header-totals" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    {showImportaAi && isNew && (
+                        <div>
+                            <input
+                                type="file"
+                                id="ai-import-file-input"
+                                accept="application/pdf,image/png,image/jpeg"
+                                style={{ display: 'none' }}
+                                onChange={handleImportaAi}
+                            />
+                            <label
+                                htmlFor="ai-import-file-input"
+                                className="btn btn-default"
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '8px', cursor: importandoAi ? 'default' : 'pointer',
+                                    background: 'linear-gradient(135deg, #7c3aed, #a855f7)', color: '#fff', border: 'none',
+                                    padding: '10px 18px', borderRadius: '8px', fontWeight: 600, opacity: importandoAi ? 0.7 : 1
+                                }}
+                                title="Carica una foto o un PDF della fattura fornitore: l'AI prova a compilare i campi automaticamente"
+                            >
+                                <FaMagic />{importandoAi ? 'Analisi in corso...' : 'Importa con AI'}
+                            </label>
+                        </div>
+                    )}
                     <div className="total-box" style={{ background: '#fff', padding: '10px 20px', borderRadius: '8px', border: '1px solid #e7ebee', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '150px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                         <span className="label" style={{ fontSize: '10px', textTransform: 'uppercase', color: '#999', fontWeight: 700, letterSpacing: '0.5px' }}>Totale Imponibile</span>
                         <span className="value" style={{ fontSize: '20px', fontWeight: 600, color: '#333' }}>
@@ -599,8 +803,13 @@ const FattureFornitoreDetail = () => {
                     <div className="total-box highlight" style={{ background: '#e74c3c', padding: '10px 20px', borderRadius: '8px', border: '1px solid #e74c3c', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '150px', boxShadow: '0 4px 6px rgba(231,76,60,0.15)' }}>
                         <span className="label" style={{ fontSize: '10px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)', fontWeight: 700, letterSpacing: '0.5px' }}>Da Saldare</span>
                         <span className="value" style={{ fontSize: '20px', fontWeight: 600, color: '#fff' }}>
-                            € {calculateTotalLordo().toFixed(2)}
+                            € {calculateTotaleDaPagare().toFixed(2)}
                         </span>
+                        {!!formData.flRitenutaAcconto && !!formData.importoRitenutaAcconto && (
+                            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.85)', marginTop: '2px' }}>
+                                (lordo € {calculateTotalLordo().toFixed(2)} − ritenuta € {formData.importoRitenutaAcconto.toFixed(2)})
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -829,10 +1038,10 @@ autoComplete="off"                                                     className
                                             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: isReadOnly ? 'default' : 'pointer', margin: 0 }}>
                                                 <input
 autoComplete="off"                                                     type="checkbox"
-                                                    checked={!formData.flRitenutaAcconto}
+                                                    checked={!!formData.flRitenutaAcconto}
                                                     disabled={isReadOnly}
                                                     onChange={e => {
-                                                        const fl = e.target.checked ? 0 : 1;
+                                                        const fl = e.target.checked ? 1 : 0;
                                                         setFormData(prev => ({ ...prev, flRitenutaAcconto: fl }));
                                                     }}
                                                     style={{ width: '16px', height: '16px', accentColor: '#1a237e' }}
@@ -951,6 +1160,8 @@ autoComplete="off"                                                         class
                                 showRitenuta={false}
                                 readOnly={isReadOnly}
                                 idListino={null}
+                                showContoOverride={showContoOverride}
+                                conti={contiContabili}
                             />
 
                             {prodotti.length > 0 && (
@@ -1039,7 +1250,7 @@ autoComplete="off"                                                         type=
                                 <ScadenzeTable
                                     idTipoPagamento={formData.idTipoPagamento}
                                     dataDocumento={formData.dataDocumentoFornitore}
-                                    totaleDocumento={calculateTotalLordo()}
+                                    totaleDocumento={calculateTotaleDaPagare()}
                                     scadenzeIniziali={formData.listaScadenzePagamentiDocumento || []}
                                     conti={combos.banche || []}
                                     onRefreshConti={async () => {

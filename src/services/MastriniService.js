@@ -6,6 +6,11 @@ const MastriniService = {
         return response.data;
     },
 
+    getTutti: async (params = {}) => {
+        const response = await api.get('/mastrini/tutti', { params });
+        return response.data;
+    },
+
     print: (idConto, params = {}) => {
         return api.get(`/mastrini/${idConto}/pdf`, { params, responseType: 'blob' });
     }

@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 const CompletaRegistrazione = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
+    const db = searchParams.get('db');
     const navigate = useNavigate();
 
     const [password, setPassword] = useState('');
@@ -34,7 +35,8 @@ const CompletaRegistrazione = () => {
         try {
             const res = await api.post('/auth/completa-registrazione', {
                 token,
-                password
+                password,
+                db
             });
 
             if (res.data && (res.data.success || res.status === 200)) {

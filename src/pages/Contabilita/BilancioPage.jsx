@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import BilancioService from '../../services/BilancioService';
 import { FaBalanceScale, FaExclamationTriangle, FaFilePdf } from 'react-icons/fa';
 import '../Configurazione/ConfigurazionePage.css';
@@ -76,7 +77,7 @@ const BilancioPage = () => {
             window.open(url, '_blank');
         } catch (err) {
             console.error('Errore nella stampa del bilancio:', err);
-            alert('Errore nella generazione del PDF.');
+            Swal.fire({ title: 'Errore', text: 'Errore nella generazione del PDF.', icon: 'error' });
         } finally {
             setStampando(false);
         }

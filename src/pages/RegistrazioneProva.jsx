@@ -198,7 +198,7 @@ const RegistrazioneProva = () => {
 
                     <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
-                            Partita IVA dello Studio / Codice Fiscale <span style={{ color: '#ef4444' }}>*</span>
+                            {accountCategory === 'STUDIO' ? 'Partita IVA dello Studio / Codice Fiscale' : 'Partita IVA / Codice Fiscale'} <span style={{ color: '#ef4444' }}>*</span>
                         </label>
                         <input
                             type="text"
@@ -220,11 +220,11 @@ const RegistrazioneProva = () => {
 
                     <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
-                            Email Referente Studio <span style={{ color: '#ef4444' }}>*</span>
+                            {accountCategory === 'STUDIO' ? 'Email Referente Studio' : 'Email'} <span style={{ color: '#ef4444' }}>*</span>
                         </label>
                         <input
                             type="email"
-                            placeholder="dove riceverai il link di attivazione dello studio..."
+                            placeholder={accountCategory === 'STUDIO' ? 'dove riceverai il link di attivazione dello studio...' : 'dove riceverai il link di attivazione...'}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required

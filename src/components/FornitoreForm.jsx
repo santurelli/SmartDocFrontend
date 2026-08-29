@@ -164,6 +164,13 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
         }
     };
 
+    useEffect(() => {
+        if (isNew) {
+            generateCodice();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isNew]);
+
     const refreshAvvisi = async () => {
         const res = await AvvisiService.getAll();
         if (res.data) setAvvisiList(res.data);
@@ -455,6 +462,51 @@ const FornitoreForm = ({ data, onChange, isNew, onConfigLoaded }) => {
                                     <small className="text-muted">Conto usato per le future scritture contabili in partita doppia relative a questo fornitore.</small>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="compact-row">
+                            <div className="compact-col compact-col-lg">
+                                <div className="form-group">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <input
+                                            type="checkbox"
+                                            id="fornitore-fl-ritenuta"
+                                            style={{ width: '16px', height: '16px' }}
+                                            checked={!!data.flRitenutaAcconto}
+                                            onChange={(e) => onChange({ ...data, flRitenutaAcconto: e.target.checked ? 1 : 0 })}
+                                        />
+                                        <label htmlFor="fornitore-fl-ritenuta" style={{ fontWeight: 'normal', margin: 0 }}>
+                                            Fatture soggette a ritenuta d'acconto
+                                        </label>
+                                    </div>
+                                    <small className="text-muted">Se abilitato, selezionando questo fornitore in una nuova Fattura Fornitore la ritenuta viene proposta automaticamente.</small>
+                                </div>
+                            </div>
+                            {!!data.flRitenutaAcconto && (
+                                <>
+                                    <div className="compact-col compact-col-md">
+                                        <div className="form-group">
+                                            <label>Tipo Ritenuta</label>
+                                            <select className="form-control" value={data.tipoRitenuta || 'PERSONE_FISICHE'} onChange={(e) => onChange({ ...data, tipoRitenuta: e.target.value })}>
+                                                <option value="PERSONE_FISICHE">Persone fisiche</option>
+                                                <option value="PERSONE_GIURIDICHE">Persone giuridiche</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="compact-col compact-col-sm">
+                                        <div className="form-group">
+                                            <label>Aliquota %</label>
+                                            <input
+                                                type="number"
+                                                className="form-control"
+                                                min="0" max="100" step="0.01"
+                                                value={data.percRitenutaAcconto ?? 20}
+                                                onChange={(e) => onChange({ ...data, percRitenutaAcconto: parseFloat(e.target.value) || 0 })}
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                         {showCommercialData && (

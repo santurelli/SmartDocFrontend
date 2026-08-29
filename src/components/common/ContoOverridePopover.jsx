@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaTag } from 'react-icons/fa';
+import EntitySelectGroup from '../EntitySelectGroup';
+import '../../pages/Configurazione/ConfigurazionePage.css';
 
 /**
  * Icona + popover per forzare manualmente il conto contabile di una riga documento, in override
@@ -64,27 +66,22 @@ const ContoOverridePopover = ({ value, conti, onChange, disabled = false }) => {
                         borderRadius: '8px',
                         boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
                         padding: '12px',
-                        width: '260px'
+                        width: '300px'
                     }}
                 >
-                    <label style={{ display: 'block', fontSize: '12px', color: '#475569', marginBottom: '6px' }}>
-                        Conto contabile (override)
-                    </label>
-                    <select
-                        className="form-control"
-                        style={{ width: '100%', marginBottom: '8px' }}
-                        value={value || ''}
-                        onChange={(e) => {
-                            const v = e.target.value ? parseInt(e.target.value, 10) : null;
-                            onChange(v);
-                        }}
-                        autoFocus
-                    >
-                        <option value="">Nessun override (usa il conto automatico)</option>
-                        {(conti || []).map(c => (
-                            <option key={c.id} value={c.id}>{c.codice} - {c.descrizione}</option>
-                        ))}
-                    </select>
+                    <div className="inline-select-group" style={{ marginBottom: '8px' }}>
+                        <EntitySelectGroup
+                            label="Conto contabile (override)"
+                            isAsync={false}
+                            options={(conti || []).map(c => ({ value: c.id, label: `${c.codice} - ${c.descrizione}` }))}
+                            value={value ? { value, label: (() => {
+                                const c = (conti || []).find(c => c.id === value);
+                                return c ? `${c.codice} - ${c.descrizione}` : '';
+                            })() } : null}
+                            onChange={(opt) => onChange(opt ? opt.value : null)}
+                            placeholder="Nessun override"
+                        />
+                    </div>
                     <div style={{ fontSize: '11px', color: '#94a3b8' }}>
                         Senza override, il conto viene risolto automaticamente dall'articolo (o, in mancanza, da un conto generico).
                     </div>

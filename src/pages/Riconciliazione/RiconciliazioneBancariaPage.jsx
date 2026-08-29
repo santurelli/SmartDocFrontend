@@ -267,7 +267,7 @@ const RiconciliazioneBancariaPage = () => {
                                                                 </td>
                                                                 <td>
                                                                     {m.stato === 'NON_ABBINATO' && (
-                                                                        <button className="btn-icon" onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} title="Vedi candidati">
+                                                                        <button className="icon-only-btn" onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} title="Vedi candidati">
                                                                             {expandedId === m.id ? <FaChevronUp /> : <FaChevronDown />}
                                                                         </button>
                                                                     )}
