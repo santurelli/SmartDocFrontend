@@ -473,6 +473,68 @@
     margin-top: 1rem;
 }
 
+/* ===================================================================
+   Mobile
+   =================================================================== */
+@media (max-width: 767px) {
+    .page-content {
+        padding: 12px;
+    }
+
+    .page-content h1 {
+        font-size: 22px;
+    }
+
+    .main-box-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .filter-block-left {
+        justify-content: space-between;
+    }
+
+    .filter-block-right {
+        flex-wrap: wrap;
+    }
+
+    .category-select {
+        width: 100%;
+    }
+
+    .search-group {
+        width: 100%;
+        flex: 1 1 auto;
+    }
+
+    /* Bottone "Filtri avanzati" e "Aggiungi" affiancati sotto categoria/ricerca, non schiacciati */
+    .filter-block-right > button {
+        flex: 1;
+    }
+
+    .add-btn {
+        white-space: nowrap;
+    }
+
+    /* Tabella: resta a scroll orizzontale (già in .table-responsive), font più compatto */
+    .main-box-body .table {
+        font-size: 13px;
+    }
+
+    .main-box-body .table th,
+    .main-box-body .table td {
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
+
+    .advanced-search-panel .row > [class*="col-md-"] {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
 .caret {
     display: inline-block;
     width: 0;

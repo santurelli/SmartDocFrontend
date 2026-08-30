@@ -180,3 +180,82 @@ ul.dashboard-stats-list li:last-child {
     box-shadow: 0 4px 8px rgba(3, 169, 244, 0.3);
     transform: translateY(-1px);
 }
+
+/* ===================================================================
+   Mobile
+   =================================================================== */
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 12px;
+    }
+
+    #content-header h1 {
+        font-size: 22px;
+    }
+
+    /* KPI: box più compatti, restano impilati grazie al grid Bootstrap col-xs-12 */
+    body #root .infographic-box {
+        padding: 16px;
+        margin-bottom: 14px;
+        min-height: auto;
+    }
+
+    body #root .infographic-box .icon-wrapper {
+        width: 48px;
+        height: 48px;
+        font-size: 1.4rem;
+        margin-right: 14px;
+    }
+
+    body #root .infographic-box .headline {
+        font-size: 0.7rem;
+    }
+
+    body #root .infographic-box .value {
+        font-size: 1.4rem;
+    }
+
+    /* Header dei box (titolo + eventuale bottone "Vedi tutte"): va a capo invece di schiacciarsi */
+    .main-box-header {
+        flex-wrap: wrap !important;
+        gap: 10px;
+        padding: 12px 15px !important;
+    }
+
+    .main-box-header h2 {
+        font-size: 1.15rem;
+    }
+
+    .btn-primary {
+        font-size: 0.9rem;
+        padding: 6px 14px;
+    }
+
+    /* Statistiche laterali: riduco lo spazio verticale */
+    .dashboard-container .dashboard-stats-list li,
+    ul.dashboard-stats-list li {
+        padding: 12px 0;
+    }
+
+    .stats-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.05rem;
+        margin-right: 12px;
+    }
+
+    .stats-value {
+        font-size: 1.05rem;
+    }
+
+    /* Tabella ultime fatture: resta a scroll orizzontale (già in .table-responsive), font più compatto */
+    .main-box-body .table {
+        font-size: 13px;
+    }
+
+    .main-box-body .table th,
+    .main-box-body .table td {
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
+}

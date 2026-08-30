@@ -300,6 +300,38 @@
         width: 100% !important;
         margin-right: 0 !important;
     }
+
+    /* Condiviso da tutte le entity form (Articoli, Clienti, Fornitori, ecc.) */
+    .entity-form-shared {
+        padding: 12px !important;
+    }
+
+    .entity-form-shared h1 {
+        font-size: 20px !important;
+    }
+
+    .entity-form-shared .form-actions {
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        margin-top: 20px;
+        padding: 12px 15px !important;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+        z-index: 20;
+    }
+
+    .entity-form-shared .btn-premium-cancel,
+    .entity-form-shared .btn-premium-save {
+        flex: 1;
+        min-height: 44px !important;
+        height: 44px !important;
+    }
+
+    .entity-form-shared .row > [class*="col-md-"] {
+        width: 100% !important;
+    }
 }
 
 .smart-tabs-container {

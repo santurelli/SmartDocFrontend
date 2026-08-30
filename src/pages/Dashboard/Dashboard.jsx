@@ -22,6 +22,13 @@ const Dashboard = () => {
     const [stats, setStats] = useState(null);
     const [ultimeFatture, setUltimeFatture] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handler);
+        return () => window.removeEventListener('resize', handler);
+    }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -153,19 +160,28 @@ const Dashboard = () => {
                         <header className="main-box-header">
                             <h2>Fatture & Incassi</h2>
                         </header>
-                        <div className="main-box-body" style={{ height: '350px', padding: '20px' }}>
+                        <div className="main-box-body" style={{ height: isMobile ? '260px' : '350px', padding: isMobile ? '10px' : '20px' }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={chartData}>
+                                <ComposedChart data={chartData} margin={isMobile ? { left: -20, right: 5 } : undefined}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                    <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `€${val / 1000}k`} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                    <XAxis
+                                        dataKey="name"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        tick={{ fill: '#64748b', fontSize: isMobile ? 10 : 12 }}
+                                        interval={isMobile ? 'preserveStartEnd' : 0}
+                                        angle={isMobile ? -35 : 0}
+                                        textAnchor={isMobile ? 'end' : 'middle'}
+                                        height={isMobile ? 40 : 30}
+                                    />
+                                    <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `€${val / 1000}k`} tick={{ fill: '#64748b', fontSize: isMobile ? 10 : 12 }} width={isMobile ? 40 : 60} />
                                     <Tooltip
                                         formatter={(value) => formatCurrency(value)}
                                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                     />
-                                    <Legend verticalAlign="top" align="right" height={36} />
-                                    <Bar dataKey="fatturato" name="Fatturato" fill="#03a9f4" radius={[4, 4, 0, 0]} barSize={30} />
-                                    <Line type="monotone" dataKey="incassato" name="Incassato" stroke="#e84e40" strokeWidth={3} dot={{ r: 4, fill: '#fff', strokeWidth: 2 }} />
+                                    <Legend verticalAlign="top" align={isMobile ? 'center' : 'right'} height={36} wrapperStyle={isMobile ? { fontSize: '12px' } : undefined} />
+                                    <Bar dataKey="fatturato" name="Fatturato" fill="#03a9f4" radius={[4, 4, 0, 0]} barSize={isMobile ? 16 : 30} />
+                                    <Line type="monotone" dataKey="incassato" name="Incassato" stroke="#e84e40" strokeWidth={3} dot={{ r: isMobile ? 3 : 4, fill: '#fff', strokeWidth: 2 }} />
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>

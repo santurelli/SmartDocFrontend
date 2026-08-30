@@ -515,6 +515,110 @@ hr {
     white-space: nowrap;
 }
 
+/* ===================================================================
+   Mobile (creazione/modifica Fattura da telefono)
+   =================================================================== */
+@media (max-width: 767px) {
+    .fatture-detail-container {
+        padding: 12px;
+        padding-bottom: 90px; /* spazio per il footer sticky Salva */
+    }
+
+    #fatture-content-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    #fatture-content-header h1 {
+        font-size: 20px;
+    }
+
+    .header-totals {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .total-box {
+        min-width: 0;
+        flex: 1 1 calc(50% - 5px);
+        padding: 8px 12px;
+    }
+
+    .total-box .label {
+        font-size: 10px;
+    }
+
+    .total-box .value {
+        font-size: 16px;
+    }
+
+    /* Tab: scroll orizzontale invece di andare a capo/rompersi */
+    .nav-tabs-custom {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0 10px;
+        scrollbar-width: none;
+    }
+
+    .nav-tabs-custom::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-tabs-custom li {
+        flex-shrink: 0;
+    }
+
+    .nav-tabs-custom li a {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+
+    .tab-padding-wrapper {
+        padding: 15px !important;
+    }
+
+    /* Footer Salva sempre raggiungibile senza scrollare fino in fondo al form */
+    .detail-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 20;
+        padding: 12px 15px;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .footer-right {
+        flex: 1;
+        justify-content: flex-end;
+    }
+
+    .split-btn-container {
+        flex: 1;
+        max-width: 260px;
+    }
+
+    .split-btn-container .split-btn-main.btn-premium-save,
+    .split-btn-container .split-btn-toggle,
+    .btn-premium-cancel {
+        min-height: 44px; /* target touch minimo consigliato */
+    }
+
+    /* Evita lo zoom automatico di iOS Safari quando si tocca un campo con
+       font-size sotto i 16px: qui i form-control ereditavano dimensioni desktop. */
+    .compact-col input,
+    .compact-col select,
+    .compact-col textarea,
+    .form-control {
+        font-size: 16px !important;
+    }
+
+    .status-workflow-bar {
+        flex-wrap: wrap;
+    }
+}
+
 .premium-input:disabled {
     background-color: #f8f9fa !important;
     color: #607d8b !important;
