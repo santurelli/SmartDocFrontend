@@ -52,6 +52,7 @@ const PianoDeiContiPage = () => {
     const [conti, setConti] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [filtroRuolo, setFiltroRuolo] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(emptyForm);
     const [settore, setSettore] = useState(null);
@@ -76,8 +77,9 @@ const PianoDeiContiPage = () => {
 
     // Costruisce l'elenco ordinato per visualizzazione ad albero (indentazione in base al codice)
     const alberoConti = useMemo(() => {
-        return [...conti].sort((a, b) => (a.codice || '').localeCompare(b.codice || '', undefined, { numeric: true }));
-    }, [conti]);
+        const filtrati = filtroRuolo ? conti.filter(c => c.ruoloDefault === filtroRuolo) : conti;
+        return [...filtrati].sort((a, b) => (a.codice || '').localeCompare(b.codice || '', undefined, { numeric: true }));
+    }, [conti, filtroRuolo]);
 
     const handleSearch = (e) => {
         const value = e.target.value;
@@ -193,14 +195,27 @@ const PianoDeiContiPage = () => {
                     </p>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                        <input
-                            type="text"
-                            className="form-control"
-                            style={{ maxWidth: '320px' }}
-                            placeholder="Cerca per codice o descrizione..."
-                            value={search}
-                            onChange={handleSearch}
-                        />
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            <input
+                                type="text"
+                                className="form-control"
+                                style={{ width: '320px', flex: '0 0 auto' }}
+                                placeholder="Cerca per codice o descrizione..."
+                                value={search}
+                                onChange={handleSearch}
+                            />
+                            <select
+                                className="form-control"
+                                style={{ width: '260px', flex: '0 0 auto' }}
+                                value={filtroRuolo}
+                                onChange={(e) => setFiltroRuolo(e.target.value)}
+                            >
+                                <option value="">- Tutti i ruoli -</option>
+                                {Object.entries(RUOLO_LABELS).map(([k, v]) => (
+                                    <option key={k} value={k}>{v}</option>
+                                ))}
+                            </select>
+                        </div>
                         <div style={{ display: 'flex', gap: '10px' }}>
                             {conti.length === 0 && !loading && (
                                 <button type="button" className="btn btn-info" style={{ fontSize: '14px', fontWeight: 500 }} onClick={handleImportaStandard}>
@@ -227,6 +242,7 @@ const PianoDeiContiPage = () => {
                                         <th style={{ width: '140px' }}>Codice</th>
                                         <th>Descrizione</th>
                                         <th style={{ width: '160px' }}>Tipo</th>
+                                        <th style={{ width: '190px' }}>Ruolo contabile</th>
                                         <th style={{ width: '100px' }} className="text-center">Azioni</th>
                                     </tr>
                                 </thead>
@@ -249,6 +265,13 @@ const PianoDeiContiPage = () => {
                                                     <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '20px', background: colors.bg, color: colors.color }}>
                                                         {TIPO_LABELS[conto.tipo] || conto.tipo}
                                                     </span>
+                                                </td>
+                                                <td>
+                                                    {conto.ruoloDefault && (
+                                                        <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 10px', borderRadius: '20px', background: '#f1f5f9', color: '#334155' }}>
+                                                            {RUOLO_LABELS[conto.ruoloDefault] || conto.ruoloDefault}
+                                                        </span>
+                                                    )}
                                                 </td>
                                                 <td className="text-center">
                                                     <button type="button" className="btn btn-xs btn-default" onClick={() => openEdit(conto)} title="Modifica" style={{ marginRight: '6px' }}>
