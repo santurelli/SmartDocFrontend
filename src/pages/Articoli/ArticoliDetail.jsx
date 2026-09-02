@@ -757,7 +757,7 @@ const ArticoliDetail = () => {
                                                                                 newPrezzi[index] = { ...newPrezzi[index], prezzo: newVal };
                                                                                 return newPrezzi;
                                                                             } else {
-                                                                                return [...prev, { idListino: listino.id, prezzo: newVal, idProdotto: id }];
+                                                                                return [...prev, { idListino: listino.id, prezzo: newVal, idProdotto: isNew ? 0 : id }];
                                                                             }
                                                                         });
                                                                     }}
