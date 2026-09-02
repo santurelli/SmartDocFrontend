@@ -39,6 +39,18 @@ export default defineConfig({
     })
   ],
   server: {
+    host: true,
+    allowedHosts: ['.loca.lt'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
+  },
+  preview: {
+    host: true,
+    allowedHosts: ['.loca.lt'],
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
