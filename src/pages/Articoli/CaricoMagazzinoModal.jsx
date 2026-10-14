@@ -93,7 +93,6 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
                 dataMovimento: formatDDMMYYYY(formData.dataOperazione),
                 idFornitore: formData.fornitore?.value,
                 descrCausale: formData.causale?.label || formData.causale?.value || '',
-                idMagazzino: 1,
                 idUnitaMisura: article.idUnitaMisura1
             };
 

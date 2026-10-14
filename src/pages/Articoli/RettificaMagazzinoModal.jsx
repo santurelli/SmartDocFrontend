@@ -70,7 +70,6 @@ const RettificaMagazzinoModal = ({ show, handleClose, article, refreshList }) =>
                 quantita: formData.nuovaGiacenza, // Backend treats this as TARGET quantity
                 dataMovimento: formatDDMMYYYY(formData.dataOperazione),
                 descrCausale: formData.causale?.label || formData.causale?.value || '',
-                idMagazzino: 1,
                 idUnitaMisura: article.idUnitaMisura1
             };
 

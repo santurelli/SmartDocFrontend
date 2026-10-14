@@ -104,7 +104,6 @@ const InventarioMagazzinoList = () => {
                 idFornitore: selectedFornitore ? selectedFornitore.value : 0,
                 idCategoria: idCategoria || 0,
                 idSottoCategoria: idSottoCategoria || 0,
-                idMagazzino: 1, // Defaulting to 1
                 dataAl: dataAl,
                 start: page * pageSize,
                 length: pageSize,
@@ -158,7 +157,6 @@ const InventarioMagazzinoList = () => {
                 idFornitore: selectedFornitore ? selectedFornitore.value : 0,
                 idCategoria: idCategoria || 0,
                 idSottoCategoria: idSottoCategoria || 0,
-                idMagazzino: 1,
                 dataAl: dataAl,
                 orderColumn: sortCol,
                 orderDir: sortDir

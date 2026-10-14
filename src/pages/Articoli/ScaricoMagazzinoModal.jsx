@@ -93,7 +93,6 @@ const ScaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
                 dataMovimento: formatDDMMYYYY(formData.dataOperazione),
                 idCliente: formData.cliente?.value,
                 descrCausale: formData.causale?.label || formData.causale?.value || '',
-                idMagazzino: 1,
                 idUnitaMisura: article.idUnitaMisura1
             };
 
