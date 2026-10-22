@@ -53,6 +53,10 @@ const Sidebar = ({ user }) => {
         const fullKey = key.includes(':') ? key : `${domain}:${key}`;
         if (configs[fullKey] !== undefined) return configs[fullKey] === '1';
         if (configs[key] !== undefined) return configs[key] === '1';
+        if (key === 'UBICAZIONI' || key === 'MARCHE') {
+            const ts = configs['GLOBAL:TIPO_STORE'] || configs['TIPO_STORE'];
+            if (ts === 'PNEUMATICI' || ts === 'GOMMISTA') return true;
+        }
         return true;
     };
 
@@ -154,6 +158,8 @@ const Sidebar = ({ user }) => {
                                             <ul className="submenu">
                                                 <li><NavLink to="/articoli/movimenti">Movimenti</NavLink></li>
                                                 <li><NavLink to="/articoli/inventario">Inventario</NavLink></li>
+                                                {isEnabled('UBICAZIONI', 'GLOBAL') && <li><NavLink to="/ubicazioni">Ubicazioni</NavLink></li>}
+                                                {isEnabled('MARCHE', 'GLOBAL') && <li><NavLink to="/marche">Marche</NavLink></li>}
                                             </ul>
                                         </li>
                                     )}

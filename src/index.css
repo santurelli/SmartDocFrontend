@@ -512,6 +512,43 @@ button.close,
   color: white;
 }
 
+.premium-btn {
+  background-color: #03a9f4;
+  border: none !important;
+  color: #ffffff !important;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 0 22px;
+  height: 44px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px rgba(3, 169, 244, 0.25);
+  transition: all 0.2s ease;
+}
+
+.premium-btn:hover {
+  background-color: #0288d1;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(3, 169, 244, 0.35);
+  color: #ffffff !important;
+}
+
+.premium-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(3, 169, 244, 0.2);
+}
+
+.premium-btn svg {
+  font-size: 16px;
+}
+
 .premium-modal form {
   border: none !important;
   box-shadow: none !important;
@@ -559,6 +596,33 @@ button.close,
 .premium-modal .input-group>div:first-child,
 .premium-input-group>div:first-child {
   flex: 1 !important;
+}
+
+.premium-modal .input-group .premium-wrench-btn,
+.premium-modal .input-group-btn .premium-wrench-btn,
+.premium-input-group .premium-wrench-btn {
+  height: auto !important;
+  width: 42px !important;
+  border-top-right-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border: 1px solid #ddd !important;
+  border-left: none !important;
+  background: #f8f9fa !important;
+  color: #64748b !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: stretch !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.premium-modal .input-group .premium-wrench-btn:hover,
+.premium-input-group .premium-wrench-btn:hover {
+  background: #e2e8f0 !important;
+  color: #1e293b !important;
 }
 
 /* =========================================================================

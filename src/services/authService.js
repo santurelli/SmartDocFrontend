@@ -28,11 +28,11 @@ const login = async (username, password, ente) => {
 const getConfig = () => {
   const cfg = sessionStorage.getItem('appConfig');
   return cfg ? JSON.parse(cfg) : {};
-}
+};
 
 const updateConfig = (newConfig) => {
   sessionStorage.setItem('appConfig', JSON.stringify(newConfig));
-}
+};
 
 const logout = () => {
   authStorage.logout();
@@ -63,14 +63,29 @@ const authHeader = () => {
 };
 
 const changePassword = async (currentPassword, newPassword) => {
-    const user = authStorage.getCurrentUser();
-    const ente = user ? user.ente : null;
-    return api.post(AUTH_URL + 'change-password', {
-        currentPassword,
-        newPassword,
-        ente
-    });
-}
+  const user = authStorage.getCurrentUser();
+  const ente = user ? user.ente : null;
+  return api.post(AUTH_URL + 'change-password', {
+    currentPassword,
+    newPassword,
+    ente
+  });
+};
+
+const forgotPassword = async (usernameOrEmail, ente) => {
+  return axios.post(AUTH_URL + 'forgot-password', {
+    usernameOrEmail,
+    ente
+  });
+};
+
+const resetPassword = async (token, password, db) => {
+  return axios.post(AUTH_URL + 'reset-password', {
+    token,
+    password,
+    db
+  });
+};
 
 const authService = {
   login,
@@ -80,7 +95,9 @@ const authService = {
   getConfig,
   updateConfig,
   authHeader,
-  changePassword
+  changePassword,
+  forgotPassword,
+  resetPassword
 };
 
 export default authService;

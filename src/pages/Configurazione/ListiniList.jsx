@@ -84,10 +84,10 @@ const ListiniList = () => {
                 <li className="active">Gestione Listini</li>
             </ul>
 
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="listini-header d-flex justify-content-between align-items-center mb-4">
                 <h1>Gestione Listini</h1>
-                <button className="btn btn-primary premium-btn" onClick={handleAdd}>
-                    <FaPlusCircle className="mr-2" /> Nuovo Listino
+                <button type="button" className="btn btn-primary btn-new-listino premium-btn" onClick={handleAdd}>
+                    <FaPlusCircle /> Nuovo Listino
                 </button>
             </div>
 

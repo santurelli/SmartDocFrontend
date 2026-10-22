@@ -11,7 +11,7 @@ import { FaWrench } from 'react-icons/fa';
  * @param {string} props.title - Tooltip title for the button.
  * @param {Function} props.onClose - Callback when the modal is closed.
  */
-const WrenchModalButton = ({ ModalComponent, modalProps = {}, title = "Gestione", onClose, onSelect, disabled = false }) => {
+const WrenchModalButton = ({ ModalComponent, modalProps = {}, title = "Gestione", onClose, onSelect, disabled = false, style, className = '' }) => {
     const [showModal, setShowModal] = useState(false);
 
     const handleOpen = () => {
@@ -26,7 +26,8 @@ const WrenchModalButton = ({ ModalComponent, modalProps = {}, title = "Gestione"
         <>
             <button
                 type="button"
-                className={`premium-wrench-btn ${disabled ? 'disabled' : ''}`}
+                className={`premium-wrench-btn ${className} ${disabled ? 'disabled' : ''}`}
+                style={style}
                 onClick={handleOpen}
                 title={disabled ? "" : title}
                 disabled={disabled}

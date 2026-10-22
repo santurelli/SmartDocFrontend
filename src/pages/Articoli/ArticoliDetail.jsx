@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaAngleRight, FaWrench, FaPlus } from 'react-icons/fa';
 import ArticoliService from '../../services/ArticoliService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
@@ -15,7 +15,9 @@ import ToniArticoloManagementModal from '../../components/modals/ToniArticoloMan
 import FormatiArticoloManagementModal from '../../components/modals/FormatiArticoloManagementModal';
 import CalibriArticoloManagementModal from '../../components/modals/CalibriArticoloManagementModal';
 import WrenchModalButton from '../../components/WrenchModalButton';
+import MarcheManagementModal from '../../components/modals/MarcheManagementModal';
 import PianoDeiContiService from '../../services/PianoDeiContiService';
+import MarcheService from '../../services/MarcheService';
 import './ArticoliDetail.css';
 import '../../components/EntityForms.css';
 
@@ -24,7 +26,11 @@ const ArticoliDetail = () => {
     const navigate = useNavigate();
     const isNew = id === 'new';
 
-    const [activeTab, setActiveTab] = useState('general');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState(() => {
+        const queryTab = new URLSearchParams(window.location.search).get('tab');
+        return queryTab || 'general';
+    });
     const [formData, setFormData] = useState({
         codice: '',
         descrizione: '',
@@ -35,6 +41,7 @@ const ArticoliDetail = () => {
         scortaMinima: 0,
         idCategoria: '',
         idSottoCategoria: '',
+        idMarca: '',
         idDivisione: '',
         idFormato: '',
         idScelta: '',
@@ -46,7 +53,13 @@ const ArticoliDetail = () => {
         prezzoFornitore: '',
         codicePerFornitore: '',
         idContoRicavo: '',
-        idContoCosto: ''
+        idContoCosto: '',
+        sezione: '',
+        serie: '',
+        diametro: '',
+        scultura: '',
+        indiceVelocita: '',
+        dot: ''
     });
     const [prezzi, setPrezzi] = useState([]);
     const [allListini, setAllListini] = useState([]);
@@ -61,7 +74,8 @@ const ArticoliDetail = () => {
         toni: [],
         calibri: [],
         unitaMisura: [],
-        aliquoteIva: []
+        aliquoteIva: [],
+        marche: []
     });
 
     const [loadingPrezzi, setLoadingPrezzi] = useState(false);
@@ -69,11 +83,16 @@ const ArticoliDetail = () => {
 
     const [config, setConfig] = useState({
         isCeramica: false,
+        abilitaCategorie: true,
         abilitaSottoCategorie: true,
         abilitaDivisioni: false,
         abilitaCodice: true,
         abilitaUnitaMisura: true,
-        abilitaScelteColori: false
+        abilitaScelteColori: false,
+        isGommista: false,
+        hasUbicazioni: false,
+        hasMarche: false,
+        tipologiaDefault: 'A'
     });
 
 
@@ -86,6 +105,9 @@ const ArticoliDetail = () => {
                 loadArticolo();
                 loadPrezzi();
             } else if (isNew) {
+                if (currentConfig.tipologiaDefault) {
+                    setFormData(prev => ({ ...prev, tipologia: currentConfig.tipologiaDefault }));
+                }
                 handleGenerateCode();
                 loadListini(); // Need listini even for new article to show the tab structure
             }
@@ -95,29 +117,82 @@ const ArticoliDetail = () => {
 
     const loadConfig = async () => {
         try {
-            const res = await ConfigurazioneService.getByDomain('GLOBAL');
-            const data = res.data?.payload || res.data || {};
+            const res = await ConfigurazioneService.getAll();
+            const data = res.data?.payload || res.data || [];
 
             let isCeramica = false;
             let abilitaDivisioni = false;
 
+            let tipoStore = 'GENERALE';
+            let gommistaVal = '0';
+            let ubicazioniVal = '0';
+            let marcheVal = '0';
+            let categorieVal = '1';
+            let sottoCategorieVal = '1';
+            let unitaMisuraVal = '1';
+            let tipologiaDefault = null;
+
             if (Array.isArray(data)) {
-                isCeramica = data.some(c => (c.chiave === 'TIPO_STORE' || c.chiave === 'TIPOSTORE') && c.valore === 'CERAMICA');
+                const ts = data.find(c => c.chiave === 'TIPO_STORE' || c.chiave === 'TIPOSTORE');
+                tipoStore = ts?.valore || 'GENERALE';
+                isCeramica = tipoStore === 'CERAMICA';
                 abilitaDivisioni = data.some(c => c.chiave === 'DIVISIONI' && c.valore === '1');
-            } else {
-                isCeramica = data['TIPO_STORE'] === 'CERAMICA' || data['TIPOSTORE'] === 'CERAMICA';
-                abilitaDivisioni = data['DIVISIONI'] === '1';
+
+                const g = data.find(c => c.chiave === 'GOMMISTA');
+                if (g) gommistaVal = g.valore;
+                const u = data.find(c => c.chiave === 'UBICAZIONI');
+                if (u) ubicazioniVal = u.valore;
+                const m = data.find(c => c.chiave === 'MARCHE');
+                if (m) marcheVal = m.valore;
+                const c = data.find(c => c.chiave === 'CATEGORIE' || c.chiave === 'CATEGORIE_ABILITA');
+                if (c) categorieVal = c.valore;
+                const sc = data.find(c => c.chiave === 'SOTTOCATEGORIE' || c.chiave === 'SOTTOCATEGORIE_ABILITA');
+                if (sc) sottoCategorieVal = sc.valore;
+                const um = data.find(c => c.chiave === 'UNITAMISURA_ABILITA' || c.chiave === 'GLOBAL:UNITAMISURA_ABILITA' || c.chiave === 'UNITAMISURA');
+                if (um) unitaMisuraVal = um.valore;
+                const td = data.find(c => c.chiave === 'TIPOLOGIA_DEFAULT' || c.chiave === 'ARTICOLI:TIPOLOGIA_DEFAULT');
+                if (td && td.valore) tipologiaDefault = td.valore;
+            } else if (data) {
+                tipoStore = data['GLOBAL:TIPO_STORE'] || data['TIPO_STORE'] || data['TIPOSTORE'] || 'GENERALE';
+                isCeramica = tipoStore === 'CERAMICA';
+                abilitaDivisioni = data['GLOBAL:DIVISIONI'] === '1' || data['DIVISIONI'] === '1';
+
+                gommistaVal = data['GLOBAL:GOMMISTA'] || data['GOMMISTA'] || '0';
+                ubicazioniVal = data['GLOBAL:UBICAZIONI'] || data['UBICAZIONI'] || '0';
+                marcheVal = data['GLOBAL:MARCHE'] || data['MARCHE'] || '0';
+                categorieVal = data['GLOBAL:CATEGORIE'] || data['ARTICOLI:CATEGORIE_ABILITA'] || data['CATEGORIE'] || '1';
+                sottoCategorieVal = data['GLOBAL:SOTTOCATEGORIE'] || data['ARTICOLI:SOTTOCATEGORIE_ABILITA'] || data['SOTTOCATEGORIE'] || '1';
+                unitaMisuraVal = data['GLOBAL:UNITAMISURA_ABILITA'] || data['UNITAMISURA_ABILITA'] || data['GLOBAL:UNITAMISURA'] || '1';
+                tipologiaDefault = data['ARTICOLI:TIPOLOGIA_DEFAULT'] || data['TIPOLOGIA_DEFAULT'];
             }
 
             const abilitaScelteColori = Array.isArray(data)
                 ? data.some(c => (c.chiave === 'SCELTE_COLORI' || c.chiave === 'ABILITA_SCELTE_COLORI') && c.valore === '1')
                 : (data['SCELTE_COLORI'] === '1' || data['ABILITA_SCELTE_COLORI'] === '1');
 
+            const isGommista = tipoStore === 'PNEUMATICI' || tipoStore === 'GOMMISTA' || gommistaVal === '1';
+            const hasUbicazioni = ubicazioniVal === '1';
+            const hasMarche = marcheVal === '1';
+            const abilitaCategorie = categorieVal !== '0';
+            const abilitaSottoCategorie = abilitaCategorie && (sottoCategorieVal !== '0');
+            const abilitaUnitaMisura = unitaMisuraVal !== '0';
+
+            if (!tipologiaDefault) {
+                tipologiaDefault = (isGommista || tipoStore === 'PNEUMATICI') ? 'AM' : 'A';
+            }
+
             const newConfig = {
                 ...config,
-                abilitaDivisioni: abilitaDivisioni,
-                isCeramica: isCeramica,
-                abilitaScelteColori: abilitaScelteColori
+                abilitaCategorie,
+                abilitaSottoCategorie,
+                abilitaDivisioni,
+                isCeramica,
+                abilitaScelteColori,
+                isGommista,
+                hasUbicazioni,
+                hasMarche,
+                abilitaUnitaMisura,
+                tipologiaDefault
             };
             setConfig(newConfig);
             return newConfig;
@@ -136,11 +211,19 @@ const ArticoliDetail = () => {
                 ArticoliService.getAliquoteIva()
             ]);
 
+            let marcheCombo = [];
+            try {
+                marcheCombo = await MarcheService.getCombo();
+            } catch (err) {
+                console.error("Errore caricamento marche", err);
+            }
+
             setCombos(prev => ({
                 ...prev,
                 categorie: cat.data?.payload || [],
                 unitaMisura: um.data?.payload || [],
                 aliquoteIva: iva.data?.payload || [],
+                marche: marcheCombo || []
             }));
 
             // Divisioni if enabled
@@ -250,16 +333,48 @@ const ArticoliDetail = () => {
             Swal.fire({ title: 'Campo obbligatorio', text: 'Il Codice è obbligatorio.', icon: 'warning' });
             return;
         }
-        if (!formData.descrizione?.trim()) {
+
+        let finalDescrizione = formData.descrizione?.trim();
+        if (!finalDescrizione && config.isGommista) {
+            const parts = [];
+            if (formData.idMarca) {
+                const mObj = combos.marche?.find(m => String(m.id) === String(formData.idMarca));
+                if (mObj) parts.push(mObj.descrizione);
+            }
+            if (formData.sezione && formData.serie) {
+                parts.push(`${formData.sezione}/${formData.serie}`);
+            } else if (formData.sezione) {
+                parts.push(formData.sezione);
+            }
+            if (formData.diametro) {
+                parts.push(`R${formData.diametro}`);
+            }
+            if (formData.indiceVelocita) {
+                parts.push(formData.indiceVelocita);
+            }
+            if (formData.scultura) {
+                parts.push(formData.scultura);
+            }
+            finalDescrizione = parts.join(' ').trim();
+        }
+
+        if (!finalDescrizione) {
             const Swal = (await import('sweetalert2')).default;
-            Swal.fire({ title: 'Campo obbligatorio', text: 'La Descrizione è obbligatoria.', icon: 'warning' });
+            Swal.fire({ 
+                title: 'Campo obbligatorio', 
+                text: config.isGommista 
+                    ? 'Per gli pneumatici inserisci almeno una misura (Sezione, Diametro...) oppure una descrizione.' 
+                    : 'La Descrizione è obbligatoria.', 
+                icon: 'warning' 
+            });
             return;
         }
+
         setSaving(true);
         let res;
         try {
             // Final sanitization: ensure collection fields are NOT empty strings
-            const dataToSave = { ...formData };
+            const dataToSave = { ...formData, descrizione: finalDescrizione };
             const collectionFields = ['tokens', 'prezzi', 'codiciBarre', 'scelteColori', 'tonitaglie'];
             collectionFields.forEach(field => {
                 if (dataToSave[field] === '') {
@@ -356,6 +471,36 @@ const ArticoliDetail = () => {
         ArticoliService.getToni().then(res => setCombos(prev => ({ ...prev, toni: res.data?.payload || [] })));
     };
 
+    const handleCloseMarcheModal = () => {
+        fetchCombos();
+    };
+
+    const handleGenerateTireDescription = () => {
+        const parts = [];
+        if (formData.idMarca) {
+            const mObj = combos.marche?.find(m => String(m.id) === String(formData.idMarca));
+            if (mObj) parts.push(mObj.descrizione);
+        }
+        if (formData.sezione && formData.serie) {
+            parts.push(`${formData.sezione}/${formData.serie}`);
+        } else if (formData.sezione) {
+            parts.push(formData.sezione);
+        }
+        if (formData.diametro) {
+            parts.push(`R${formData.diametro}`);
+        }
+        if (formData.indiceVelocita) {
+            parts.push(formData.indiceVelocita);
+        }
+        if (formData.scultura) {
+            parts.push(formData.scultura);
+        }
+        const generated = parts.join(' ').trim();
+        if (generated) {
+            setFormData(prev => ({ ...prev, descrizione: generated }));
+        }
+    };
+
     const handleCloseCalibriModal = () => {
         ArticoliService.getCalibri().then(res => setCombos(prev => ({ ...prev, calibri: res.data?.payload || [] })));
     };
@@ -411,12 +556,141 @@ const ArticoliDetail = () => {
                                 </div>
                             </div>
                         )}
+                        {config.isGommista && (
+                            <div className="panel panel-default" style={{ border: '1px solid #3c8dbc', borderRadius: '8px', padding: '15px', marginBottom: '20px', backgroundColor: '#f9fbfd' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: '1px solid #d2d6de', paddingBottom: '8px' }}>
+                                    <h4 style={{ margin: 0, color: '#3c8dbc', fontWeight: 'bold' }}>
+                                        <i className="fa fa-car" style={{ marginRight: '8px' }}></i> Parametri Pneumatico
+                                    </h4>
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-sm btn-info"
+                                        onClick={handleGenerateTireDescription}
+                                        title="Compone la descrizione automatica in base ai parametri inseriti"
+                                    >
+                                        <i className="fa fa-magic mr-1"></i> Componi Descrizione
+                                    </button>
+                                </div>
+                                {config.hasMarche && (
+                                    <div className="row" style={{ marginBottom: '10px' }}>
+                                        <div className="col-xs-12 col-md-4">
+                                            <div className="form-group">
+                                                <label style={{ fontWeight: 'bold' }}>Marca</label>
+                                                <div className="flex-input-group">
+                                                    <select className="form-control" name="idMarca" value={formData.idMarca || ''} onChange={handleChange}>
+                                                        <option value="">Seleziona Marca...</option>
+                                                        {combos.marche?.map(m => (
+                                                            <option key={m.id} value={m.id}>{m.descrizione}</option>
+                                                        ))}
+                                                    </select>
+                                                    <WrenchModalButton
+                                                        ModalComponent={MarcheManagementModal}
+                                                        onClose={handleCloseMarcheModal}
+                                                        title="Gestione marche"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="row">
+                                    <div className="col-xs-6 col-md-2">
+                                        <div className="form-group">
+                                            <label>Sezione (mm)</label>
+                                            <input 
+                                                type="number" 
+                                                className="form-control" 
+                                                name="sezione" 
+                                                value={formData.sezione || ''} 
+                                                onChange={handleChange} 
+                                                placeholder="es. 205" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-xs-6 col-md-2">
+                                        <div className="form-group">
+                                            <label>Serie (%)</label>
+                                            <input 
+                                                type="number" 
+                                                className="form-control" 
+                                                name="serie" 
+                                                value={formData.serie || ''} 
+                                                onChange={handleChange} 
+                                                placeholder="es. 55" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-xs-6 col-md-2">
+                                        <div className="form-group">
+                                            <label>Diametro (")</label>
+                                            <input 
+                                                type="number" 
+                                                className="form-control" 
+                                                name="diametro" 
+                                                value={formData.diametro || ''} 
+                                                onChange={handleChange} 
+                                                placeholder="es. 16" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-xs-6 col-md-2">
+                                        <div className="form-group">
+                                            <label>Indice Velocità/Carico</label>
+                                            <input 
+                                                type="text" 
+                                                className="form-control" 
+                                                name="indiceVelocita" 
+                                                value={formData.indiceVelocita || ''} 
+                                                onChange={handleChange} 
+                                                placeholder="es. 91V" 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-xs-6 col-md-2">
+                                        <div className="form-group">
+                                            <label>DOT</label>
+                                            <input 
+                                                type="text" 
+                                                className="form-control" 
+                                                name="dot" 
+                                                value={formData.dot || ''} 
+                                                onChange={handleChange} 
+                                                placeholder="es. 2423" 
+                                                maxLength={10}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-xs-12 col-md-2">
+                                        <div className="form-group">
+                                            <label>Scultura / Modello</label>
+                                            <input 
+                                                type="text" 
+                                                className="form-control" 
+                                                name="scultura" 
+                                                value={formData.scultura || ''} 
+                                                onChange={handleChange} 
+                                                placeholder="es. Primacy 4" 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="row">
                             <div className="col-xs-12 col-md-8">
                                 <div className="form-group">
-                                    <label className="required">Descrizione</label>
-                                    <input type="text" className="form-control" name="descrizione" value={formData.descrizione} onChange={handleChange} placeholder="Inserisci descrizione" />
+                                    <label className={config.isGommista ? "" : "required"}>
+                                        Descrizione {config.isGommista && <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '12px' }}>(opzionale: generata automaticamente dalle misure)</span>}
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        className="form-control" 
+                                        name="descrizione" 
+                                        value={formData.descrizione || ''} 
+                                        onChange={handleChange} 
+                                        placeholder={config.isGommista ? "Opzionale (se vuota, verrà usata la concatenazione di sezione, serie, diametro...)" : "Inserisci descrizione"} 
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -454,22 +728,24 @@ const ArticoliDetail = () => {
                         </div>
 
                         <div className="row">
-                            <div className="col-xs-12 col-md-4">
-                                <div className="form-group">
-                                    <label>Categoria</label>
-                                    <div className="flex-input-group">
-                                        <select className="form-control" name="idCategoria" value={formData.idCategoria} onChange={handleChange}>
-                                            <option value="">Seleziona...</option>
-                                            {combos.categorie.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
-                                        </select>
-                                        <WrenchModalButton
-                                            ModalComponent={CategorieManagementModal}
-                                            onClose={handleCloseCategorieModal}
-                                            title="Gestione categorie"
-                                        />
+                            {config.abilitaCategorie && (
+                                <div className="col-xs-12 col-md-4">
+                                    <div className="form-group">
+                                        <label>Categoria</label>
+                                        <div className="flex-input-group">
+                                            <select className="form-control" name="idCategoria" value={formData.idCategoria} onChange={handleChange}>
+                                                <option value="">Seleziona...</option>
+                                                {combos.categorie.map(c => <option key={c.id} value={c.id}>{c.descrizione}</option>)}
+                                            </select>
+                                            <WrenchModalButton
+                                                ModalComponent={CategorieManagementModal}
+                                                onClose={handleCloseCategorieModal}
+                                                title="Gestione categorie"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            )}
                             {config.abilitaSottoCategorie && (
                                 <div className="col-xs-12 col-md-4">
                                     <div className="form-group">
@@ -483,6 +759,26 @@ const ArticoliDetail = () => {
                                                 ModalComponent={SottoCategorieManagementModal}
                                                 onClose={handleCloseSottoCategorieModal}
                                                 title="Gestione sottocategorie"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {config.hasMarche && !config.isGommista && (
+                                <div className="col-xs-12 col-md-4">
+                                    <div className="form-group">
+                                        <label>Marca</label>
+                                        <div className="flex-input-group">
+                                            <select className="form-control" name="idMarca" value={formData.idMarca || ''} onChange={handleChange}>
+                                                <option value="">Seleziona...</option>
+                                                {combos.marche?.map(m => (
+                                                    <option key={m.id} value={m.id}>{m.descrizione}</option>
+                                                ))}
+                                            </select>
+                                            <WrenchModalButton
+                                                ModalComponent={MarcheManagementModal}
+                                                onClose={handleCloseMarcheModal}
+                                                title="Gestione marche"
                                             />
                                         </div>
                                     </div>

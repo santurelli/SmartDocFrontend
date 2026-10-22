@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import authService from '../services/authService';
 import './Login.css';
-import { FaUser, FaKey, FaBuilding, FaFileSignature, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaUser, FaKey, FaBuilding, FaFileSignature, FaEye, FaEyeSlash, FaTimes, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -14,6 +14,14 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+
+    // Password dimenticata modal state
+    const [showForgotModal, setShowForgotModal] = useState(false);
+    const [forgotUsername, setForgotUsername] = useState('');
+    const [forgotEnte, setForgotEnte] = useState(null);
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotError, setForgotError] = useState('');
+    const [forgotSuccess, setForgotSuccess] = useState(false);
 
     // Pre-seleziona l'azienda quando si arriva da un link di invito (es. email nuovo utente)
     useEffect(() => {
@@ -43,46 +51,8 @@ const Login = () => {
             setError('Il campo Password non può essere vuoto.');
             return;
         }
-        if (!ente) { // Using standard select2 behavior usually defaults to first if empty, but here explicit selection is needed
-            // OR maybe we should default to empty?
-            // Legacy behavior: user searches and selects.
-            // If ente is missing we should show error? Or legacy might default?
-            // Let's assume selection is required if not defaulted.
-            // Wait, legacy logic `$("#frm_password").keydown... focus #frm_azienda`.
-            // If user doesn't select, what happens?
-            // Let's enforce selection for now or handle null.
-        }
 
         try {
-            // Passing ente.value (denominazione) or ente.dbName?
-            // LoginRequest expects 'ente' string.
-            // Legacy uses `$("#frm_azienda").val()`. 
-            // Select2 usually returns the id or value.
-            // In MunicipalityDao `COMUNI_S01` returns `label` as denominazione.
-            // Logic in backend: `LoginDelegate` doesn't use it yet (we just added it to Request).
-            // But `SmartDocRoutingDataSource` uses `DatabaseContextHolder.getClientDatabase()`.
-            // Who sets the Context? `JwtAuthenticationFilter`?
-            // No, the LOGIN request itself doesn't use the token (it gets one).
-            // The LOGIN request needs to route to the correct DB?
-            // Legacy `MunicipalityService` runs on "Master" DB?
-            // Legacy Login:
-            // 1. User picks Azienda.
-            // 2. POST /login with ente.
-            // 3. Backend (LoginService) uses `ente` to switch DataSource?
-            // Ideally `AuthController` should read `ente` from request, set the Context, *then* call `LoginDelegate`.
-            // But `LoginDelegate` currently just checks username/password.
-            // We need `LoginDelegate` or `AuthController` to use `ente` effectively in the future.
-            // For now, we just pass what the valid "ente" string is.
-            // Let's pass the simple string value (denominazione) as `ente`.
-            // Or `dbName` if that's what backend expects?
-            // In `MunicipalityDto` we have `dbName`. 
-            // Let's pass `ente.label` for now as that's what the legacy UI likely sent (value=label in select2 often if no ID).
-            // Actually legacy Select2: `results: data`. `templateSelection: formatAziendaSelected` returns `data.label`.
-            // So visual is label. The value?
-            // `COMUNI_S01`: `id`, `label`, `db_name`.
-            // Legacy Select2 value is likely the `id` or `label`.
-            // Let's pass `ente.label` (denominazione) for now or `ente.value`.
-
             await authService.login(username, password, ente ? ente.dbName : '');
             navigate('/');
         } catch (err) {
@@ -92,6 +62,33 @@ const Login = () => {
             } else {
                 setError('Errore generico durante il login.');
             }
+        }
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        setForgotError('');
+        setForgotSuccess(false);
+
+        if (!forgotUsername.trim()) {
+            setForgotError('Inserisci il tuo username o indirizzo email.');
+            return;
+        }
+        if (!forgotEnte || !forgotEnte.dbName) {
+            setForgotError('Seleziona la tua azienda.');
+            return;
+        }
+
+        setForgotLoading(true);
+        try {
+            await authService.forgotPassword(forgotUsername.trim(), forgotEnte.dbName);
+            setForgotSuccess(true);
+        } catch (err) {
+            console.error("Forgot password error:", err);
+            const msg = err.response?.data?.message || err.response?.data;
+            setForgotError(typeof msg === 'string' ? msg : 'Errore durante la richiesta di recupero password.');
+        } finally {
+            setForgotLoading(false);
         }
     };
 
@@ -133,6 +130,34 @@ const Login = () => {
         })
     };
 
+    const modalSelectStyles = {
+        control: (provided) => ({
+            ...provided,
+            height: '42px',
+            minHeight: '42px',
+            borderRadius: '8px',
+            borderColor: '#cbd5e1',
+            boxShadow: 'none',
+            fontSize: '14px',
+            '&:hover': {
+                borderColor: '#03a9f4'
+            }
+        }),
+        valueContainer: (provided) => ({
+            ...provided,
+            height: '42px',
+            padding: '0 12px'
+        }),
+        indicatorsContainer: (provided) => ({
+            ...provided,
+            height: '42px',
+        }),
+        menu: (provided) => ({
+            ...provided,
+            zIndex: 10001
+        })
+    };
+
     const passwordRef = React.useRef(null);
     const aziendaRef = React.useRef(null);
 
@@ -147,11 +172,9 @@ const Login = () => {
 
     const handleAziendaKeyDown = (e) => {
         if (e.key === 'Enter') {
-            // If menu is open, let React Select handle the choice (don't submit)
             if (isMenuOpen) {
                 return;
             }
-            // If menu is closed, submit form
             handleLogin(e);
         }
     };
@@ -242,6 +265,34 @@ const Login = () => {
                                                     </div>
                                                 </div>
 
+                                                {/* Link Password Dimenticata */}
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px', marginBottom: '14px' }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setForgotUsername(username);
+                                                            setForgotEnte(ente);
+                                                            setForgotError('');
+                                                            setForgotSuccess(false);
+                                                            setShowForgotModal(true);
+                                                        }}
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            padding: 0,
+                                                            color: '#03a9f4',
+                                                            fontSize: '13px',
+                                                            cursor: 'pointer',
+                                                            fontWeight: '500',
+                                                            textDecoration: 'none'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                                                        onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                                                    >
+                                                        Password dimenticata?
+                                                    </button>
+                                                </div>
+
                                                 {error && (
                                                     <div className="alert alert-danger" style={{ marginTop: '10px', color: '#a94442', backgroundColor: '#f2dede', borderColor: '#ebccd1', padding: '15px', borderRadius: '4px' }}>
                                                         {error}
@@ -262,6 +313,195 @@ const Login = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal Password Dimenticata */}
+            {showForgotModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                    backdropFilter: 'blur(4px)',
+                    zIndex: 10000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '16px'
+                }}>
+                    <div style={{
+                        background: '#ffffff',
+                        borderRadius: '16px',
+                        width: '100%',
+                        maxWidth: '460px',
+                        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)',
+                        overflow: 'hidden',
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}>
+                        {/* Header Modale */}
+                        <div style={{
+                            padding: '18px 24px',
+                            borderBottom: '1px solid #e2e8f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            background: '#f8fafc'
+                        }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>
+                                Recupero Password
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowForgotModal(false)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#64748b',
+                                    cursor: 'pointer',
+                                    fontSize: '18px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    padding: '4px'
+                                }}
+                            >
+                                <FaTimes />
+                            </button>
+                        </div>
+
+                        {/* Corpo Modale */}
+                        <div style={{ padding: '24px' }}>
+                            {forgotSuccess ? (
+                                <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                                    <FaCheckCircle style={{ color: '#10b981', fontSize: '48px', marginBottom: '16px' }} />
+                                    <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', marginBottom: '8px' }}>
+                                        Email Inviata!
+                                    </h4>
+                                    <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.6', marginBottom: '20px' }}>
+                                        Se i dati inseriti sono corretti, abbiamo inviato un'email con il link sicuro per reimpostare la password.
+                                        Controlla la tua casella di posta (e la cartella spam).
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowForgotModal(false)}
+                                        style={{
+                                            background: '#2563eb',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            padding: '10px 24px',
+                                            borderRadius: '8px',
+                                            fontWeight: '600',
+                                            fontSize: '14px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Chiudi
+                                    </button>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleForgotPassword}>
+                                    <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.5', marginTop: 0, marginBottom: '20px' }}>
+                                        Inserisci il tuo username o indirizzo email e seleziona la tua azienda. Ti invieremo un link per reimpostare la password.
+                                    </p>
+
+                                    <div style={{ marginBottom: '16px' }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                            Username o Email
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Inserisci il tuo username o email"
+                                            value={forgotUsername}
+                                            onChange={(e) => setForgotUsername(e.target.value)}
+                                            style={{
+                                                height: '42px',
+                                                borderRadius: '8px',
+                                                border: '1px solid #cbd5e1',
+                                                padding: '0 12px',
+                                                fontSize: '14px',
+                                                width: '100%',
+                                                boxSizing: 'border-box'
+                                            }}
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '20px' }}>
+                                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                            Azienda
+                                        </label>
+                                        <AsyncSelect
+                                            cacheOptions
+                                            defaultOptions
+                                            loadOptions={loadOptions}
+                                            onChange={setForgotEnte}
+                                            value={forgotEnte}
+                                            placeholder="Seleziona Azienda..."
+                                            noOptionsMessage={() => "Digita per cercare azienda..."}
+                                            styles={modalSelectStyles}
+                                            openMenuOnFocus
+                                        />
+                                    </div>
+
+                                    {forgotError && (
+                                        <div style={{
+                                            color: '#b91c1c',
+                                            backgroundColor: '#fef2f2',
+                                            border: '1px solid #fecaca',
+                                            padding: '10px 14px',
+                                            borderRadius: '8px',
+                                            fontSize: '13px',
+                                            marginBottom: '16px'
+                                        }}>
+                                            {forgotError}
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowForgotModal(false)}
+                                            style={{
+                                                background: '#f1f5f9',
+                                                color: '#475569',
+                                                border: '1px solid #e2e8f0',
+                                                padding: '10px 18px',
+                                                borderRadius: '8px',
+                                                fontWeight: '600',
+                                                fontSize: '14px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Annulla
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={forgotLoading}
+                                            style={{
+                                                background: forgotLoading ? '#94a3b8' : '#2563eb',
+                                                color: '#ffffff',
+                                                border: 'none',
+                                                padding: '10px 20px',
+                                                borderRadius: '8px',
+                                                fontWeight: '600',
+                                                fontSize: '14px',
+                                                cursor: forgotLoading ? 'not-allowed' : 'pointer',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}
+                                        >
+                                            {forgotLoading && <FaSpinner className="fa-spin" />}
+                                            {forgotLoading ? 'Invio in corso...' : 'Invia link di reset'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

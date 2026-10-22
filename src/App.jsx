@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './pages/Login';
 import CompletaRegistrazione from './pages/CompletaRegistrazione';
+import ResetPassword from './pages/ResetPassword';
 import RegistrazioneProva from './pages/RegistrazioneProva';
 import authService from './services/authService';
 import './App.css';
@@ -59,6 +60,8 @@ import PrevisioneCassaPage from './pages/PrevisioneCassa/PrevisioneCassaPage';
 import StudioDashboardPage from './pages/Studio/StudioDashboardPage';
 import StatistichePage from './pages/Statistiche/StatistichePage';
 import DashboardStatistichePage from './pages/Statistiche/DashboardStatistichePage';
+import UbicazioniList from './pages/Ubicazioni/UbicazioniList';
+import MarcheList from './pages/Configurazione/MarcheList';
 
 const RoleProtectedRoute = ({ allowedRoles, children }) => {
   const currentUser = authService.getCurrentUser();
@@ -141,6 +144,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/completa-registrazione" element={<CompletaRegistrazione />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/registrazione-prova" element={<RegistrazioneProva />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Dashboard />} />
@@ -193,6 +197,8 @@ function App() {
         <Route path="/articoli" element={<ArticoliList />} />
         <Route path="/articoli/movimenti" element={<MovimentiList />} />
         <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />
+        <Route path="/ubicazioni" element={<UbicazioniList />} />
+        <Route path="/marche" element={<MarcheList />} />
         <Route path="/articoli/:id" element={<ArticoliDetail />} />
         <Route path="/prima-nota" element={<PlanProtectedRoute minPlanLevel={4}><PrimaNotaList /></PlanProtectedRoute>} />
         <Route path="/registri-iva" element={<RegistriIvaPage />} />
