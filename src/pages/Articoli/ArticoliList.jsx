@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ArticoliService from '../../services/ArticoliService';
 import CategorieArticoliService from '../../services/CategorieArticoliService';
 import { useNavigate } from 'react-router-dom';
-import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash, FaHome, FaAngleRight, FaMapMarkerAlt, FaFilter, FaEraser, FaTags } from 'react-icons/fa';
+import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash, FaHome, FaAngleRight, FaMapMarkerAlt, FaFilter, FaEraser, FaTags, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import FornitoriService from '../../services/FornitoriService';
 import AuthService from '../../services/authService';
@@ -307,8 +307,12 @@ const ArticoliList = () => {
     };
 
     const renderSortIcon = (colIndex) => {
-        if (sortCol !== colIndex) return <span className="sort-icon">▼</span>;
-        return <span className="sort-icon">{sortDir === 'asc' ? '▲' : '▼'}</span>;
+        if (sortCol !== colIndex) {
+            return <FaSort style={{ opacity: 0.35, marginLeft: '6px', fontSize: '11px', verticalAlign: 'middle' }} />;
+        }
+        return sortDir === 'asc' 
+            ? <FaSortUp style={{ color: '#03a9f4', marginLeft: '6px', fontSize: '12px', verticalAlign: 'middle' }} />
+            : <FaSortDown style={{ color: '#03a9f4', marginLeft: '6px', fontSize: '12px', verticalAlign: 'middle' }} />;
     };
 
     const handleDelete = async (art) => {
