@@ -3,6 +3,7 @@ import { NavLink, Navigate } from 'react-router-dom';
 import StatisticheService from '../../services/StatisticheService';
 import FattureService from '../../services/FattureService';
 import authService from '../../services/authService';
+import { getUserRole, ROLES } from '../../utils/rolePermissions';
 import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
     Tooltip, Legend, ResponsiveContainer, ComposedChart, Area
@@ -18,6 +19,11 @@ const Dashboard = () => {
 
     if (tipoAccount === 5) {
         return <Navigate to="/studio/dashboard" replace />;
+    }
+
+    const userRole = getUserRole(currentUser);
+    if (userRole === ROLES.WAREHOUSE || userRole === ROLES.WAREHOUSE_OPERATOR) {
+        return <Navigate to="/articoli/movimenti" replace />;
     }
     const [stats, setStats] = useState(null);
     const [ultimeFatture, setUltimeFatture] = useState([]);

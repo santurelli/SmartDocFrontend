@@ -63,35 +63,21 @@ import DashboardStatistichePage from './pages/Statistiche/DashboardStatistichePa
 import UbicazioniList from './pages/Ubicazioni/UbicazioniList';
 import MarcheList from './pages/Configurazione/MarcheList';
 
+import { getUserRole, hasRole, ROLES } from './utils/rolePermissions';
+
 const RoleProtectedRoute = ({ allowedRoles, children }) => {
   const currentUser = authService.getCurrentUser();
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
 
-  const appConfig = authService.getConfig();
-  const u = currentUser.user || currentUser;
-  
-  let userRole = appConfig?.role || currentUser?.role || u?.role;
-  
-  if (!userRole) {
-    const gruppoId = u?.gruppo || u?.k_d_e_gruppi || currentUser?.gruppo;
-    if (gruppoId === 1 || gruppoId === '1' || !gruppoId) {
-      userRole = 'ROLE_ADMIN';
-    } else if (gruppoId === 2 || gruppoId === '2') {
-      userRole = 'ROLE_ACCOUNTING';
-    } else if (gruppoId === 3 || gruppoId === '3') {
-      userRole = 'ROLE_SALES';
-    } else if (gruppoId === 4 || gruppoId === '4') {
-      userRole = 'ROLE_WAREHOUSE';
-    } else {
-      userRole = 'ROLE_ADMIN';
+  const userRole = getUserRole(currentUser);
+  const authorized = hasRole(allowedRoles, currentUser);
+
+  if (!authorized) {
+    if (userRole === ROLES.WAREHOUSE || userRole === ROLES.WAREHOUSE_OPERATOR) {
+      return <Navigate to="/articoli/movimenti" replace />;
     }
-  }
-
-  const hasRole = allowedRoles.includes(userRole) || userRole === 'ROLE_ADMIN';
-
-  if (!hasRole) {
     return <Navigate to="/" replace />;
   }
   
@@ -148,69 +134,69 @@ function App() {
       <Route path="/registrazione-prova" element={<RegistrazioneProva />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/configurazione/dati-azienda" element={<DatiAziendaPage />} />
-        <Route path="/configurazione/parametri" element={<ParametriPage />} />
-        <Route path="/configurazione/fatturazione" element={<ImpostazioniFatturazionePage />} />
-        <Route path="/configurazione/documenti" element={<ImpostazioniDocumentiPage />} />
-        <Route path="/libro-giornale" element={<PlanProtectedRoute minPlanLevel={4}><LibroGiornaleList /></PlanProtectedRoute>} />
-        <Route path="/mastrini" element={<PlanProtectedRoute minPlanLevel={4}><MastriniList /></PlanProtectedRoute>} />
-        <Route path="/chiusura-esercizio" element={<PlanProtectedRoute minPlanLevel={4}><ChiusuraEsercizioPage /></PlanProtectedRoute>} />
-        <Route path="/bilancio" element={<PlanProtectedRoute minPlanLevel={4}><BilancioPage /></PlanProtectedRoute>} />
-        <Route path="/piano-conti" element={<PlanProtectedRoute minPlanLevel={4}><PianoDeiContiPage /></PlanProtectedRoute>} />
-        <Route path="/configurazione/ecommerce" element={<PlanProtectedRoute minPlanLevel={3}><EcommercePage /></PlanProtectedRoute>} />
-        <Route path="/configurazione/listini" element={<ListiniList />} />
-        <Route path="/configurazione/dati-generali" element={<DatiGeneraliPage />} />
+        <Route path="/configurazione/dati-azienda" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><DatiAziendaPage /></RoleProtectedRoute>} />
+        <Route path="/configurazione/parametri" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><ParametriPage /></RoleProtectedRoute>} />
+        <Route path="/configurazione/fatturazione" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><ImpostazioniFatturazionePage /></RoleProtectedRoute>} />
+        <Route path="/configurazione/documenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><ImpostazioniDocumentiPage /></RoleProtectedRoute>} />
+        <Route path="/libro-giornale" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><LibroGiornaleList /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/mastrini" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><MastriniList /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/chiusura-esercizio" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><ChiusuraEsercizioPage /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/bilancio" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><BilancioPage /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/piano-conti" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><PianoDeiContiPage /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/configurazione/ecommerce" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><PlanProtectedRoute minPlanLevel={3}><EcommercePage /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/configurazione/listini" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING', 'ROLE_SALES']}><ListiniList /></RoleProtectedRoute>} />
+        <Route path="/configurazione/dati-generali" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><DatiGeneraliPage /></RoleProtectedRoute>} />
         <Route path="/configurazione/utenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiList /></RoleProtectedRoute>} />
         <Route path="/configurazione/utenti/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiDetail /></RoleProtectedRoute>} />
         <Route path="/configurazione/utenti/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN']}><UtentiDetail /></RoleProtectedRoute>} />
-        <Route path="/clienti" element={<ClientiList />} />
-        <Route path="/clienti/new" element={<ClientiDetail />} />
-        <Route path="/clienti/:id" element={<ClientiDetail />} />
-        <Route path="/fornitori" element={<FornitoriList />} />
-        <Route path="/fornitori/new" element={<FornitoriDetail />} />
-        <Route path="/fornitori/:id" element={<FornitoriDetail />} />
-        <Route path="/preventivi" element={<PreventiviList />} />
-        <Route path="/preventivi/new" element={<PreventiviDetail />} />
-        <Route path="/preventivi/:id" element={<PreventiviDetail />} />
-        <Route path="/conf-ordine" element={<ConfOrdineList />} />
-        <Route path="/conf-ordine/new" element={<ConfOrdineDetail />} />
-        <Route path="/conf-ordine/:id" element={<ConfOrdineDetail />} />
-        <Route path="/ddt" element={<DDTList />} />
-        <Route path="/ddt/new" element={<DDTDetail />} />
-        <Route path="/ddt/:id" element={<DDTDetail />} />
-        <Route path="/ordini" element={<PlanProtectedRoute minPlanLevel={4}><OrdiniList /></PlanProtectedRoute>} />
-        <Route path="/ordini/new" element={<PlanProtectedRoute minPlanLevel={4}><OrdiniDetail /></PlanProtectedRoute>} />
-        <Route path="/ordini/:id" element={<PlanProtectedRoute minPlanLevel={4}><OrdiniDetail /></PlanProtectedRoute>} />
-        <Route path="/bollecarico" element={<PlanProtectedRoute minPlanLevel={4}><BollaCaricoList /></PlanProtectedRoute>} />
-        <Route path="/bollecarico/new" element={<PlanProtectedRoute minPlanLevel={4}><BollaCaricoDetail /></PlanProtectedRoute>} />
-        <Route path="/bollecarico/:id" element={<PlanProtectedRoute minPlanLevel={4}><BollaCaricoDetail /></PlanProtectedRoute>} />
-        <Route path="/fatture" element={<FattureList />} />
-        <Route path="/fatture/new" element={<FattureDetail />} />
-        <Route path="/fatture/:id" element={<FattureDetail />} />
-        <Route path="/note-credito" element={<NoteCreditoList />} />
-        <Route path="/note-credito/new" element={<NoteCreditoDetail />} />
-        <Route path="/note-credito/:id" element={<NoteCreditoDetail />} />
-        <Route path="/fatture-fornitore" element={<PlanProtectedRoute minPlanLevel={4}><FattureFornitoreList /></PlanProtectedRoute>} />
-        <Route path="/fatture-fornitore/:id" element={<PlanProtectedRoute minPlanLevel={4}><FattureFornitoreDetail /></PlanProtectedRoute>} />
-        <Route path="/note-credito-fornitore" element={<PlanProtectedRoute minPlanLevel={4}><NoteCreditoFornitoreList /></PlanProtectedRoute>} />
-        <Route path="/note-credito-fornitore/:id" element={<PlanProtectedRoute minPlanLevel={4}><NoteCreditoFornitoreDetail /></PlanProtectedRoute>} />
-        <Route path="/articoli" element={<ArticoliList />} />
-        <Route path="/articoli/movimenti" element={<MovimentiList />} />
-        <Route path="/articoli/inventario" element={<InventarioMagazzinoList />} />
-        <Route path="/ubicazioni" element={<UbicazioniList />} />
-        <Route path="/marche" element={<MarcheList />} />
-        <Route path="/articoli/:id" element={<ArticoliDetail />} />
-        <Route path="/prima-nota" element={<PlanProtectedRoute minPlanLevel={4}><PrimaNotaList /></PlanProtectedRoute>} />
-        <Route path="/registri-iva" element={<RegistriIvaPage />} />
-        <Route path="/ritenute/770" element={<Prospetto770Page />} />
-        <Route path="/scadenzario/promemoria" element={<PromemoriaPage />} />
-        <Route path="/riconciliazione" element={<PlanProtectedRoute minPlanLevel={4}><RiconciliazioneBancariaPage /></PlanProtectedRoute>} />
-        <Route path="/previsione-cassa" element={<PlanProtectedRoute minPlanLevel={4}><PrevisioneCassaPage /></PlanProtectedRoute>} />
+        <Route path="/clienti" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><ClientiList /></RoleProtectedRoute>} />
+        <Route path="/clienti/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><ClientiDetail /></RoleProtectedRoute>} />
+        <Route path="/clienti/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><ClientiDetail /></RoleProtectedRoute>} />
+        <Route path="/fornitori" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><FornitoriList /></RoleProtectedRoute>} />
+        <Route path="/fornitori/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><FornitoriDetail /></RoleProtectedRoute>} />
+        <Route path="/fornitori/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><FornitoriDetail /></RoleProtectedRoute>} />
+        <Route path="/preventivi" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><PreventiviList /></RoleProtectedRoute>} />
+        <Route path="/preventivi/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><PreventiviDetail /></RoleProtectedRoute>} />
+        <Route path="/preventivi/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><PreventiviDetail /></RoleProtectedRoute>} />
+        <Route path="/conf-ordine" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><ConfOrdineList /></RoleProtectedRoute>} />
+        <Route path="/conf-ordine/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><ConfOrdineDetail /></RoleProtectedRoute>} />
+        <Route path="/conf-ordine/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES']}><ConfOrdineDetail /></RoleProtectedRoute>} />
+        <Route path="/ddt" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES', 'ROLE_WAREHOUSE']}><DDTList /></RoleProtectedRoute>} />
+        <Route path="/ddt/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES', 'ROLE_WAREHOUSE']}><DDTDetail /></RoleProtectedRoute>} />
+        <Route path="/ddt/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES', 'ROLE_WAREHOUSE']}><DDTDetail /></RoleProtectedRoute>} />
+        <Route path="/ordini" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><PlanProtectedRoute minPlanLevel={4}><OrdiniList /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/ordini/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><PlanProtectedRoute minPlanLevel={4}><OrdiniDetail /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/ordini/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><PlanProtectedRoute minPlanLevel={4}><OrdiniDetail /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/bollecarico" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><PlanProtectedRoute minPlanLevel={4}><BollaCaricoList /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/bollecarico/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><PlanProtectedRoute minPlanLevel={4}><BollaCaricoDetail /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/bollecarico/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']}><PlanProtectedRoute minPlanLevel={4}><BollaCaricoDetail /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/fatture" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><FattureList /></RoleProtectedRoute>} />
+        <Route path="/fatture/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><FattureDetail /></RoleProtectedRoute>} />
+        <Route path="/fatture/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><FattureDetail /></RoleProtectedRoute>} />
+        <Route path="/note-credito" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><NoteCreditoList /></RoleProtectedRoute>} />
+        <Route path="/note-credito/new" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><NoteCreditoDetail /></RoleProtectedRoute>} />
+        <Route path="/note-credito/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><NoteCreditoDetail /></RoleProtectedRoute>} />
+        <Route path="/fatture-fornitore" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><FattureFornitoreList /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/fatture-fornitore/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><FattureFornitoreDetail /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/note-credito-fornitore" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><NoteCreditoFornitoreList /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/note-credito-fornitore/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><NoteCreditoFornitoreDetail /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/articoli" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']}><ArticoliList /></RoleProtectedRoute>} />
+        <Route path="/articoli/movimenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']}><MovimentiList /></RoleProtectedRoute>} />
+        <Route path="/articoli/inventario" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']}><InventarioMagazzinoList /></RoleProtectedRoute>} />
+        <Route path="/ubicazioni" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']}><UbicazioniList /></RoleProtectedRoute>} />
+        <Route path="/marche" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']}><MarcheList /></RoleProtectedRoute>} />
+        <Route path="/articoli/:id" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING', 'ROLE_SALES', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']}><ArticoliDetail /></RoleProtectedRoute>} />
+        <Route path="/prima-nota" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><PrimaNotaList /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/registri-iva" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><RegistriIvaPage /></RoleProtectedRoute>} />
+        <Route path="/ritenute/770" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><Prospetto770Page /></RoleProtectedRoute>} />
+        <Route path="/scadenzario/promemoria" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PromemoriaPage /></RoleProtectedRoute>} />
+        <Route path="/riconciliazione" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><RiconciliazioneBancariaPage /></PlanProtectedRoute></RoleProtectedRoute>} />
+        <Route path="/previsione-cassa" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><PlanProtectedRoute minPlanLevel={4}><PrevisioneCassaPage /></PlanProtectedRoute></RoleProtectedRoute>} />
         <Route path="/studio/dashboard" element={<StudioDashboardPage />} />
-        <Route path="/statistiche/dashboard" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><DashboardStatistichePage /></RoleProtectedRoute>} />
-        <Route path="/statistiche/vendite" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
-        <Route path="/statistiche/acquisti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
-        <Route path="/statistiche/pagamenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ADMIN', 'ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
+        <Route path="/statistiche/dashboard" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><DashboardStatistichePage /></RoleProtectedRoute>} />
+        <Route path="/statistiche/vendite" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
+        <Route path="/statistiche/acquisti" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
+        <Route path="/statistiche/pagamenti" element={<RoleProtectedRoute allowedRoles={['ROLE_ACCOUNTING']}><StatistichePage /></RoleProtectedRoute>} />
       </Route>
       <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>

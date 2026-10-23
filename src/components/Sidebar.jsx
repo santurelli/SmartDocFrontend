@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import ConfigurazioneService from '../services/ConfigurazioneService';
 import authService from '../services/authService';
+import { hasRole, ROLES } from '../utils/rolePermissions';
 import {
     FaTachometerAlt, FaThLarge, FaCubes, FaAngleRight, FaAngleDown,
     FaRegFileAlt, FaTable, FaGavel, FaDesktop, FaRegBookmark, FaChartBar, FaWrench, FaPowerOff, FaUser, FaCircle, FaFileAlt, FaBell, FaExchangeAlt, FaUserTie, FaCogs, FaBalanceScale, FaChartLine
@@ -70,12 +71,38 @@ const Sidebar = ({ user }) => {
         return tipoAccount >= minPlanLevel;
     };
 
+    const checkRole = (allowedRoles) => {
+        return hasRole(allowedRoles, currentUser);
+    };
+
     const handleExitImpersonation = () => {
         sessionStorage.removeItem('impersonated_tenant');
         window.location.href = '/studio/dashboard';
     };
 
     const userName = user ? `${user.nome} ${user.cognome ? user.cognome.charAt(0) + '.' : ''}` : 'Utente';
+
+    // Permessi per Documenti
+    const canSeePreventivi = isAllowedByPlan(3) && isEnabled('ABILITA_PREVENTIVI') && checkRole(['ROLE_ACCOUNTING', 'ROLE_SALES']);
+    const canSeeConfOrdine = isAllowedByPlan(3) && isEnabled('ABILITA_CONF_ORDINE') && checkRole(['ROLE_ACCOUNTING', 'ROLE_SALES']);
+    const canSeeDdt = isAllowedByPlan(3) && isEnabled('ABILITA_DDT') && checkRole(['ROLE_ACCOUNTING', 'ROLE_SALES', 'ROLE_WAREHOUSE']);
+    const canSeeFatture = (isEnabled('ABILITA_FATTURE') || isEnabled('ABILITA_NOTE_DEBITO') || isEnabled('ABILITA_FATTURE_PROFORMA') || isEnabled('ABILITA_FATTURE_ACCOMPAGNATORIE')) && checkRole(['ROLE_ACCOUNTING']);
+    const canSeeNoteCredito = isEnabled('ABILITA_NOTE_CREDITO') && checkRole(['ROLE_ACCOUNTING']);
+    const canSeeOrdini = isAllowedByPlan(4) && isEnabled('ABILITA_ORDINI') && checkRole(['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']);
+    const canSeeBolleCarico = isAllowedByPlan(4) && isEnabled('ABILITA_BOLLECARICO') && checkRole(['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']);
+    const canSeeFattureFornitore = isAllowedByPlan(4) && isEnabled('ABILITA_FATTURE_FORNITORE') && checkRole(['ROLE_ACCOUNTING']);
+    const canSeeNoteCreditoFornitore = isAllowedByPlan(4) && isEnabled('ABILITA_NOTE_CREDITO_FORNITORE') && checkRole(['ROLE_ACCOUNTING']);
+    const canSeeDocumenti = canSeePreventivi || canSeeConfOrdine || canSeeDdt || canSeeFatture || canSeeNoteCredito || canSeeOrdini || canSeeBolleCarico || canSeeFattureFornitore || canSeeNoteCreditoFornitore;
+
+    // Permessi per Dati Generali
+    const canSeeClienti = checkRole(['ROLE_ACCOUNTING', 'ROLE_SALES']);
+    const canSeeFornitori = checkRole(['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']);
+    const canSeeDipendenti = isEnabled('DIPENDENTI', 'GLOBAL') && checkRole(['ROLE_ACCOUNTING']);
+    const canSeeListini = isAllowedByPlan(3) && checkRole(['ROLE_ACCOUNTING', 'ROLE_SALES']);
+    const canSeeTipiPagamento = checkRole(['ROLE_ACCOUNTING']);
+    const canSeeUnitaMisura = checkRole(['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE']);
+    const canSeeAliquoteIva = checkRole(['ROLE_ACCOUNTING']);
+    const canSeeDatiGenerali = canSeeClienti || canSeeFornitori || canSeeDipendenti || canSeeListini || canSeeTipiPagamento || canSeeUnitaMisura || canSeeAliquoteIva;
 
     return (
         <div id="nav-col">
@@ -132,14 +159,16 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    <li>
-                                        <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>
-                                            <span className="icon-container"><FaTachometerAlt /></span>
-                                            <span className="text">Dashboard</span>
-                                        </NavLink>
-                                    </li>
+                                    {checkRole(['ROLE_ACCOUNTING', 'ROLE_SALES']) && (
+                                        <li>
+                                            <NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>
+                                                <span className="icon-container"><FaTachometerAlt /></span>
+                                                <span className="text">Dashboard</span>
+                                            </NavLink>
+                                        </li>
+                                    )}
 
-                                    {isAllowedByPlan(3) && (
+                                    {isAllowedByPlan(3) && checkRole(['ROLE_ACCOUNTING', 'ROLE_SALES', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']) && (
                                         <li>
                                             <NavLink to="/articoli" className={({ isActive }) => isActive ? "active" : ""}>
                                                 <span className="icon-container"><FaThLarge /></span>
@@ -148,7 +177,7 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    {isAllowedByPlan(4) && (
+                                    {isAllowedByPlan(4) && checkRole(['ROLE_ACCOUNTING', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_OPERATOR']) && (
                                         <li className={openMenus['magazzino'] ? 'open' : ''}>
                                             <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('magazzino'); }}>
                                                 <span className="icon-container"><FaCubes /></span>
@@ -164,28 +193,30 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    <li className={openMenus['documenti'] ? 'open' : ''}>
-                                        <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('documenti'); }}>
-                                            <span className="icon-container"><FaRegFileAlt /></span>
-                                            <span className="text">Documenti</span>
-                                            <FaAngleRight className="drop-icon" />
-                                        </a>
-                                        <ul className="submenu">
-                                            {isAllowedByPlan(3) && isEnabled('ABILITA_PREVENTIVI') && <li><NavLink to="/preventivi">Preventivi</NavLink></li>}
-                                            {isAllowedByPlan(3) && isEnabled('ABILITA_CONF_ORDINE') && <li><NavLink to="/conf-ordine">Conferme d'ordine</NavLink></li>}
-                                            {isAllowedByPlan(3) && isEnabled('ABILITA_DDT') && <li><NavLink to="/ddt">Doc. trasporto</NavLink></li>}
-                                            {(isEnabled('ABILITA_FATTURE') || isEnabled('ABILITA_NOTE_DEBITO') || isEnabled('ABILITA_FATTURE_PROFORMA') || isEnabled('ABILITA_FATTURE_ACCOMPAGNATORIE')) && (
-                                                <li><NavLink to="/fatture">Fatture/Note debito</NavLink></li>
-                                            )}
-                                            {isEnabled('ABILITA_NOTE_CREDITO') && <li><NavLink to="/note-credito">Note di credito</NavLink></li>}
-                                            {isAllowedByPlan(4) && isEnabled('ABILITA_ORDINI') && <li><NavLink to="/ordini">Ordini a fornitori</NavLink></li>}
-                                            {isAllowedByPlan(4) && isEnabled('ABILITA_BOLLECARICO') && <li><NavLink to="/bollecarico">Bolle di carico</NavLink></li>}
-                                            {isAllowedByPlan(4) && isEnabled('ABILITA_FATTURE_FORNITORE') && <li><NavLink to="/fatture-fornitore">Fatture fornitore</NavLink></li>}
-                                            {isAllowedByPlan(4) && isEnabled('ABILITA_NOTE_CREDITO_FORNITORE') && <li><NavLink to="/note-credito-fornitore">Note credito fornitore</NavLink></li>}
-                                        </ul>
-                                    </li>
+                                    {canSeeDocumenti && (
+                                        <li className={openMenus['documenti'] ? 'open' : ''}>
+                                            <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('documenti'); }}>
+                                                <span className="icon-container"><FaRegFileAlt /></span>
+                                                <span className="text">Documenti</span>
+                                                <FaAngleRight className="drop-icon" />
+                                            </a>
+                                            <ul className="submenu">
+                                                {canSeePreventivi && <li><NavLink to="/preventivi">Preventivi</NavLink></li>}
+                                                {canSeeConfOrdine && <li><NavLink to="/conf-ordine">Conferme d'ordine</NavLink></li>}
+                                                {canSeeDdt && <li><NavLink to="/ddt">Doc. trasporto</NavLink></li>}
+                                                {canSeeFatture && (
+                                                    <li><NavLink to="/fatture">Fatture/Note debito</NavLink></li>
+                                                )}
+                                                {canSeeNoteCredito && <li><NavLink to="/note-credito">Note di credito</NavLink></li>}
+                                                {canSeeOrdini && <li><NavLink to="/ordini">Ordini a fornitori</NavLink></li>}
+                                                {canSeeBolleCarico && <li><NavLink to="/bollecarico">Bolle di carico</NavLink></li>}
+                                                {canSeeFattureFornitore && <li><NavLink to="/fatture-fornitore">Fatture fornitore</NavLink></li>}
+                                                {canSeeNoteCreditoFornitore && <li><NavLink to="/note-credito-fornitore">Note credito fornitore</NavLink></li>}
+                                            </ul>
+                                        </li>
+                                    )}
 
-                                    {isAllowedByPlan(4) && (
+                                    {isAllowedByPlan(4) && checkRole(['ROLE_ACCOUNTING']) && (
                                         <li>
                                             <NavLink to="/prima-nota">
                                                 <span className="icon-container"><FaTable /></span>
@@ -194,7 +225,7 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    {isAllowedByPlan(4) && (
+                                    {isAllowedByPlan(4) && checkRole(['ROLE_ACCOUNTING']) && (
                                         <li>
                                             <NavLink to="/riconciliazione">
                                                 <span className="icon-container"><FaExchangeAlt /></span>
@@ -203,7 +234,7 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    {isAllowedByPlan(4) && (
+                                    {isAllowedByPlan(4) && checkRole(['ROLE_ACCOUNTING']) && (
                                         <li>
                                             <NavLink to="/previsione-cassa">
                                                 <span className="icon-container"><FaChartLine /></span>
@@ -212,7 +243,7 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    {isAllowedByPlan(4) && (
+                                    {isAllowedByPlan(4) && checkRole(['ROLE_ACCOUNTING']) && (
                                         <li className={openMenus['contabilita'] ? 'open' : ''}>
                                             <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('contabilita'); }}>
                                                 <span className="icon-container"><FaBalanceScale /></span>
@@ -229,45 +260,53 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    <li>
-                                        <NavLink to="/registri-iva">
-                                            <span className="icon-container"><FaGavel /></span>
-                                            <span className="text">Registri IVA</span>
-                                        </NavLink>
-                                    </li>
+                                    {checkRole(['ROLE_ACCOUNTING']) && (
+                                        <li>
+                                            <NavLink to="/registri-iva">
+                                                <span className="icon-container"><FaGavel /></span>
+                                                <span className="text">Registri IVA</span>
+                                            </NavLink>
+                                        </li>
+                                    )}
 
-                                    <li>
-                                        <NavLink to="/ritenute/770">
-                                            <span className="icon-container"><FaFileAlt /></span>
-                                            <span className="text">Prospetto 770</span>
-                                        </NavLink>
-                                    </li>
+                                    {checkRole(['ROLE_ACCOUNTING']) && (
+                                        <li>
+                                            <NavLink to="/ritenute/770">
+                                                <span className="icon-container"><FaFileAlt /></span>
+                                                <span className="text">Prospetto 770</span>
+                                            </NavLink>
+                                        </li>
+                                    )}
 
-                                    <li>
-                                        <NavLink to="/scadenzario/promemoria">
-                                            <span className="icon-container"><FaBell /></span>
-                                            <span className="text">Promemoria Scadenze</span>
-                                        </NavLink>
-                                    </li>
+                                    {checkRole(['ROLE_ACCOUNTING']) && (
+                                        <li>
+                                            <NavLink to="/scadenzario/promemoria">
+                                                <span className="icon-container"><FaBell /></span>
+                                                <span className="text">Promemoria Scadenze</span>
+                                            </NavLink>
+                                        </li>
+                                    )}
 
-                                    <li className={openMenus['datiGenerali'] ? 'open' : ''}>
-                                        <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('datiGenerali'); }}>
-                                            <span className="icon-container"><FaRegBookmark /></span>
-                                            <span className="text">Dati generali</span>
-                                            <FaAngleRight className="drop-icon" />
-                                        </a>
-                                        <ul className="submenu">
-                                            <li><NavLink to="/clienti">Clienti</NavLink></li>
-                                            <li><NavLink to="/fornitori">Fornitori</NavLink></li>
-                                            {isEnabled('DIPENDENTI', 'GLOBAL') && <li><NavLink to="/dipendenti">Dipendenti</NavLink></li>}
-                                            {isAllowedByPlan(3) && <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>}
-                                            <li><a href="#" onClick={(e) => { e.preventDefault(); setShowTipiPagamento(true); }}>Tipi pagamento</a></li>
-                                            <li><a href="#" onClick={(e) => { e.preventDefault(); setShowUnitaMisura(true); }}>Unità di misura</a></li>
-                                            <li><a href="#" onClick={(e) => { e.preventDefault(); setShowAliquoteIva(true); }}>Aliquote IVA</a></li>
-                                        </ul>
-                                    </li>
+                                    {canSeeDatiGenerali && (
+                                        <li className={openMenus['datiGenerali'] ? 'open' : ''}>
+                                            <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('datiGenerali'); }}>
+                                                <span className="icon-container"><FaRegBookmark /></span>
+                                                <span className="text">Dati generali</span>
+                                                <FaAngleRight className="drop-icon" />
+                                            </a>
+                                            <ul className="submenu">
+                                                {canSeeClienti && <li><NavLink to="/clienti">Clienti</NavLink></li>}
+                                                {canSeeFornitori && <li><NavLink to="/fornitori">Fornitori</NavLink></li>}
+                                                {canSeeDipendenti && <li><NavLink to="/dipendenti">Dipendenti</NavLink></li>}
+                                                {canSeeListini && <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>}
+                                                {canSeeTipiPagamento && <li><a href="#" onClick={(e) => { e.preventDefault(); setShowTipiPagamento(true); }}>Tipi pagamento</a></li>}
+                                                {canSeeUnitaMisura && <li><a href="#" onClick={(e) => { e.preventDefault(); setShowUnitaMisura(true); }}>Unità di misura</a></li>}
+                                                {canSeeAliquoteIva && <li><a href="#" onClick={(e) => { e.preventDefault(); setShowAliquoteIva(true); }}>Aliquote IVA</a></li>}
+                                            </ul>
+                                        </li>
+                                    )}
 
-                                    {isAllowedByPlan(4) && (
+                                    {isAllowedByPlan(4) && checkRole(['ROLE_ACCOUNTING']) && (
                                         <li className={openMenus['statistiche'] ? 'open' : ''}>
                                             <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('statistiche'); }}>
                                                 <span className="icon-container"><FaChartBar /></span>
@@ -284,24 +323,24 @@ const Sidebar = ({ user }) => {
                                         </li>
                                     )}
 
-                                    <li className={openMenus['configurazione'] ? 'open' : ''}>
-                                        <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('configurazione'); }}>
-                                            <span className="icon-container"><FaWrench /></span>
-                                            <span className="text">Configurazione</span>
-                                            <FaAngleRight className="drop-icon" />
-                                        </a>
-                                        <ul className="submenu">
-                                            <li><NavLink to="/configurazione/dati-azienda">Dati azienda</NavLink></li>
-                                            <li><NavLink to="/configurazione/dati-generali">Impostazioni Generali</NavLink></li>
-                                            <li><NavLink to="/configurazione/fatturazione">Fatturazione</NavLink></li>
-                                            <li><NavLink to="/configurazione/documenti">Documenti</NavLink></li>
-                                            <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
-                                            <li><NavLink to="/configurazione/ecommerce">Integrazione E-commerce</NavLink></li>
-                                            {(authService.getConfig()?.role === 'ROLE_ADMIN') && (
+                                    {checkRole(['ROLE_ADMIN']) && (
+                                        <li className={openMenus['configurazione'] ? 'open' : ''}>
+                                            <a href="#" className="dropdown-toggle" onClick={(e) => { e.preventDefault(); toggleMenu('configurazione'); }}>
+                                                <span className="icon-container"><FaWrench /></span>
+                                                <span className="text">Configurazione</span>
+                                                <FaAngleRight className="drop-icon" />
+                                            </a>
+                                            <ul className="submenu">
+                                                <li><NavLink to="/configurazione/dati-azienda">Dati azienda</NavLink></li>
+                                                <li><NavLink to="/configurazione/dati-generali">Impostazioni Generali</NavLink></li>
+                                                <li><NavLink to="/configurazione/fatturazione">Fatturazione</NavLink></li>
+                                                <li><NavLink to="/configurazione/documenti">Documenti</NavLink></li>
+                                                <li><NavLink to="/configurazione/listini">Gestione listini</NavLink></li>
+                                                <li><NavLink to="/configurazione/ecommerce">Integrazione E-commerce</NavLink></li>
                                                 <li><NavLink to="/configurazione/utenti">Gestione Utenti</NavLink></li>
-                                            )}
-                                        </ul>
-                                    </li>
+                                            </ul>
+                                        </li>
+                                    )}
                                 </>
                             )}
 

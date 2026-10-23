@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { FaShieldAlt, FaChartPie, FaShoppingCart, FaBoxOpen, FaAngleDown, FaAngleUp } from 'react-icons/fa';
+import { FaShieldAlt, FaChartPie, FaShoppingCart, FaBoxOpen, FaAngleDown, FaAngleUp, FaBoxes } from 'react-icons/fa';
 
 const AccordionItem = ({ title, icon, color, description, features, restrictions, isOpen, onClick }) => {
     return (
@@ -129,6 +129,20 @@ const RuoliHelpModal = ({ show, onHide }) => {
                             restrictions="Blocco verso valori finanziari, Fatture, Prima Nota e Statistiche economiche. Nessun accesso alla rubrica Clienti slegata dai DDT."
                             isOpen={openKey === 3}
                             onClick={() => toggleOpen(3)}
+                        />
+
+                        <AccordionItem 
+                            title="WAREHOUSE_OPERATOR (Operatore Magazzino)" 
+                            icon={<FaBoxes />} 
+                            color="#16a085"
+                            description="Profilo operativo ristretto: gestione delle sole giacenze e movimentazione articoli, senza documenti o dati finanziari."
+                            features={[
+                                <React.Fragment><strong>Gestione Merci:</strong> Ricerca, consultazione e inserimento nel catalogo "Articoli".</React.Fragment>,
+                                <React.Fragment><strong>Magazzino:</strong> Pieno accesso a Movimenti di carico/scarico, Inventario giacenze, Ubicazioni e Marche.</React.Fragment>
+                            ]}
+                            restrictions="Nessun accesso ai Documenti logistici (DDT, Bolle, Ordini fornitore), né ad anagrafiche Fornitori/Clienti, fatture, contabilità o impostazioni."
+                            isOpen={openKey === 4}
+                            onClick={() => toggleOpen(4)}
                         />
 
                     </div>
