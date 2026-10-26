@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Select from 'react-select';
 import AsyncSelect from 'react-select/async';
 import AsyncCreatableSelect from 'react-select/async-creatable';
 import FornitoriService from '../../services/FornitoriService';
@@ -63,7 +64,7 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
 
     const loadLocations = async () => {
         try {
-            const res = await UbicazioniService.getList({ start: 0, length: 200, search: '' });
+            const res = await UbicazioniService.getList({ start: 0, length: 1000, search: '' });
             setAvailableLocations(res.data?.list || []);
         } catch (err) {
             console.error("Errore caricamento ubicazioni", err);
@@ -150,6 +151,11 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
     const totaleUbicato = ubicazioniRows.reduce((sum, r) => sum + (parseFloat(r.quantita) || 0), 0);
     const rimanenza = caricoQty - totaleUbicato;
     const isOverallocated = formData.quantita && totaleUbicato > caricoQty;
+
+    const ubicazioneOptions = availableLocations.map(u => ({
+        value: u.id,
+        label: `${u.codUbicazione}${u.corsia ? ` (Corsia ${u.corsia})` : ''}${u.descrizione ? ` - ${u.descrizione}` : ''}`
+    }));
 
     const handleSubmit = async () => {
         if (!formData.dataOperazione || !formData.quantita) {
@@ -502,7 +508,7 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
                                 </p>
 
                                 {/* Tabella righe ubicazioni */}
-                                <div className="table-responsive" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', marginBottom: '12px' }}>
+                                <div className="table-responsive" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'visible', marginBottom: '12px' }}>
                                     <table className="table" style={{ marginBottom: 0 }}>
                                         <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                                             <tr>
@@ -517,27 +523,45 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
                                                 <tr key={idx} style={{ verticalAlign: 'middle', borderBottom: idx < ubicazioniRows.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
                                                     <td style={{ padding: '8px 14px' }}>
                                                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                            <select
-                                                                className="form-control"
-                                                                value={row.idUbicazione}
-                                                                onChange={(e) => handleUbicazioneRowChange(idx, 'idUbicazione', e.target.value)}
-                                                                style={{
-                                                                    borderTopRightRadius: 0,
-                                                                    borderBottomRightRadius: 0,
-                                                                    height: '38px',
-                                                                    fontSize: '13px'
-                                                                }}
-                                                            >
-                                                                <option value="">-- Seleziona Ubicazione --</option>
-                                                                {availableLocations.map(u => (
-                                                                    <option key={u.id} value={u.id}>
-                                                                        {u.codUbicazione} {u.corsia ? `(Corsia ${u.corsia})` : ''} {u.descrizione ? `- ${u.descrizione}` : ''}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
+                                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                                <Select
+                                                                    options={ubicazioneOptions}
+                                                                    value={ubicazioneOptions.find(opt => opt.value === Number(row.idUbicazione)) || null}
+                                                                    onChange={(selectedOption) => handleUbicazioneRowChange(idx, 'idUbicazione', selectedOption ? selectedOption.value : '')}
+                                                                    placeholder="Cerca o seleziona ubicazione..."
+                                                                    isClearable
+                                                                    isSearchable
+                                                                    noOptionsMessage={({ inputValue }) => !inputValue ? "Nessuna ubicazione disponibile" : `Nessuna ubicazione trovata per "${inputValue}"`}
+                                                                    menuPortalTarget={document.body}
+                                                                    styles={{
+                                                                        control: (base) => ({
+                                                                            ...base,
+                                                                            borderTopLeftRadius: '6px',
+                                                                            borderBottomLeftRadius: '6px',
+                                                                            borderTopRightRadius: '0px',
+                                                                            borderBottomRightRadius: '0px',
+                                                                            borderColor: '#cbd5e1',
+                                                                            minHeight: '38px',
+                                                                            height: '38px',
+                                                                            boxShadow: 'none',
+                                                                            fontSize: '13px'
+                                                                        }),
+                                                                        menuPortal: (base) => ({
+                                                                            ...base,
+                                                                            zIndex: 9999
+                                                                        })
+                                                                    }}
+                                                                />
+                                                            </div>
                                                             <WrenchModalButton
                                                                 ModalComponent={UbicazioniManagementModal}
                                                                 onClose={loadLocations}
+                                                                onSelect={(selectedUbi) => {
+                                                                    loadLocations();
+                                                                    if (selectedUbi && selectedUbi.id) {
+                                                                        handleUbicazioneRowChange(idx, 'idUbicazione', selectedUbi.id);
+                                                                    }
+                                                                }}
                                                                 title="Gestione Ubicazioni"
                                                             />
                                                         </div>

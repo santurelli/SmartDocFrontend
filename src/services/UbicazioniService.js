@@ -34,6 +34,11 @@ class UbicazioniService {
         return api.delete(`/ubicazioni/prodotto/${id}`);
     }
 
+    async prelievo(data) {
+        const response = await api.post('/ubicazioni/prelievo', data);
+        return response.data;
+    }
+
     async stampaPrelievo(data) {
         const response = await api.post('/ubicazioni/stampa-prelievo', data);
         const resData = response.data;
@@ -51,13 +56,16 @@ class UbicazioniService {
                 };
             } catch (err) {
                 console.warn('Errore chiamata diretta al PrinterBridge:', err);
-                throw new Error(`Impossibile comunicare con il PrinterBridge su ${bridgeUrl}. Verifica che sia avviato.`);
+                return {
+                    success: true,
+                    warning: `Giacenze aggiornate con successo, ma non è stato possibile comunicare con il PrinterBridge su ${bridgeUrl}. Verifica che sia avviato.`
+                };
             }
         }
 
         return {
             success: true,
-            message: resData?.message || 'Stampa inviata con successo'
+            message: resData?.message || 'Operazione completata con successo'
         };
     }
 }

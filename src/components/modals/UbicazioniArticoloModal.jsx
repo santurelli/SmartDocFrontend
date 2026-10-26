@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import UbicazioniService from '../../services/UbicazioniService';
 import Swal from 'sweetalert2';
-import { FaPrint, FaMapMarkerAlt, FaCogs } from 'react-icons/fa';
+import { FaPrint, FaMapMarkerAlt, FaCogs, FaBoxes } from 'react-icons/fa';
 import UbicazioniManagementModal from './UbicazioniManagementModal';
 
 const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) => {
@@ -11,9 +11,11 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
     const [quantitiesToPick, setQuantitiesToPick] = useState({});
     const [scaricaGiacenza, setScaricaGiacenza] = useState(true);
     const [showUbicazioniManagement, setShowUbicazioniManagement] = useState(false);
+    const [currentGiacenza, setCurrentGiacenza] = useState(article?.quantitaEsistente || 0);
 
     useEffect(() => {
         if (show && article?.id) {
+            setCurrentGiacenza(article.quantitaEsistente || 0);
             loadData();
         }
     }, [show, article]);
@@ -68,8 +70,8 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
         return sum + q;
     }, 0);
 
-    const handleStampaPrelievo = async () => {
-        const itemsToPick = locations
+    const getItemsToPick = () => {
+        return locations
             .map(loc => {
                 const qty = parseFloat(quantitiesToPick[loc.id]) || 0;
                 return {
@@ -85,6 +87,60 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                 };
             })
             .filter(item => item.quantita > 0);
+    };
+
+    const handleSoloPrelievo = async () => {
+        const itemsToPick = getItemsToPick();
+
+        if (itemsToPick.length === 0) {
+            Swal.fire('Attenzione', 'Inserisci una quantità da prelevare maggiore di 0 per almeno una ubicazione.', 'warning');
+            return;
+        }
+
+        for (const it of itemsToPick) {
+            if (it.quantita > it.maxAvailable) {
+                Swal.fire('Attenzione', `La quantità da prelevare per ${it.codUbicazione} (${it.quantita} pz) non può superare la giacenza disponibile (${it.maxAvailable} pz).`, 'warning');
+                return;
+            }
+        }
+
+        setPrinting(true);
+        try {
+            const result = await UbicazioniService.prelievo({
+                idProdotto: article.id,
+                items: itemsToPick
+            });
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Prelievo Effettuato',
+                text: result.message || `Prelievo di ${totalSelectedQty} pz registrato con successo. Giacenza generale e ubicazioni aggiornate.`,
+                timer: 3000,
+                showConfirmButton: false
+            });
+
+            const newTotal = Math.max(0, currentGiacenza - totalSelectedQty);
+            setCurrentGiacenza(newTotal);
+            if (article) {
+                article.quantitaEsistente = newTotal;
+            }
+
+            loadData();
+            if (refreshList) refreshList();
+        } catch (err) {
+            console.error("Errore durante il prelievo", err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore durante il prelievo',
+                text: err.response?.data || err.message || 'Impossibile completare il prelievo'
+            });
+        } finally {
+            setPrinting(false);
+        }
+    };
+
+    const handleStampaPrelievo = async () => {
+        const itemsToPick = getItemsToPick();
 
         if (itemsToPick.length === 0) {
             Swal.fire('Attenzione', 'Inserisci una quantità da prelevare maggiore di 0 per almeno una ubicazione.', 'warning');
@@ -108,18 +164,31 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
             });
 
             const successMsg = scaricaGiacenza
-                ? `Scheda di prelievo inviata (${totalSelectedQty} pz). Le giacenze delle ubicazioni sono state aggiornate.`
+                ? `Scheda di prelievo inviata (${totalSelectedQty} pz). Giacenza generale e ubicazioni aggiornate.`
                 : `Scheda di prelievo inviata alla stampante (${totalSelectedQty} pz).`;
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Stampa Inviata!',
-                text: result.message || successMsg,
-                timer: 3000,
-                showConfirmButton: false
-            });
+            if (result.warning) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Giacenze Aggiornate',
+                    text: result.warning
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Stampa Inviata!',
+                    text: result.message || successMsg,
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
 
             if (scaricaGiacenza) {
+                const newTotal = Math.max(0, currentGiacenza - totalSelectedQty);
+                setCurrentGiacenza(newTotal);
+                if (article) {
+                    article.quantitaEsistente = newTotal;
+                }
                 loadData();
                 if (refreshList) refreshList();
             }
@@ -127,8 +196,8 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
             console.error("Errore durante la stampa", err);
             Swal.fire({
                 icon: 'error',
-                title: 'Errore di Stampa',
-                text: err.message || 'Impossibile inviare la stampa al PrinterBridge. Verifica che sia attivo sulla porta 3001.'
+                title: 'Errore',
+                text: err.message || 'Impossibile completare l\'operazione.'
             });
         } finally {
             setPrinting(false);
@@ -188,7 +257,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                                         Giacenza Totale
                                     </span>
                                     <span className="badge" style={{ backgroundColor: '#10b981', fontSize: '13px', padding: '6px 12px', borderRadius: '12px', fontWeight: 600 }}>
-                                        {(article?.quantitaEsistente || 0).toFixed(0)} pz
+                                        {(currentGiacenza || 0).toFixed(0)} pz
                                     </span>
                                 </div>
                             </div>
@@ -218,7 +287,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                                 <strong style={{ fontSize: '15px' }}>Nessuna ubicazione assegnata a questo articolo.</strong>
                                 <div style={{ marginTop: '8px', fontSize: '13px', color: '#475569' }}>
                                     L'ubicazione e il DOT vengono registrati durante il <strong>Carico di Magazzino</strong>.<br />
-                                    Una volta caricata la merce, qui potrai indicare le quantità da prelevare e stampare la <strong>Scheda di Prelievo</strong>.
+                                    Una volta caricata la merce, qui potrai indicare le quantità da prelevare e scaricare la giacenza.
                                 </div>
                             </div>
                         ) : (
@@ -235,7 +304,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                                     </thead>
                                     <tbody>
                                         {locations.map(loc => (
-                                            <tr key={loc.id}>
+                                             <tr key={loc.id}>
                                                 <td>
                                                     <strong style={{ color: '#2980b9' }}>{loc.codUbicazione}</strong>
                                                     {loc.descUbicazione && <small className="text-muted" style={{ display: 'block', marginTop: '2px' }}>{loc.descUbicazione}</small>}
@@ -288,7 +357,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                                     onChange={(e) => setScaricaGiacenza(e.target.checked)}
                                     style={{ margin: 0, width: '15px', height: '15px', cursor: 'pointer' }}
                                 />
-                                Scala giacenza dalle ubicazioni al prelievo
+                                Scala giacenza (ubicazioni e generale)
                             </label>
                         </div>
                         <div style={{ display: 'flex', gap: '10px' }}>
@@ -297,10 +366,21 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                             </button>
                             <button
                                 type="button"
+                                className="btn btn-primary"
+                                onClick={handleSoloPrelievo}
+                                disabled={printing || locations.length === 0 || totalSelectedQty <= 0}
+                                style={{ borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', padding: '6px 14px' }}
+                                title="Preleva la merce aggiornando le ubicazioni e la giacenza generale senza stampare"
+                            >
+                                <FaBoxes /> {printing ? 'Attendere...' : 'Solo Prelievo'}
+                            </button>
+                            <button
+                                type="button"
                                 className="btn btn-success"
                                 onClick={handleStampaPrelievo}
                                 disabled={printing || locations.length === 0 || totalSelectedQty <= 0}
                                 style={{ borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', padding: '6px 16px' }}
+                                title="Stampa la scheda di prelievo e scala le giacenze"
                             >
                                 <FaPrint /> {printing ? 'Invio Stampa...' : 'Stampa Scheda Prelievo'}
                             </button>
@@ -316,4 +396,3 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
 };
 
 export default UbicazioniArticoloModal;
-

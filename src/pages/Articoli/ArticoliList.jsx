@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import ArticoliService from '../../services/ArticoliService';
 import CategorieArticoliService from '../../services/CategorieArticoliService';
 import { useNavigate } from 'react-router-dom';
-import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash, FaHome, FaAngleRight, FaMapMarkerAlt, FaFilter, FaEraser, FaTags, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaPlusCircle, FaSearch, FaChevronLeft, FaChevronRight, FaEdit, FaCog, FaTrash, FaHome, FaAngleRight, FaMapMarkerAlt, FaFilter, FaEraser, FaTags, FaSort, FaSortUp, FaSortDown, FaPrint } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import FornitoriService from '../../services/FornitoriService';
 import AuthService from '../../services/authService';
@@ -217,19 +218,29 @@ const ArticoliList = () => {
             return;
         }
         const rect = e.currentTarget.getBoundingClientRect();
-        const menuWidth = 250;
-        const estimatedMenuHeight = 260;
+        const menuWidth = 260;
+        const estimatedMenuHeight = 340;
 
         const spaceBelow = window.innerHeight - rect.bottom;
         const spaceAbove = rect.top;
-        const openUp = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow;
+        const openUp = (spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow) || (spaceBelow < 220 && spaceAbove >= 220);
+
+        let left = rect.right - menuWidth;
+        if (left < 10) left = 10;
+        if (left + menuWidth > window.innerWidth - 10) {
+            left = Math.max(10, window.innerWidth - menuWidth - 10);
+        }
+
+        const maxHeight = openUp 
+            ? Math.max(140, spaceAbove - 20) 
+            : Math.max(140, spaceBelow - 20);
 
         setDropdownPosition({
             openUp,
             top: openUp ? 'auto' : (rect.bottom + 5),
             bottom: openUp ? (window.innerHeight - rect.top + 5) : 'auto',
-            left: Math.max(10, rect.right - menuWidth),
-            maxHeight: openUp ? Math.max(160, spaceAbove - 20) : Math.max(160, spaceBelow - 20)
+            left,
+            maxHeight
         });
         setActiveDropdownId(art.id);
     };
@@ -414,6 +425,38 @@ const ArticoliList = () => {
             dot: '',
             scultura: ''
         }));
+    };
+
+    const formatArticleTitle = (art) => {
+        if (!art) return '';
+        const isTire = Boolean(art.sezione || art.diametro || art.scultura || art.dot);
+        if (isTire || config.isGommista) {
+            const parts = [];
+            if (art.sezione && art.serie) {
+                parts.push(`${art.sezione}/${art.serie}`);
+            } else if (art.sezione) {
+                parts.push(art.sezione);
+            }
+            if (art.diametro) {
+                parts.push(`R${art.diametro}`);
+            }
+            if (art.indiceVelocita) {
+                parts.push(art.indiceVelocita);
+            }
+            if (art.scultura) {
+                parts.push(art.scultura);
+            }
+            const tireSpec = parts.join(' ').trim();
+            let primaryText = tireSpec || art.descrizione || '';
+            if (art.descMarca && !primaryText.toLowerCase().includes(art.descMarca.toLowerCase())) {
+                primaryText = `${art.descMarca} ${primaryText}`;
+            }
+            if (art.dot) {
+                primaryText += ` (DOT ${art.dot})`;
+            }
+            return `${art.codice} - ${primaryText}`;
+        }
+        return `${art.codice} - ${art.descrizione || ''}`;
     };
 
     return (
@@ -868,7 +911,7 @@ const ArticoliList = () => {
                                     )}
                                     <th onClick={() => handleSort(0)} style={{ cursor: 'pointer' }}>CODICE {renderSortIcon(0)}</th>
                                     <th onClick={() => handleSort(1)} style={{ cursor: 'pointer' }}>DESCRIZIONE {renderSortIcon(1)}</th>
-                                    <th style={{ textAlign: 'right' }}>PREZZO FORN.</th>
+                                    <th style={{ textAlign: 'right' }}>PREZZO VENDITA</th>
                                     <th onClick={() => handleSort(4)} style={{ cursor: 'pointer', textAlign: 'right' }}>ESISTENZA {renderSortIcon(4)}</th>
                                     <th onClick={() => handleSort(5)} style={{ cursor: 'pointer', textAlign: 'right' }}>DISPONIBILE {renderSortIcon(5)}</th>
                                     <th style={{ width: '1%' }}></th>
@@ -946,18 +989,20 @@ const ArticoliList = () => {
                                                 })()}
                                             </td>
                                             <td className="text-right" style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
-                                                <button
-                                                    type="button"
-                                                    className="btn-quick-price"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleOpenPrezziModal(art);
-                                                    }}
-                                                    title="Visualizza rapidamente prezzi e listini di vendita"
-                                                >
-                                                    <span>{(art.prezzoFornitore || 0).toFixed(2)} €</span>
-                                                    <FaTags className="quick-price-icon" />
-                                                </button>
+                                                {art.prezzoListinoVendita != null ? (
+                                                    <button
+                                                        type="button"
+                                                        className="btn-quick-price"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenPrezziModal(art);
+                                                        }}
+                                                        title="Visualizza rapidamente prezzi e listini di vendita"
+                                                    >
+                                                        <span>{Number(art.prezzoListinoVendita).toFixed(2)} €</span>
+                                                        <FaTags className="quick-price-icon" />
+                                                    </button>
+                                                ) : null}
                                             </td>
                                             <td className="text-right">
                                                 { (art.tipologia === 'AM' || art.tipologia === 'AMSC') ? 
@@ -1034,8 +1079,8 @@ const ArticoliList = () => {
                 </div>
             </div>
 
-            {/* Fixed Dropdown Menu */}
-            {activeDropdownId && (
+            {/* Fixed Dropdown Menu rendered via Portal */}
+            {activeDropdownId && createPortal(
                 (() => {
                     const art = articoli.find(a => a.id === activeDropdownId);
                     if (!art) return null;
@@ -1050,6 +1095,8 @@ const ArticoliList = () => {
                                 top: dropdownPosition.top,
                                 bottom: dropdownPosition.bottom,
                                 left: dropdownPosition.left,
+                                width: '260px',
+                                right: 'auto',
                                 maxHeight: dropdownPosition.maxHeight,
                                 overflowY: 'auto',
                                 zIndex: 9999,
@@ -1060,7 +1107,16 @@ const ArticoliList = () => {
                                 borderRadius: '6px'
                             }}
                         >
-                            <div className="dropdown-item" onClick={() => navigate(`/articoli/${art.id}`)}>Modifica</div>
+                            <div className="dropdown-item" onClick={() => { setActiveDropdownId(null); navigate(`/articoli/${art.id}`); }}>
+                                Modifica
+                            </div>
+                            
+                            {config.hasUbicazioni && (
+                                <div className="dropdown-item" onClick={() => handleUbicazioniClick(art)}>
+                                    <FaPrint className="mr-2" /> Stampa scheda di prelievo
+                                </div>
+                            )}
+
                             <div className="dropdown-item" onClick={() => handleOpenPrezziModal(art)} style={{ color: '#0284c7', fontWeight: '500' }}>
                                 <FaTags className="mr-2" /> Prezzi di vendita
                             </div>
@@ -1072,21 +1128,15 @@ const ArticoliList = () => {
                                     <div className="dropdown-item" onClick={() => handleScaricoClick(art)}>Scarica</div>
                                     <div className="dropdown-item" onClick={() => handleRettificaClick(art)}>Rettifica</div>
                                     <div className="dropdown-divider"></div>
-                                    <div className="dropdown-item" onClick={() => navigate('/articoli/movimenti', { state: { filterByArticle: { value: art.id, label: `${art.codice} - ${art.descrizione}` } } })}>Movimenti magazzino</div>
-                                </>
-                            )}
-
-                            {config.hasUbicazioni && (
-                                <>
-                                    <div className="dropdown-divider"></div>
-                                    <div className="dropdown-item" onClick={() => handleUbicazioniClick(art)} style={{ color: '#27ae60', fontWeight: '500' }}>
-                                        <FaMapMarkerAlt className="mr-2" /> Ubicazioni & Prelievo
+                                    <div className="dropdown-item" onClick={() => { setActiveDropdownId(null); navigate('/articoli/movimenti', { state: { filterByArticle: { value: art.id, label: formatArticleTitle(art) } } }); }}>
+                                        Movimenti magazzino
                                     </div>
                                 </>
                             )}
                         </div>
                     );
-                })()
+                })(),
+                document.body
             )}
         </div>
     );
