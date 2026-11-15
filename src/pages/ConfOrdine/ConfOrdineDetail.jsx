@@ -252,7 +252,7 @@ const ConfOrdineDetail = () => {
                     particelle: (payload.PARTICELLE || payload.particelle || prev.particelle || []).flatMap(p => typeof p === 'string' ? p.split(',').map(s => s.trim()).filter(Boolean) : p),
                     listini: payload.LISTINI || payload.listini || prev.listini,
                     tipiPagamento: payload.TIPIPAGAMENTO || payload.tipiPagamento || prev.tipiPagamento,
-                    risorse: payload.BANCHE || payload.risorse || prev.risorse,
+                    risorse: payload.RISORSE || payload.BANCHE || payload.risorse || prev.risorse,
                     aliquoteIva: payload.ALIQUOTEIVA || payload.aliquoteIva || prev.aliquoteIva,
                     unitaMisura: payload.UNITAMISURA || payload.unitaMisura || prev.unitaMisura,
                     vettori: payload.VETTORI || payload.vettori || prev.vettori,

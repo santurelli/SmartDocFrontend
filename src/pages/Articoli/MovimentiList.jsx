@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import MovimentiMagazzinoService from '../../services/MovimentiMagazzinoService';
 import ArticoliService from '../../services/ArticoliService';
 import ConfigurazioneService from '../../services/ConfigurazioneService';
 import MarcheService from '../../services/MarcheService';
 import DownloadProgress from '../../components/DownloadProgress';
-import { FaSearch, FaChevronLeft, FaChevronRight, FaFileExcel, FaCloudDownloadAlt, FaHome, FaAngleRight, FaFilter, FaEraser } from 'react-icons/fa';
+import { FaSearch, FaChevronLeft, FaChevronRight, FaFileExcel, FaCloudDownloadAlt, FaHome, FaAngleRight, FaFilter, FaEraser, FaTrash, FaEdit, FaSync, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import { useLocation } from 'react-router-dom';
 import AsyncSelect from 'react-select/async';
 import Select from 'react-select';
 import Swal from 'sweetalert2';
+import ModificaMovimentoModal from '../../components/modals/ModificaMovimentoModal';
 import './ArticoliList.css'; // Reusing Articoli CSS
 
 import storageHelper from '../../utils/storageHelper';
-import { getDefaultSearchRange } from '../../utils/dateUtils';
+import { getDefaultSearchRange, formatDate, getDaysAgo } from '../../utils/dateUtils';
 
 const MODULE_NAME = 'movimenti';
 
@@ -26,7 +27,9 @@ const MovimentiList = () => {
         dtTo: defaultRange.dataA,
         page: 0,
         pageSize: 50,
-        selectedArticle: null
+        selectedArticle: null,
+        sortCol: 'data_movimento',
+        sortDir: 'desc'
     });
 
     // Check if navigated from an article menu (location.state takes precedence)
@@ -38,6 +41,8 @@ const MovimentiList = () => {
     const [downloading, setDownloading] = useState(false);
     const [page, setPage] = useState(initialState.page || 0);
     const [pageSize, setPageSize] = useState(initialState.pageSize || 50);
+    const [sortCol, setSortCol] = useState(initialState.sortCol || 'data_movimento');
+    const [sortDir, setSortDir] = useState(initialState.sortDir || 'desc');
 
     // Filters: if coming from article menu, default to 365 days of history so movements are not cut off
     const [dtFrom, setDtFrom] = useState(() => (navArticle ? getDefaultSearchRange(365).dataDa : (initialState.dtFrom || defaultRange.dataDa)));
@@ -46,7 +51,10 @@ const MovimentiList = () => {
 
     // Tyre Management Config & Filters
     const [isGommista, setIsGommista] = useState(false);
+    const [hasUbicazioni, setHasUbicazioni] = useState(false);
     const [marcheList, setMarcheList] = useState([]);
+    const [selectedMovimentoForEdit, setSelectedMovimentoForEdit] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [tireFilters, setTireFilters] = useState({
         idMarca: '',
         sezione: '',
@@ -69,17 +77,22 @@ const MovimentiList = () => {
             const data = res.data?.payload || res.data || [];
             let tipoStore = '';
             let gommistaVal = '0';
+            let ubiVal = '0';
             if (Array.isArray(data)) {
                 const ts = data.find(c => c.chiave === 'TIPO_STORE');
                 if (ts) tipoStore = ts.valore;
                 const g = data.find(c => c.chiave === 'GOMMISTA');
                 if (g) gommistaVal = g.valore;
+                const u = data.find(c => c.chiave === 'UBICAZIONI');
+                if (u) ubiVal = u.valore;
             } else {
                 tipoStore = data['GLOBAL:TIPO_STORE'] || data['TIPO_STORE'] || '';
                 gommistaVal = data['GLOBAL:GOMMISTA'] || data['GOMMISTA'] || '0';
+                ubiVal = data['GLOBAL:UBICAZIONI'] || data['UBICAZIONI'] || '0';
             }
             const gommista = (tipoStore === 'PNEUMATICI' || tipoStore === 'GOMMISTA' || gommistaVal === '1');
             setIsGommista(gommista);
+            setHasUbicazioni(gommista || ubiVal === '1');
         }).catch(err => {
             console.error("Error loading config in MovimentiList", err);
         });
@@ -92,9 +105,11 @@ const MovimentiList = () => {
             dtTo,
             page,
             pageSize,
-            selectedArticle
+            selectedArticle,
+            sortCol,
+            sortDir
         });
-    }, [dtFrom, dtTo, page, pageSize, selectedArticle]);
+    }, [dtFrom, dtTo, page, pageSize, selectedArticle, sortCol, sortDir]);
 
     // Handle incoming navigation state updates (e.g. repeated navigation)
     useEffect(() => {
@@ -137,7 +152,8 @@ const MovimentiList = () => {
                 length: 40,
                 search: inputValue || '',
                 orderColumn: 1,
-                orderDir: 'asc'
+                orderDir: 'asc',
+                includeDeleted: true
             };
 
             // Smart parse: e.g. "205/55" or "205 55"
@@ -162,7 +178,7 @@ const MovimentiList = () => {
             const list = res.data?.list || [];
             return list.map(a => ({
                 value: a.id,
-                label: formatTireLabel(a),
+                label: formatTireLabel(a) + (a.flDeleted === 1 ? ' (Eliminato)' : ''),
                 article: a
             }));
         } catch (e) {
@@ -183,49 +199,113 @@ const MovimentiList = () => {
             scultura: ''
         });
         setSelectedArticle(null);
+        if (!dtFrom && !dtTo) {
+            setDtFrom(getDaysAgo(30));
+            setDtTo(formatDate(new Date()));
+        }
         setPage(0);
+    };
+
+    const handleQuickRange = (rangeKey) => {
+        const todayStr = formatDate(new Date());
+        if (rangeKey === '30d') {
+            setDtFrom(getDaysAgo(30));
+            setDtTo(todayStr);
+        } else if (rangeKey === '90d') {
+            setDtFrom(getDaysAgo(90));
+            setDtTo(todayStr);
+        } else if (rangeKey === 'year') {
+            const currentYear = new Date().getFullYear();
+            setDtFrom(`${currentYear}-01-01`);
+            setDtTo(todayStr);
+        } else if (rangeKey === '365d') {
+            setDtFrom(getDaysAgo(365));
+            setDtTo(todayStr);
+        } else if (rangeKey === 'all') {
+            if (!selectedArticle) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Selezione articolo richiesta',
+                    text: 'Per consultare tutto lo storico è necessario selezionare prima un articolo specifico per preservare le prestazioni.'
+                });
+                return;
+            }
+            setDtFrom('');
+            setDtTo('');
+        }
+        setPage(0);
+    };
+
+    const currentPreset = useMemo(() => {
+        if (!dtFrom && !dtTo) return 'all';
+        const todayStr = formatDate(new Date());
+        if (dtTo === todayStr) {
+            if (dtFrom === getDaysAgo(30)) return '30d';
+            if (dtFrom === getDaysAgo(90)) return '90d';
+            const currentYear = new Date().getFullYear();
+            if (dtFrom === `${currentYear}-01-01`) return 'year';
+            if (dtFrom === getDaysAgo(365)) return '365d';
+        }
+        return 'custom';
+    }, [dtFrom, dtTo]);
+
+    const isDateRangeInvalid = Boolean(dtFrom && dtTo && dtFrom > dtTo);
+    const requiresArticleForFullHistory = Boolean(!selectedArticle && !dtFrom && !dtTo);
+
+    const handleSort = (column) => {
+        if (sortCol === column) {
+            setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortCol(column);
+            setSortDir('asc');
+        }
+        setPage(0);
+    };
+
+    const renderSortIcon = (column) => {
+        if (sortCol !== column) {
+            return <FaSort style={{ color: '#94a3b8', marginLeft: '5px', fontSize: '11px', verticalAlign: 'middle' }} />;
+        }
+        return sortDir === 'asc' 
+            ? <FaSortUp style={{ color: '#27ae60', marginLeft: '5px', fontSize: '12px', verticalAlign: 'middle' }} /> 
+            : <FaSortDown style={{ color: '#27ae60', marginLeft: '5px', fontSize: '12px', verticalAlign: 'middle' }} />;
     };
 
     // Fetch movements (protected against race conditions)
     useEffect(() => {
-        if (dtFrom && dtTo) {
+        if (!isDateRangeInvalid && !requiresArticleForFullHistory) {
             fetchMovimenti();
+        } else if (requiresArticleForFullHistory) {
+            setMovimenti([]);
+            setTotalCount(0);
         }
-    }, [page, pageSize, dtFrom, dtTo, selectedArticle]);
+    }, [page, pageSize, dtFrom, dtTo, selectedArticle, isDateRangeInvalid, requiresArticleForFullHistory, sortDir, sortCol]);
 
     const fetchMovimenti = async () => {
-        // Validate Date Range
-        if (dtFrom && dtTo) {
-            const date1 = new Date(dtFrom);
-            const date2 = new Date(dtTo);
-            const diffTime = Math.abs(date2 - date1);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 365) {
-                Swal.fire('Attenzione', 'L\'intervallo di ricerca non può superare i 365 giorni.', 'warning');
-                return;
-            }
-            if (date1 > date2) {
-                Swal.fire('Attenzione', 'La data di inizio non può essere successiva alla data di fine.', 'warning');
-                return;
-            }
+        if (isDateRangeInvalid || requiresArticleForFullHistory) {
+            return;
         }
 
         const currentSeq = ++requestSeqRef.current;
         setLoading(true);
         try {
-            const formatDate = (isoDate) => {
-                if (!isoDate) return '';
-                const [yyyy, mm, dd] = isoDate.split('-');
-                return `${dd}/${mm}/${yyyy}`;
+            const formatToApiDate = (isoDate) => {
+                if (!isoDate) return null;
+                const parts = isoDate.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return null;
             };
 
             const response = await MovimentiMagazzinoService.list({
                 start: page * pageSize,
                 length: pageSize,
-                dtFrom: formatDate(dtFrom),
-                dtTo: formatDate(dtTo),
-                idProdotto: selectedArticle ? selectedArticle.value : null
+                dtFrom: formatToApiDate(dtFrom),
+                dtTo: formatToApiDate(dtTo),
+                idProdotto: selectedArticle ? selectedArticle.value : null,
+                orderDir: sortDir,
+                orderColumn: sortCol
             });
 
             // Discard response if a newer request was initiated
@@ -258,24 +338,96 @@ const MovimentiList = () => {
         }
     };
 
+    const handleDeleteMovimento = async (m) => {
+        const movId = m.id || m.idDocumento;
+        if (!movId) {
+            Swal.fire('Attenzione', 'Impossibile identificare il movimento per lo storno.', 'warning');
+            return;
+        }
+
+        const isCarico = m.tipoMovimento === 'I';
+        const qtaVal = isCarico ? m.quantitaCarico : m.quantitaScarico;
+        const qtaText = `${qtaVal ? qtaVal.toFixed(2) : (m.quantita || 0)} pz (${isCarico ? 'CARICO' : 'SCARICO'})`;
+        const artText = formatTireLabel(m);
+
+        const confirm = await Swal.fire({
+            title: isCarico ? 'Stornare Carico?' : 'Stornare Movimento?',
+            html: `
+                <div style="text-align: left; font-size: 13px;">
+                    <p>Stai per stornare il seguente movimento manuale di magazzino:</p>
+                    <ul style="margin: 8px 0; padding-left: 20px;">
+                        <li><strong>Articolo:</strong> ${artText}</li>
+                        <li><strong>Quantità:</strong> ${qtaText}</li>
+                        <li><strong>Data:</strong> ${m.dataMovimento}</li>
+                        <li><strong>Causale:</strong> ${m.causale || '-'}</li>
+                    </ul>
+                    <p style="color: #dc2626; font-size: 12px; margin-top: 10px;">
+                        ⚠️ L'operazione cancellerà questo movimento e riallineerà immediatamente la giacenza generale di magazzino.
+                    </p>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sì, storna ed elimina',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            await MovimentiMagazzinoService.delete(movId);
+            Swal.fire({
+                icon: 'success',
+                title: 'Movimento Stornato',
+                text: 'Il movimento è stato eliminato e la giacenza di magazzino è stata riallineata con successo.',
+                timer: 2500,
+                showConfirmButton: false
+            });
+            fetchMovimenti();
+        } catch (err) {
+            console.error("Errore durante lo storno del movimento", err);
+            Swal.fire('Errore', 'Impossibile completare lo storno del movimento', 'error');
+        }
+    };
+
+    const handleEditMovimento = (m) => {
+        setSelectedMovimentoForEdit(m);
+        setShowEditModal(true);
+    };
+
     const handlePageSizeChange = (e) => {
         setPageSize(parseInt(e.target.value, 10));
         setPage(0);
     };
 
     const handleExport = async () => {
+        if (isDateRangeInvalid) {
+            Swal.fire('Attenzione', 'La data di inizio non può essere successiva alla data di fine.', 'warning');
+            return;
+        }
+        if (requiresArticleForFullHistory) {
+            Swal.fire('Attenzione', 'Per esportare tutto lo storico è necessario selezionare un articolo, oppure specificare un intervallo di date.', 'warning');
+            return;
+        }
         setDownloading(true);
         try {
-            const formatDate = (isoDate) => {
-                if (!isoDate) return '';
-                const [yyyy, mm, dd] = isoDate.split('-');
-                return `${dd}/${mm}/${yyyy}`;
+            const formatToApiDate = (isoDate) => {
+                if (!isoDate) return null;
+                const parts = isoDate.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return null;
             };
 
             const criteria = {
-                dtFrom: formatDate(dtFrom),
-                dtTo: formatDate(dtTo),
-                idProdotto: selectedArticle ? selectedArticle.value : null
+                dtFrom: formatToApiDate(dtFrom),
+                dtTo: formatToApiDate(dtTo),
+                idProdotto: selectedArticle ? selectedArticle.value : null,
+                orderDir: sortDir,
+                orderColumn: sortCol
             };
 
             const response = await MovimentiMagazzinoService.exportExcel(criteria);
@@ -309,7 +461,7 @@ const MovimentiList = () => {
                 <div className="main-box-header">
                     <div className="filter-block-left">
                         <div style={{ marginRight: '10px' }}>
-                            <button className="btn btn-cloud" title="Esporta" onClick={handleExport} disabled={downloading}>
+                            <button className="btn btn-cloud" title="Esporta in Excel" onClick={handleExport} disabled={downloading || isDateRangeInvalid || requiresArticleForFullHistory}>
                                 {downloading ? <span className="fa fa-spinner fa-spin" /> : <FaCloudDownloadAlt />}
                             </button>
                         </div>
@@ -325,33 +477,79 @@ const MovimentiList = () => {
                         </div>
                     </div>
 
-                    <div className="filter-block-right" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
+                    <div className="filter-block-right" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Quick Presets Dropdown */}
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <select
+                                className="form-control"
+                                value={currentPreset}
+                                onChange={(e) => handleQuickRange(e.target.value)}
+                                style={{ height: '34px', fontSize: '12px', minWidth: '135px', fontWeight: 500 }}
+                                title="Filtro rapido periodo"
+                            >
+                                <option value="30d">Ultimi 30 giorni</option>
+                                <option value="90d">Ultimi 3 mesi</option>
+                                <option value="year">Anno in corso</option>
+                                <option value="365d">Ultimi 12 mesi</option>
+                                <option value="all" disabled={!selectedArticle}>
+                                    Tutto lo storico {!selectedArticle ? '(richiede articolo)' : ''}
+                                </option>
+                                {currentPreset === 'custom' && <option value="custom">Personalizzato</option>}
+                            </select>
+                        </div>
+
+                        {/* Dal */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: 0 }}>Dal:</label>
                             <input
                                 type="date"
                                 className="form-control"
                                 value={dtFrom}
                                 onChange={(e) => { setDtFrom(e.target.value); setPage(0); }}
-                                title="Dal"
+                                style={{
+                                    height: '34px',
+                                    fontSize: '12px',
+                                    width: '135px',
+                                    borderColor: isDateRangeInvalid ? '#ef4444' : undefined
+                                }}
+                                title="Data inizio ricerca"
                             />
                         </div>
-                        <div className="form-group" style={{ marginBottom: 0 }}>
+
+                        {/* Al */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: 0 }}>Al:</label>
                             <input
                                 type="date"
                                 className="form-control"
                                 value={dtTo}
                                 onChange={(e) => { setDtTo(e.target.value); setPage(0); }}
-                                title="Al"
+                                style={{
+                                    height: '34px',
+                                    fontSize: '12px',
+                                    width: '135px',
+                                    borderColor: isDateRangeInvalid ? '#ef4444' : undefined
+                                }}
+                                title="Data fine ricerca"
                             />
                         </div>
-                        <div className="form-group" style={{ marginBottom: 0, minWidth: '340px' }}>
+
+                        {/* Ricerca Articolo */}
+                        <div style={{ minWidth: '320px', flex: '1 1 250px' }}>
                             <AsyncSelect
                                 key={JSON.stringify(tireFilters)}
                                 cacheOptions
                                 defaultOptions
                                 loadOptions={loadArticleSuggestions}
                                 value={selectedArticle}
-                                onChange={(val) => { setSelectedArticle(val); setPage(0); }}
+                                onChange={(val) => {
+                                    setSelectedArticle(val);
+                                    if (!val && !dtFrom && !dtTo) {
+                                        setDtFrom(getDaysAgo(30));
+                                        setDtTo(formatDate(new Date()));
+                                    }
+                                    setPage(0);
+                                }}
                                 placeholder="Cerca articolo (codice, marca, misura)..."
                                 isClearable
                                 styles={{
@@ -362,6 +560,32 @@ const MovimentiList = () => {
                                 loadingMessage={() => "Caricamento articoli..."}
                             />
                         </div>
+
+                        {/* Pulsante Ricarica / Aggiorna */}
+                        <button
+                            type="button"
+                            className="btn btn-default"
+                            onClick={() => { if (!isDateRangeInvalid && !requiresArticleForFullHistory) fetchMovimenti(); }}
+                            disabled={loading || isDateRangeInvalid || requiresArticleForFullHistory}
+                            title="Aggiorna risultati"
+                            style={{ height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px' }}
+                        >
+                            <FaSync className={loading ? "fa-spin" : ""} />
+                        </button>
+
+                        {/* Segnalazione inline per intervallo invertito (senza bloccare con popup) */}
+                        {isDateRangeInvalid && (
+                            <div style={{ width: '100%', color: '#ef4444', fontSize: '12px', fontWeight: 600, textAlign: 'right', marginTop: '2px' }}>
+                                ⚠️ La data 'Dal' non può essere successiva alla data 'Al'
+                            </div>
+                        )}
+
+                        {/* Segnalazione inline per storico completo senza articolo */}
+                        {requiresArticleForFullHistory && (
+                            <div style={{ width: '100%', color: '#d97706', fontSize: '12px', fontWeight: 600, textAlign: 'right', marginTop: '2px' }}>
+                                ℹ️ La ricerca in tutto lo storico è disabilitata senza un articolo selezionato. Seleziona un articolo o imposta un intervallo di date.
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -543,20 +767,34 @@ const MovimentiList = () => {
                         <table className="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>DATA</th>
+                                    <th
+                                        onClick={() => handleSort('data_movimento')}
+                                        style={{ cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap' }}
+                                        title="Clicca per invertire l'ordinamento per data"
+                                    >
+                                        DATA {renderSortIcon('data_movimento')}
+                                    </th>
                                     <th>ARTICOLO</th>
                                     <th>DOC</th>
                                     <th>CLIENTE / FORNITORE</th>
                                     <th className="text-right" style={{ textAlign: 'right' }}>CARICATO</th>
                                     <th className="text-right" style={{ textAlign: 'right' }}>SCARICATO</th>
                                     <th>CAUSALE</th>
+                                    <th style={{ textAlign: 'center', width: '95px' }}>AZIONI</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
-                                    <tr><td colSpan="7" className="text-center">Caricamento movimenti...</td></tr>
+                                    <tr><td colSpan="8" className="text-center">Caricamento movimenti...</td></tr>
+                                ) : requiresArticleForFullHistory ? (
+                                    <tr>
+                                        <td colSpan="8" className="text-center" style={{ color: '#d97706', padding: '24px 0', fontSize: '13px' }}>
+                                            <FaFilter style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                                            Seleziona un articolo oppure imposta un intervallo di date per visualizzare i movimenti.
+                                        </td>
+                                    </tr>
                                 ) : movimenti.length === 0 ? (
-                                    <tr><td colSpan="7" className="text-center">Nessun movimento trovato per i criteri selezionati.</td></tr>
+                                    <tr><td colSpan="8" className="text-center">Nessun movimento trovato per i criteri selezionati.</td></tr>
                                 ) : (
                                     movimenti.map((m, index) => (
                                         <tr key={m.id || index}>
@@ -566,6 +804,11 @@ const MovimentiList = () => {
                                                     <span style={{ fontWeight: '600', color: '#1e293b' }}>
                                                         {formatTireLabel(m)}
                                                     </span>
+                                                    {m.flDeleted === 1 && (
+                                                        <span className="badge" style={{ backgroundColor: '#94a3b8', color: '#fff', marginLeft: '6px', fontSize: '10px', padding: '2px 5px', fontWeight: 'normal', borderRadius: '4px' }}>
+                                                            Eliminato
+                                                        </span>
+                                                    )}
                                                     {m.dot && (
                                                         <span className="badge" style={{ backgroundColor: '#64748b', color: '#fff', marginLeft: '8px', fontSize: '11px', padding: '2px 6px', fontWeight: 'normal', borderRadius: '4px' }}>
                                                             DOT {m.dot}
@@ -578,6 +821,34 @@ const MovimentiList = () => {
                                             <td className="text-right">{m.quantitaCarico ? m.quantitaCarico.toFixed(2) : ''}</td>
                                             <td className="text-right">{m.quantitaScarico ? m.quantitaScarico.toFixed(2) : ''}</td>
                                             <td>{m.causale}{m.causale && m.numeroDocumento ? ` n. ${m.numeroDocumento}` : ''}</td>
+                                            <td style={{ textAlign: 'center', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+                                                {!m.numeroDocumento && (m.id || m.idDocumento) ? (
+                                                    <div style={{ display: 'inline-flex', gap: '5px' }}>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-default btn-xs"
+                                                            onClick={() => handleEditMovimento(m)}
+                                                            style={{ color: '#2563eb', borderColor: '#93c5fd', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}
+                                                            title={m.tipoMovimento === 'I' ? 'Modifica questo carico manuale' : 'Modifica questo scarico manuale'}
+                                                        >
+                                                            <FaEdit style={{ marginRight: '4px' }} /> Modifica
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-default btn-xs"
+                                                            onClick={() => handleDeleteMovimento(m)}
+                                                            style={{ color: '#dc2626', borderColor: '#fca5a5', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}
+                                                            title={m.tipoMovimento === 'I' ? 'Storna ed elimina questo carico manuale' : 'Storna ed elimina questo scarico manuale'}
+                                                        >
+                                                            <FaTrash style={{ marginRight: '4px' }} /> Storna
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span className="badge" style={{ backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '10px', fontWeight: 'normal', border: '1px solid #cbd5e1' }}>
+                                                        Da Doc
+                                                    </span>
+                                                )}
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -611,6 +882,17 @@ const MovimentiList = () => {
                     </div>
                 </div>
             </div>
+
+            <ModificaMovimentoModal
+                show={showEditModal}
+                handleClose={() => {
+                    setShowEditModal(false);
+                    setSelectedMovimentoForEdit(null);
+                }}
+                movimento={selectedMovimentoForEdit}
+                onSaveSuccess={fetchMovimenti}
+                hasUbicazioni={hasUbicazioni}
+            />
         </div>
     );
 };

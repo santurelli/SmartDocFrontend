@@ -32,6 +32,7 @@ const DatiAziendaForm = () => {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [fetchedTipoAccount, setFetchedTipoAccount] = useState(null);
     const [fetchedFlProva, setFetchedFlProva] = useState(1);
+    const [flFatturaElettronica, setFlFatturaElettronica] = useState(0);
     const [fetchedTipoRinnovo, setFetchedTipoRinnovo] = useState('ANNUAL');
     const [giorniRimanenti, setGiorniRimanenti] = useState(90);
 
@@ -51,6 +52,10 @@ const DatiAziendaForm = () => {
                     authService.updateConfig({ ...cfg, tipoAccount: payload.tipoAccount, tipo_account: payload.tipoAccount });
                     window.dispatchEvent(new Event('configupdated'));
                 }
+            }
+
+            if (payload.flFatturaElettronica !== undefined) {
+                setFlFatturaElettronica(payload.flFatturaElettronica);
             }
 
             if (payload.flProva !== undefined) {
@@ -124,8 +129,13 @@ const DatiAziendaForm = () => {
         e.preventDefault();
         setMessage({ text: '', type: '' });
 
-        if (!formData.denominazione || !formData.idRegimeFiscale) {
-            setMessage({ text: 'Denominazione e Regime Fiscale sono obbligatori.', type: 'error' });
+        if (!formData.denominazione) {
+            setMessage({ text: 'La Denominazione è obbligatoria.', type: 'error' });
+            return;
+        }
+
+        if (flFatturaElettronica === 1 && !formData.idRegimeFiscale) {
+            setMessage({ text: 'Il Regime Fiscale è obbligatorio con la fatturazione elettronica attiva.', type: 'error' });
             return;
         }
 
@@ -319,13 +329,13 @@ const DatiAziendaForm = () => {
 
                 <div className="row">
                     <div className="col-md-6 form-group">
-                        <label>Regime Fiscale <span className="text-danger">*</span></label>
+                        <label>Regime Fiscale{flFatturaElettronica === 1 && <span className="text-danger"> *</span>}</label>
                         <select
                             name="idRegimeFiscale"
                             className="form-control"
                             value={formData.idRegimeFiscale || ''}
                             onChange={handleChange}
-                            required
+                            required={flFatturaElettronica === 1}
                         >
                             <option value="">Seleziona...</option>
                             {regimiFiscali.map(rf => (

@@ -39,6 +39,16 @@ class UbicazioniService {
         return response.data;
     }
 
+    async getPrelieviRecenti(idProdotto) {
+        const response = await api.get(`/ubicazioni/prelievi-recenti/${idProdotto}`);
+        return response.data;
+    }
+
+    async annullaPrelievo(idMovimento) {
+        const response = await api.post('/ubicazioni/annulla-prelievo', { idMovimento });
+        return response.data;
+    }
+
     async stampaPrelievo(data) {
         const response = await api.post('/ubicazioni/stampa-prelievo', data);
         const resData = response.data;
@@ -52,20 +62,23 @@ class UbicazioniService {
                 await axios.post(`${bridgeUrl}/printer-command`, resData.bridgePayload, { timeout: 5000 });
                 return {
                     success: true,
-                    message: `Stampa inviata con successo via PrinterBridge (${resData.printerIp})`
+                    message: `Stampa inviata con successo via PrinterBridge (${resData.printerIp})`,
+                    createdMovements: resData.createdMovements
                 };
             } catch (err) {
                 console.warn('Errore chiamata diretta al PrinterBridge:', err);
                 return {
                     success: true,
-                    warning: `Giacenze aggiornate con successo, ma non è stato possibile comunicare con il PrinterBridge su ${bridgeUrl}. Verifica che sia avviato.`
+                    warning: `Giacenze aggiornate con successo, ma non è stato possibile comunicare con il PrinterBridge su ${bridgeUrl}. Verifica che sia avviato.`,
+                    createdMovements: resData.createdMovements
                 };
             }
         }
 
         return {
             success: true,
-            message: resData?.message || 'Operazione completata con successo'
+            message: resData?.message || 'Operazione completata con successo',
+            createdMovements: resData?.createdMovements
         };
     }
 }

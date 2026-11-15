@@ -325,7 +325,7 @@ const PreventiviDetail = () => {
                     particelle: (payload.PARTICELLE || payload.particelle || prev.particelle || []).flatMap(p => typeof p === 'string' ? p.split(',').map(s => s.trim()).filter(Boolean) : p),
                     listini: payload.LISTINI || payload.listini || prev.listini,
                     tipiPagamento: payload.TIPIPAGAMENTO || payload.tipiPagamento || prev.tipiPagamento,
-                    risorse: payload.BANCHE || payload.risorse || prev.risorse,
+                    risorse: payload.RISORSE || payload.BANCHE || payload.risorse || prev.risorse,
                     aliquoteIva: payload.ALIQUOTEIVA || payload.aliquoteIva || prev.aliquoteIva,
                     unitaMisura: payload.UNITAMISURA || payload.unitaMisura || prev.unitaMisura,
                     agenti: payload.AGENTI || payload.agenti || prev.agenti,
@@ -801,7 +801,12 @@ const PreventiviDetail = () => {
         }
     };
 
+    const [generatingPdf, setGeneratingPdf] = useState(null); // null | 'print' | 'export'
+
     const handlePrint = async () => {
+        setShowActionsMenu(false);
+        setGeneratingPdf('print');
+        try {
         const savedId = await savePreventivo();
         if (!savedId) return; // Save failed or validation error
 
@@ -829,9 +834,15 @@ const PreventiviDetail = () => {
             console.error("Error printing:", error);
             Swal.fire('Errore', 'Errore durante la stampa', 'error');
         }
+        } finally {
+            setGeneratingPdf(null);
+        }
     };
 
     const handleExportPdf = async () => {
+        setShowActionsMenu(false);
+        setGeneratingPdf('export');
+        try {
         const savedId = await savePreventivo();
         if (!savedId) return;
 
@@ -854,6 +865,9 @@ const PreventiviDetail = () => {
         } catch (error) {
             console.error("Error exporting PDF:", error);
             Swal.fire('Errore', 'Errore durante l\'esportazione PDF', 'error');
+        }
+        } finally {
+            setGeneratingPdf(null);
         }
     };
 
@@ -1443,10 +1457,14 @@ const PreventiviDetail = () => {
                                 type="button"
                                 className={`btn-premium-save split-btn-main ${saving ? 'is-saving' : ''}`}
                                 onClick={handleSave}
-                                disabled={saving || loading}
-                                style={{ minWidth: '130px' }}
+                                disabled={saving || loading || !!generatingPdf}
+                                style={{ minWidth: '190px' }}
                             >
-                                {saving ? (
+                                {generatingPdf ? (
+                                    <>
+                                        <i className="fa fa-spinner fa-spin mr-2"></i> {generatingPdf === 'print' ? 'Preparazione stampa...' : 'Generazione PDF...'}
+                                    </>
+                                ) : saving ? (
                                     <>
                                         <i className="fa fa-spinner fa-spin mr-2"></i> Salvataggio...
                                     </>
@@ -1456,7 +1474,7 @@ const PreventiviDetail = () => {
                                     </>
                                 )}
                             </button>
-                            <button type="button" className="split-btn-toggle" onClick={() => !saving && setShowActionsMenu(!showActionsMenu)} disabled={saving || loading}>
+                            <button type="button" className="split-btn-toggle" onClick={() => !saving && setShowActionsMenu(!showActionsMenu)} disabled={saving || loading || !!generatingPdf}>
                                 <FaCaretDown />
                             </button>
                             {showActionsMenu && (

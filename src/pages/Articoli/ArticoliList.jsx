@@ -21,6 +21,227 @@ import './ArticoliList.css';
 
 const MODULE_NAME = 'articoli';
 
+const ArticleLocationBadges = ({ ubicazioniList, art, onOpenModal, config }) => {
+    const [expanded, setExpanded] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 640 : false));
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 640);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    if (!config?.hasUbicazioni) return null;
+
+    const hasLocations = Array.isArray(ubicazioniList) && ubicazioniList.length > 0;
+
+    // Se non ci sono ubicazioni assegnate ma c'è giacenza fisica
+    if (!hasLocations) {
+        if (art.quantitaEsistente > 0 && (art.tipologia === 'AM' || art.tipologia === 'AMSC')) {
+            return (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', alignItems: 'center' }}>
+                    <span
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenModal(art);
+                        }}
+                        title="Giacenza presente a magazzino ma non ancora posizionata su scaffale. Clicca per assegnare."
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            backgroundColor: '#f8fafc',
+                            border: '1px dashed #cbd5e1',
+                            color: '#64748b',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            maxWidth: isMobile ? '180px' : '260px'
+                        }}
+                    >
+                        <FaMapMarkerAlt style={{ color: '#94a3b8', fontSize: '10px' }} />
+                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Non ubicato</span>
+                    </span>
+                </div>
+            );
+        }
+        return null;
+    }
+
+    // Regola di visibilità compatta: su mobile mostra 1 ubicazione (+ N altre), su desktop ne mostra 2
+    const maxVisible = isMobile ? 1 : 2;
+    const shouldTruncate = ubicazioniList.length > maxVisible;
+    const visibleList = expanded || !shouldTruncate ? ubicazioniList : ubicazioniList.slice(0, maxVisible);
+    const remainingCount = ubicazioniList.length - maxVisible;
+
+    // Tooltip riassuntivo per il badge "+ N altre"
+    const remainingList = shouldTruncate ? ubicazioniList.slice(maxVisible) : [];
+    const remainingTooltip = shouldTruncate
+        ? `Altre ubicazioni (${remainingCount}):\n` +
+          remainingList
+              .map(u => {
+                  const d = u.descrizione?.trim() || u.codUbicazione;
+                  const q = Math.round(u.quantita || 0);
+                  const dot = u.dot ? ` (${u.dot})` : '';
+                  return `• ${d}: ${q} pz${dot}`;
+              })
+              .join('\n') +
+          `\n\n👉 Clicca per espandere tutte o aprire la scheda`
+        : '';
+
+    return (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px', alignItems: 'center' }}>
+            {visibleList.map((u, uIdx) => {
+                const qtaInt = Math.round(u.quantita || 0);
+                const displayUbi = u.descrizione?.trim() || u.codUbicazione;
+                const posDetails = [
+                    u.corsia && `Corsia: ${u.corsia}`,
+                    u.ripiano && `Ripiano: ${u.ripiano}`,
+                    u.livello && `Livello: ${u.livello}`,
+                    u.dot && `DOT: ${u.dot}`
+                ].filter(Boolean).join(' | ');
+
+                const tooltipText = `${displayUbi}${u.descrizione && u.codUbicazione ? ` (Cod: ${u.codUbicazione})` : ''}${posDetails ? `\n${posDetails}` : ''}\n👉 Clicca per aprire la scheda di prelievo`;
+
+                return (
+                    <span
+                        key={uIdx}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenModal(art);
+                        }}
+                        title={tooltipText}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            backgroundColor: '#f0fdf4',
+                            border: '1px solid #86efac',
+                            color: '#15803d',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                            transition: 'all 0.15s ease',
+                            maxWidth: isMobile ? '220px' : '300px',
+                            whiteSpace: 'nowrap',
+                            userSelect: 'none'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = '#dcfce7';
+                            e.currentTarget.style.borderColor = '#4ade80';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = '#f0fdf4';
+                            e.currentTarget.style.borderColor = '#86efac';
+                        }}
+                    >
+                        <FaMapMarkerAlt style={{ color: '#16a34a', fontSize: '10px', flexShrink: 0 }} />
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {displayUbi}: <strong>{qtaInt} pz</strong>
+                        </span>
+                        {u.dot && (
+                            <span
+                                style={{
+                                    fontSize: '10px',
+                                    color: '#166534',
+                                    opacity: 0.85,
+                                    fontWeight: 'normal',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    maxWidth: isMobile ? '70px' : '120px'
+                                }}
+                            >
+                                ({u.dot})
+                            </span>
+                        )}
+                    </span>
+                );
+            })}
+
+            {/* Badge "+ N altre" */}
+            {shouldTruncate && !expanded && (
+                <span
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setExpanded(true);
+                    }}
+                    title={remainingTooltip}
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        backgroundColor: '#f1f5f9',
+                        border: '1px solid #cbd5e1',
+                        color: '#334155',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                        userSelect: 'none',
+                        transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#e2e8f0';
+                        e.currentTarget.style.borderColor = '#94a3b8';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f1f5f9';
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                >
+                    +{remainingCount} altr{remainingCount === 1 ? 'a' : 'e'} ▾
+                </span>
+            )}
+
+            {/* Pulsante "▲ Riduci" */}
+            {shouldTruncate && expanded && (
+                <span
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setExpanded(false);
+                    }}
+                    title="Riduci visualizzazione ubicazioni"
+                    style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        backgroundColor: '#f8fafc',
+                        border: '1px solid #e2e8f0',
+                        color: '#64748b',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f1f5f9';
+                        e.currentTarget.style.borderColor = '#cbd5e1';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8fafc';
+                        e.currentTarget.style.borderColor = '#e2e8f0';
+                    }}
+                >
+                    ▲ Riduci
+                </span>
+            )}
+        </div>
+    );
+};
+
 const ArticoliList = () => {
     // Load initial state from sessionStorage
     const initialState = storageHelper.loadState(MODULE_NAME, {
@@ -484,6 +705,7 @@ const ArticoliList = () => {
                 handleClose={handleCloseUbicazioniModal}
                 article={selectedArticle}
                 refreshList={fetchArticoli}
+                hasMarche={config.hasMarche}
             />
             <ArticoloPrezziModal
                 show={showPrezziModal}
@@ -929,6 +1151,15 @@ const ArticoliList = () => {
                                             <td>{art.codice}</td>
                                             <td>
                                                 {(() => {
+                                                    let ubicazioniList = [];
+                                                    try {
+                                                        if (art.ubicazioniJson) {
+                                                            ubicazioniList = JSON.parse(art.ubicazioniJson);
+                                                        }
+                                                    } catch (e) {
+                                                        ubicazioniList = [];
+                                                    }
+
                                                     const isTire = Boolean(art.sezione || art.diametro || art.scultura || art.dot);
                                                     if (isTire || config.isGommista) {
                                                         const parts = [];
@@ -954,26 +1185,32 @@ const ArticoliList = () => {
 
                                                         return (
                                                             <div>
-                                                                <span style={{ fontWeight: '600', color: '#1e293b' }}>
-                                                                    {primaryText}
-                                                                </span>
-                                                                {art.dot && (
-                                                                    <span className="badge" style={{ backgroundColor: '#64748b', color: '#fff', marginLeft: '8px', fontSize: '11px', padding: '2px 6px', fontWeight: 'normal', borderRadius: '4px' }}>
-                                                                        DOT {art.dot}
+                                                                <div>
+                                                                    <span style={{ fontWeight: '600', color: '#1e293b' }}>
+                                                                        {primaryText}
                                                                     </span>
-                                                                )}
+                                                                    {art.dot && (
+                                                                        <span className="badge" style={{ backgroundColor: '#64748b', color: '#fff', marginLeft: '8px', fontSize: '11px', padding: '2px 6px', fontWeight: 'normal', borderRadius: '4px' }}>
+                                                                            DOT {art.dot}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <ArticleLocationBadges ubicazioniList={ubicazioniList} art={art} onOpenModal={handleUbicazioniClick} config={config} />
                                                             </div>
                                                         );
                                                     }
 
                                                     return (
                                                         <div>
-                                                            {art.descMarca && (
-                                                                <span className="badge badge-default mr-1" style={{ fontSize: '11px', backgroundColor: '#e2e8f0', color: '#334155', marginRight: '6px' }}>
-                                                                    {art.descMarca}
-                                                                </span>
-                                                            )}
-                                                            <span>{art.descrizione}</span>
+                                                            <div>
+                                                                {art.descMarca && (
+                                                                    <span className="badge badge-default mr-1" style={{ fontSize: '11px', backgroundColor: '#e2e8f0', color: '#334155', marginRight: '6px' }}>
+                                                                        {art.descMarca}
+                                                                    </span>
+                                                                )}
+                                                                <span>{art.descrizione}</span>
+                                                            </div>
+                                                            <ArticleLocationBadges ubicazioniList={ubicazioniList} art={art} onOpenModal={handleUbicazioniClick} config={config} />
                                                             {config.isCeramica && (art.descrFormato || art.descrScelta || art.descrTono || art.descrCalibro) && (
                                                                 <div style={{ fontSize: '0.85em', color: '#777', marginTop: '4px' }}>
                                                                     {[

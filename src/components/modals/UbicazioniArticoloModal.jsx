@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import UbicazioniService from '../../services/UbicazioniService';
 import Swal from 'sweetalert2';
-import { FaPrint, FaMapMarkerAlt, FaCogs, FaBoxes } from 'react-icons/fa';
+import { FaPrint, FaMapMarkerAlt, FaCogs, FaBoxes, FaHistory, FaUndoAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import UbicazioniManagementModal from './UbicazioniManagementModal';
 
-const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) => {
+const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList, hasMarche = true }) => {
     const [locations, setLocations] = useState([]);
     const [loading, setLoading] = useState(false);
     const [printing, setPrinting] = useState(false);
@@ -12,19 +12,66 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
     const [scaricaGiacenza, setScaricaGiacenza] = useState(true);
     const [showUbicazioniManagement, setShowUbicazioniManagement] = useState(false);
     const [currentGiacenza, setCurrentGiacenza] = useState(article?.quantitaEsistente || 0);
+    const [prelieviRecenti, setPrelieviRecenti] = useState([]);
+    const [showPrelieviRecenti, setShowPrelieviRecenti] = useState(false);
 
     useEffect(() => {
         if (show && article?.id) {
             setCurrentGiacenza(article.quantitaEsistente || 0);
             loadData();
+            loadPrelieviRecenti();
         }
     }, [show, article]);
+
+    const loadPrelieviRecenti = async () => {
+        if (!article?.id) return;
+        try {
+            const list = await UbicazioniService.getPrelieviRecenti(article.id);
+            setPrelieviRecenti(list || []);
+        } catch (err) {
+            console.error("Errore caricamento prelievi recenti", err);
+        }
+    };
+
+    const handleAnnullaPrelievo = async (idMovimento, desc) => {
+        const confirm = await Swal.fire({
+            title: 'Annullare Prelievo?',
+            text: `Vuoi annullare questo prelievo (${desc || ''}) e ripristinare la merce nell'ubicazione e nella giacenza generale?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sì, ripristina',
+            cancelButtonText: 'No, mantieni',
+            confirmButtonColor: '#2563eb'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const res = await UbicazioniService.annullaPrelievo(idMovimento);
+            Swal.fire({
+                icon: 'success',
+                title: 'Prelievo Annullato',
+                text: res.message || 'Giacenza e ubicazione ripristinate con successo.',
+                timer: 3000,
+                showConfirmButton: false
+            });
+            loadData();
+            loadPrelieviRecenti();
+            if (refreshList) refreshList();
+        } catch (err) {
+            console.error("Errore annullamento prelievo", err);
+            Swal.fire('Errore', err.response?.data || err.message || 'Impossibile annullare il prelievo', 'error');
+        }
+    };
 
     const loadData = async () => {
         setLoading(true);
         try {
             const prodUbiRes = await UbicazioniService.getByProdotto(article.id);
-            const locList = prodUbiRes.data || [];
+            const locList = (prodUbiRes.data || []).map(loc => ({
+                ...loc,
+                dot: loc.dot || article?.dot || ''
+            }));
             setLocations(locList);
 
             // Inizializza le quantità da prelevare (se c'è 1 sola ubicazione, imposta default 4 o giacenza)
@@ -89,6 +136,62 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
             .filter(item => item.quantita > 0);
     };
 
+    const showPickingSuccessWithUndo = (result, totalQty, wasDischarged) => {
+        const movList = result.createdMovements || [];
+        if (wasDischarged && movList.length > 0) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Prelievo Effettuato',
+                html: `
+                    <div style="font-size: 14px; margin-bottom: 8px;">
+                        ${result.message || `Prelievo di ${totalQty} pz registrato con successo. Giacenza generale e ubicazioni aggiornate.`}
+                    </div>
+                    <div style="font-size: 12px; color: #475569; background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; margin-top: 12px; text-align: left;">
+                        💡 <strong>Hai sbagliato quantità o articolo?</strong><br/>
+                        Puoi annullare subito questa operazione con il pulsante rosso qui sotto, oppure in qualsiasi momento dalla sezione <em>"Storico Prelievi Recenti"</em>.
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'OK, Confermato',
+                cancelButtonText: '↩️ Annulla Subito Prelievo',
+                cancelButtonColor: '#dc2626',
+                confirmButtonColor: '#2563eb',
+                reverseButtons: true
+            }).then(async (btnRes) => {
+                if (btnRes.dismiss === Swal.DismissReason.cancel) {
+                    try {
+                        for (const m of movList) {
+                            if (m.idMovimento) {
+                                await UbicazioniService.annullaPrelievo(m.idMovimento);
+                            }
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Prelievo Annullato',
+                            text: 'Giacenza generale e ubicazioni ripristinate con successo.',
+                            timer: 2500,
+                            showConfirmButton: false
+                        });
+                        loadData();
+                        loadPrelieviRecenti();
+                        if (refreshList) refreshList();
+                    } catch (undoErr) {
+                        console.error("Errore rollback prelievo", undoErr);
+                        Swal.fire('Errore', 'Errore durante l\'annullamento del prelievo', 'error');
+                    }
+                }
+            });
+        } else {
+            Swal.fire({
+                icon: 'success',
+                title: 'Operazione Completata',
+                text: result.message || `Operazione completata con successo (${totalQty} pz).`,
+                timer: 3000,
+                showConfirmButton: false
+            });
+        }
+    };
+
     const handleSoloPrelievo = async () => {
         const itemsToPick = getItemsToPick();
 
@@ -111,13 +214,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                 items: itemsToPick
             });
 
-            Swal.fire({
-                icon: 'success',
-                title: 'Prelievo Effettuato',
-                text: result.message || `Prelievo di ${totalSelectedQty} pz registrato con successo. Giacenza generale e ubicazioni aggiornate.`,
-                timer: 3000,
-                showConfirmButton: false
-            });
+            showPickingSuccessWithUndo(result, totalSelectedQty, true);
 
             const newTotal = Math.max(0, currentGiacenza - totalSelectedQty);
             setCurrentGiacenza(newTotal);
@@ -126,6 +223,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
             }
 
             loadData();
+            loadPrelieviRecenti();
             if (refreshList) refreshList();
         } catch (err) {
             console.error("Errore durante il prelievo", err);
@@ -159,13 +257,13 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
         try {
             const result = await UbicazioniService.stampaPrelievo({
                 idProdotto: article.id,
+                marca: article.descMarca || article.marca || '',
+                scultura: article.scultura || '',
+                dot: article.dot || locations.find(l => l.dot)?.dot || '',
+                hasMarche: !!hasMarche,
                 items: itemsToPick,
                 scaricaGiacenza: scaricaGiacenza
             });
-
-            const successMsg = scaricaGiacenza
-                ? `Scheda di prelievo inviata (${totalSelectedQty} pz). Giacenza generale e ubicazioni aggiornate.`
-                : `Scheda di prelievo inviata alla stampante (${totalSelectedQty} pz).`;
 
             if (result.warning) {
                 Swal.fire({
@@ -174,13 +272,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                     text: result.warning
                 });
             } else {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Stampa Inviata!',
-                    text: result.message || successMsg,
-                    timer: 3000,
-                    showConfirmButton: false
-                });
+                showPickingSuccessWithUndo(result, totalSelectedQty, scaricaGiacenza);
             }
 
             if (scaricaGiacenza) {
@@ -190,6 +282,7 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                     article.quantitaEsistente = newTotal;
                 }
                 loadData();
+                loadPrelieviRecenti();
                 if (refreshList) refreshList();
             }
         } catch (err) {
@@ -207,8 +300,8 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
     if (!show) return null;
 
     return (
-        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }} tabIndex="-1" role="dialog">
-            <div className="modal-dialog modal-lg" role="document">
+        <div className="modal show premium-modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050, overflowY: 'auto' }} tabIndex="-1" role="dialog">
+            <div className="modal-dialog modal-lg" role="document" style={{ maxWidth: '96vw', margin: '20px auto' }}>
                 <div className="modal-content premium-modal-content">
                     <div className="modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', minHeight: 'unset' }}>
                         <div>
@@ -227,28 +320,64 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                     <div className="modal-body" style={{ padding: '20px' }}>
                         {/* Articolo Info Card */}
                         <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px 18px', marginBottom: '20px' }}>
-                            <div className="row" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <div className="col-xs-6 col-sm-3 col-md-3" style={{ marginBottom: '8px' }}>
+                            <div className="row" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 0' }}>
+                                <div className="col-xs-6 col-sm-3 col-md-2" style={{ marginBottom: '8px' }}>
                                     <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
-                                        Codice Articolo
+                                        Codice
                                     </span>
-                                    <strong style={{ display: 'block', fontSize: '15px', color: '#0f172a' }}>
+                                    <strong style={{ display: 'block', fontSize: '14px', color: '#0f172a' }}>
                                         {article?.codice || '-'}
                                     </strong>
                                 </div>
-                                <div className="col-xs-6 col-sm-3 col-md-3" style={{ marginBottom: '8px' }}>
-                                    <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
-                                        Marca
-                                    </span>
-                                    <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155' }}>
-                                        {article?.descMarca || article?.marca || '-'}
-                                    </span>
-                                </div>
-                                <div className="col-xs-6 col-sm-4 col-md-4" style={{ marginBottom: '8px' }}>
+                                {hasMarche !== false && (
+                                    <div className="col-xs-6 col-sm-3 col-md-2" style={{ marginBottom: '8px' }}>
+                                        <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
+                                            Marca
+                                        </span>
+                                        <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155' }}>
+                                            {article?.descMarca || article?.marca || '-'}
+                                        </span>
+                                    </div>
+                                )}
+                                {article?.scultura && (
+                                    <div className="col-xs-6 col-sm-3 col-md-2" style={{ marginBottom: '8px' }}>
+                                        <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
+                                            Modello
+                                        </span>
+                                        <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>
+                                            {article.scultura}
+                                        </span>
+                                    </div>
+                                )}
+                                {(article?.sezione || article?.diametro) && (
+                                    <div className="col-xs-6 col-sm-3 col-md-2" style={{ marginBottom: '8px' }}>
+                                        <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
+                                            Misura
+                                        </span>
+                                        <span style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#2563eb' }}>
+                                            {[
+                                                article.sezione && article.serie ? `${article.sezione}/${article.serie}` : article.sezione,
+                                                article.diametro && `R${article.diametro}`,
+                                                article.indiceVelocita
+                                            ].filter(Boolean).join(' ')}
+                                        </span>
+                                    </div>
+                                )}
+                                {(article?.dot || locations.some(l => l.dot)) && (
+                                    <div className="col-xs-6 col-sm-3 col-md-2" style={{ marginBottom: '8px' }}>
+                                        <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
+                                            DOT
+                                        </span>
+                                        <span className="badge" style={{ backgroundColor: '#475569', fontSize: '12px', padding: '4px 8px' }}>
+                                            {article?.dot || locations.find(l => l.dot)?.dot || '-'}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="col-xs-6 col-sm-4 col-md-3" style={{ marginBottom: '8px' }}>
                                     <span style={{ display: 'block', fontSize: '11px', textTransform: 'uppercase', color: '#64748b', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
                                         Descrizione
                                     </span>
-                                    <span style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#1e293b' }}>
+                                    <span style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#1e293b' }}>
                                         {article?.descrizione || '-'}
                                     </span>
                                 </div>
@@ -306,8 +435,10 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                                         {locations.map(loc => (
                                              <tr key={loc.id}>
                                                 <td>
-                                                    <strong style={{ color: '#2980b9' }}>{loc.codUbicazione}</strong>
-                                                    {loc.descUbicazione && <small className="text-muted" style={{ display: 'block', marginTop: '2px' }}>{loc.descUbicazione}</small>}
+                                                    <strong style={{ color: '#2980b9' }}>{loc.descUbicazione || loc.descrizione || loc.codUbicazione}</strong>
+                                                    {(loc.descUbicazione || loc.descrizione) && (
+                                                        <small className="text-muted" style={{ display: 'block', marginTop: '2px' }}>Cod: {loc.codUbicazione}</small>
+                                                    )}
                                                 </td>
                                                 <td>
                                                     {[
@@ -341,6 +472,80 @@ const UbicazioniArticoloModal = ({ show, handleClose, article, refreshList }) =>
                                 </table>
                             </div>
                         )}
+
+                        {/* Sezione Storico Prelievi Recenti & Annullamento */}
+                        <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '15px' }}>
+                            <div 
+                                onClick={() => setShowPrelieviRecenti(!showPrelieviRecenti)}
+                                style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center', 
+                                    cursor: 'pointer',
+                                    userSelect: 'none',
+                                    padding: '8px 12px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#f8fafc',
+                                    border: '1px solid #e2e8f0'
+                                }}
+                            >
+                                <strong style={{ fontSize: '13px', color: '#334155', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <FaHistory style={{ color: '#0284c7' }} /> Storico Prelievi Recenti ({prelieviRecenti.length})
+                                </strong>
+                                <span style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    {showPrelieviRecenti ? <><FaChevronUp /> Nascondi</> : <><FaChevronDown /> Mostra per annullare</>}
+                                </span>
+                            </div>
+
+                            {showPrelieviRecenti && (
+                                <div style={{ marginTop: '10px' }}>
+                                    {prelieviRecenti.length === 0 ? (
+                                        <p style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic', margin: '8px 0' }}>
+                                            Nessun prelievo registrato per questo articolo.
+                                        </p>
+                                    ) : (
+                                        <div className="table-responsive" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                                            <table className="table table-condensed table-hover" style={{ fontSize: '12px', marginBottom: 0 }}>
+                                                <thead>
+                                                    <tr style={{ backgroundColor: '#f1f5f9' }}>
+                                                        <th>Data/Ora</th>
+                                                        <th>Quantità</th>
+                                                        <th>Dettagli Prelievo</th>
+                                                        <th>Operatore</th>
+                                                        <th style={{ textAlign: 'right' }}>Azione</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {prelieviRecenti.map((p) => (
+                                                        <tr key={p.id}>
+                                                            <td style={{ verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{p.dataora || p.data}</td>
+                                                            <td style={{ verticalAlign: 'middle' }}>
+                                                                <strong style={{ color: '#dc2626' }}>-{p.quantita} pz</strong>
+                                                            </td>
+                                                            <td style={{ verticalAlign: 'middle' }} title={p.causale}>
+                                                                {p.causale ? p.causale.replace(/\[UBI:.*?\]/, '') : '-'}
+                                                            </td>
+                                                            <td style={{ verticalAlign: 'middle' }}>{p.operatore || '-'}</td>
+                                                            <td style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-warning btn-xs"
+                                                                    onClick={() => handleAnnullaPrelievo(p.id, `${p.quantita} pz - ${p.causale ? p.causale.replace(/\[UBI:.*?\]/, '') : ''}`)}
+                                                                    style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}
+                                                                    title="Annulla questo prelievo e ripristina la giacenza nell'ubicazione e generale"
+                                                                >
+                                                                    <FaUndoAlt className="mr-1" /> Annulla Prelievo
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="modal-footer" style={{ borderTop: '1px solid #e5e5e5', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>

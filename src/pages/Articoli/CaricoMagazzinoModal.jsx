@@ -154,7 +154,7 @@ const CaricoMagazzinoModal = ({ show, handleClose, article, refreshList }) => {
 
     const ubicazioneOptions = availableLocations.map(u => ({
         value: u.id,
-        label: `${u.codUbicazione}${u.corsia ? ` (Corsia ${u.corsia})` : ''}${u.descrizione ? ` - ${u.descrizione}` : ''}`
+        label: `${u.descrizione ? u.descrizione : u.codUbicazione}${u.corsia ? ` (Corsia ${u.corsia})` : ''}${u.descrizione && u.codUbicazione ? ` [${u.codUbicazione}]` : ''}`
     }));
 
     const handleSubmit = async () => {

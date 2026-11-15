@@ -39,6 +39,24 @@ const MovimentiMagazzinoService = {
             throw error;
         }
     },
+    update: async (id, dto) => {
+        try {
+            const response = await api.put('/movimenti/' + id, dto);
+            return response.data;
+        } catch (error) {
+            console.error("Error updating movimento:", error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await api.delete('/movimenti/' + id);
+            return response.data;
+        } catch (error) {
+            console.error("Error deleting movimento:", error);
+            throw error;
+        }
+    },
     exportExcel: async (criteria) => {
         try {
             const response = await api.post('/movimenti/export-excel', criteria, {
