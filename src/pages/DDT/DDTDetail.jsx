@@ -852,8 +852,7 @@ const DDTDetail = () => {
 
         try {
             const res = await DDTService.save(payload);
-            // Il backend restituisce il payload con l'id o l'id direttamente
-            return res.data.payload?.id || res.data.payload || (isNew ? res.data : id);
+            return res.data.payload || (isNew ? res.data : id);
         } catch (error) {
             console.error(error);
             const msg = error.response?.data || 'Errore durante il salvataggio';
@@ -864,7 +863,8 @@ const DDTDetail = () => {
 
     const handleSave = async (e, options = {}) => {
         if (e) e.preventDefault();
-        const savedId = await saveDDT();
+        const savedRes = await saveDDT();
+        const savedId = savedRes?.id || savedRes;
         if (savedId) {
             if (options.print) {
                 try {
@@ -907,7 +907,7 @@ const DDTDetail = () => {
                     const url = window.URL.createObjectURL(new Blob([printRes.data], { type: 'application/pdf' }));
                     const link = document.createElement('a');
                     link.href = url;
-                    link.setAttribute('download', `DDT_${formData.numDocumento}.pdf`);
+                    link.setAttribute('download', `DDT_${savedRes?.numDocumento || formData.numDocumento}.pdf`);
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -917,7 +917,16 @@ const DDTDetail = () => {
                     Swal.fire('Errore PDF', err.message || 'Impossibile esportare il PDF', 'error');
                 }
             }
-            if (!options.print && !options.pdf) {
+            if (savedRes?.numeroRiassegnato) {
+                Swal.fire({
+                    title: 'DDT salvato con il n. ' + savedRes.numDocumento,
+                    html: `Attenzione: il numero <b>${savedRes.numeroOriginale}</b> era già presente per l'anno di riferimento.<br/>È stato assegnato automaticamente il nuovo progressivo <b>${savedRes.numDocumento}</b>.`,
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    navigate('/ddt');
+                });
+            } else if (!options.print && !options.pdf) {
                 Swal.fire({
                     title: 'Salvato!',
                     text: 'DDT salvato con successo',
@@ -1572,7 +1581,8 @@ const DDTDetail = () => {
                                         </button>
                                         <div className="action-dropdown-divider" style={{ height: '1px', background: '#eee', margin: '5px 0' }}></div>
                                         <button type="button" className="split-btn-item" onClick={async (e) => {
-                                            const savedId = await saveDDT();
+                                            const savedRes = await saveDDT();
+                                            const savedId = savedRes?.id || savedRes;
                                             if (savedId) navigate(`/fatture/new?fromDDT=${savedId}`);
                                         }}>
                                             <FaArrowRight /> Genera Fattura

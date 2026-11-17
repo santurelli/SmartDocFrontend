@@ -1100,7 +1100,7 @@ const FattureDetail = () => {
 
         try {
             const res = await FattureService.save(payload);
-            return res.data.payload?.id || res.data.payload || (isNew ? res.data : id);
+            return res.data.payload || (isNew ? res.data : id);
         } catch (error) {
             console.error(error);
             const msg = error.response?.data || 'Errore durante il salvataggio';
@@ -1144,8 +1144,9 @@ const FattureDetail = () => {
 
     const handleSave = async (e, options = {}) => {
         if (e) e.preventDefault();
-        const savedId = await saveFattura();
-        if (savedId) {
+        const savedRes = await saveFattura();
+        if (savedRes) {
+            const savedId = savedRes?.id || savedRes;
             if (options.print) {
                 try {
                     const printRes = await FattureService.print(savedId);
@@ -1163,7 +1164,7 @@ const FattureDetail = () => {
                     const url = window.URL.createObjectURL(new Blob([printRes.data]));
                     const link = document.createElement('a');
                     link.href = url;
-                    link.setAttribute('download', `Fattura_${formData.numDocumento}.pdf`);
+                    link.setAttribute('download', `Fattura_${savedRes?.numDocumento || formData.numDocumento}.pdf`);
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -1171,7 +1172,16 @@ const FattureDetail = () => {
                     console.error("PDF error:", err);
                 }
             }
-            if (!options.print && !options.pdf) {
+            if (savedRes?.numeroRiassegnato) {
+                Swal.fire({
+                    title: 'Fattura salvata con il n. ' + savedRes.numDocumento,
+                    html: `Attenzione: il numero <b>${savedRes.numeroOriginale}</b> era già utilizzato per l'anno in corso.<br/>È stato assegnato automaticamente il nuovo progressivo <b>${savedRes.numDocumento}</b>.`,
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    navigate('/fatture');
+                });
+            } else if (!options.print && !options.pdf) {
                 Swal.fire({
                     title: 'Salvato!',
                     text: 'Fattura salvata con successo',
@@ -2025,7 +2035,8 @@ const FattureDetail = () => {
                                         </button>
                                         <div className="action-dropdown-divider"></div>
                                         <button type="button" className="split-btn-item" onClick={async () => {
-                                            const savedId = await saveFattura();
+                                            const savedRes = await saveFattura();
+                                            const savedId = savedRes?.id || savedRes;
                                             if (savedId) navigate(`/note-credito/new?fromFatture=${savedId}`);
                                         }}>
                                             <FaArrowRight /> Genera nota credito

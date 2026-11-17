@@ -800,9 +800,7 @@ const ConfOrdineDetail = () => {
         try {
             setLoading(true);
             const response = await ConfOrdineService.save(payload);
-            // If it's a new record, the ID is in response.data.payload
-            const savedId = response.data.payload || id;
-            return savedId;
+            return response.data?.payload || id;
         } catch (error) {
             console.error(error);
             const msg = error.response?.data || 'Errore durante il salvataggio';
@@ -815,22 +813,34 @@ const ConfOrdineDetail = () => {
 
     const handleSave = async (e) => {
         if (e) e.preventDefault();
-        const savedId = await saveConfOrdine();
-        if (savedId) {
-            Swal.fire({
-                title: 'Salvato!',
-                text: 'Conferma d\'ordine salvata con successo',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                navigate('/conf-ordine');
-            });
+        const savedRes = await saveConfOrdine();
+        if (savedRes) {
+            if (savedRes?.numeroRiassegnato) {
+                Swal.fire({
+                    title: 'Conferma d\'ordine salvata con il n. ' + savedRes.numDocumento,
+                    html: `Attenzione: il numero <b>${savedRes.numeroOriginale}</b> era già presente per l'anno di riferimento.<br/>È stato assegnato automaticamente il nuovo progressivo <b>${savedRes.numDocumento}</b>.`,
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    navigate('/conf-ordine');
+                });
+            } else {
+                Swal.fire({
+                    title: 'Salvato!',
+                    text: 'Conferma d\'ordine salvata con successo',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    navigate('/conf-ordine');
+                });
+            }
         }
     };
 
     const handlePrint = async () => {
-        const savedId = await saveConfOrdine();
+        const savedRes = await saveConfOrdine();
+        const savedId = savedRes?.id || savedRes;
         if (!savedId) return;
 
         try {
@@ -1410,7 +1420,8 @@ const ConfOrdineDetail = () => {
                                     </button>
                                     <div className="action-dropdown-divider"></div>
                                     <button type="button" className="split-btn-item" onClick={async () => {
-                                        const savedId = await saveConfOrdine();
+                                        const savedRes = await saveConfOrdine();
+                                        const savedId = savedRes?.id || savedRes;
                                         if (savedId) navigate(`/ddt/new?fromConferme=${savedId}`);
                                     }}>
                                         <FaArrowRight /> Genera DDT

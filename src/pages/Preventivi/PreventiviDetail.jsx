@@ -772,11 +772,10 @@ const PreventiviDetail = () => {
 
             if (isNew) {
                 const response = await PreventiviService.insert(payload);
-                // Il backend restituisce il nuovo ID nel payload o direttamente
-                return response.data?.payload || response.data?.id || response.data;
+                return response.data?.payload || response.data;
             } else {
-                await PreventiviService.update(id, payload);
-                return id;
+                const response = await PreventiviService.update(id, payload);
+                return response.data?.payload || id;
             }
         } catch (error) {
             console.error("Error saving:", error);
@@ -792,9 +791,18 @@ const PreventiviDetail = () => {
 
         setSaving(true);
         try {
-            const savedId = await savePreventivo();
-            if (savedId) {
-                Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
+            const savedRes = await savePreventivo();
+            if (savedRes) {
+                if (savedRes?.numeroRiassegnato) {
+                    Swal.fire({
+                        title: 'Preventivo salvato con il n. ' + savedRes.numDocumento,
+                        html: `Attenzione: il numero <b>${savedRes.numeroOriginale}</b> era già presente per l'anno di riferimento.<br/>È stato assegnato automaticamente il nuovo progressivo <b>${savedRes.numDocumento}</b>.`,
+                        icon: 'warning',
+                        confirmButtonText: 'OK'
+                    }).then(() => navigate('/preventivi'));
+                } else {
+                    Swal.fire('Successo', 'Preventivo salvato', 'success').then(() => navigate('/preventivi'));
+                }
             }
         } finally {
             setSaving(false);
@@ -807,7 +815,8 @@ const PreventiviDetail = () => {
         setShowActionsMenu(false);
         setGeneratingPdf('print');
         try {
-        const savedId = await savePreventivo();
+        const savedRes = await savePreventivo();
+        const savedId = savedRes?.id || savedRes;
         if (!savedId) return; // Save failed or validation error
 
         try {
@@ -843,7 +852,8 @@ const PreventiviDetail = () => {
         setShowActionsMenu(false);
         setGeneratingPdf('export');
         try {
-        const savedId = await savePreventivo();
+        const savedRes = await savePreventivo();
+        const savedId = savedRes?.id || savedRes;
         if (!savedId) return;
 
         try {
@@ -1490,7 +1500,8 @@ const PreventiviDetail = () => {
                                     </button>
                                     <div className="action-dropdown-divider"></div>
                                     <button type="button" className="split-btn-item" onClick={async () => {
-                                        const savedId = await savePreventivo();
+                                        const savedRes = await savePreventivo();
+                                        const savedId = savedRes?.id || savedRes;
                                         if (savedId) navigate(`/conf-ordine/new?fromPreventivi=${savedId}`);
                                     }}>
                                         <FaArrowRight /> Genera conferma ordine

@@ -749,7 +749,7 @@ const NoteCreditoDetail = () => {
 
         try {
             const res = await NoteCreditoService.save(payload);
-            return res.data.payload?.id || res.data.payload || (isNew ? res.data : id);
+            return res.data.payload || (isNew ? res.data : id);
         } catch (error) {
             console.error(error);
             const msg = error.response?.data || 'Errore durante il salvataggio';
@@ -760,8 +760,9 @@ const NoteCreditoDetail = () => {
 
     const handleSave = async (e, options = {}) => {
         if (e) e.preventDefault();
-        const savedId = await saveNoteCredito();
-        if (savedId) {
+        const savedRes = await saveNoteCredito();
+        if (savedRes) {
+            const savedId = savedRes?.id || savedRes;
             if (options.print) {
                 try {
                     const printRes = await NoteCreditoService.print(savedId);
@@ -779,7 +780,7 @@ const NoteCreditoDetail = () => {
                     const url = window.URL.createObjectURL(new Blob([printRes.data]));
                     const link = document.createElement('a');
                     link.href = url;
-                    link.setAttribute('download', `NoteCredito_${formData.numDocumento}.pdf`);
+                    link.setAttribute('download', `NoteCredito_${savedRes?.numDocumento || formData.numDocumento}.pdf`);
                     document.body.appendChild(link);
                     link.click();
                     link.remove();
@@ -787,7 +788,16 @@ const NoteCreditoDetail = () => {
                     console.error("PDF error:", err);
                 }
             }
-            if (!options.print && !options.pdf) {
+            if (savedRes?.numeroRiassegnato) {
+                Swal.fire({
+                    title: 'Nota di credito salvata con il n. ' + savedRes.numDocumento,
+                    html: `Attenzione: il numero <b>${savedRes.numeroOriginale}</b> era già presente per l'anno di riferimento.<br/>È stato assegnato automaticamente il nuovo progressivo <b>${savedRes.numDocumento}</b>.`,
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    navigate('/note-credito');
+                });
+            } else if (!options.print && !options.pdf) {
                 Swal.fire({
                     title: 'Salvato!',
                     text: 'Nota di credito salvata con successo',
